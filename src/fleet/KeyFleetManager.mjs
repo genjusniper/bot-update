@@ -1,4 +1,4 @@
-// src/fleet/KeyFleetManager.mjs — RESILIENT HIGH-UPTIME FLEET MANAGER
+// src/fleet/KeyFleetManager.mjs
 
 export class KeyFleetManager {
     constructor(rawKeyString) {
@@ -6,7 +6,7 @@ export class KeyFleetManager {
         this.fleet = keys.map((key, index) => ({
             id: index + 1,
             key: key,
-            health: 'HEALTHY',
+            health: 'HEALTHY', // 'HEALTHY' | 'COOLDOWN' | 'QUARANTINED'
             cooldownUntil: 0,
             consecutiveErrors: 0,
             totalSuccess: 0,
@@ -18,10 +18,9 @@ export class KeyFleetManager {
     }
 
     getHealthyKey() {
-        if (this.fleet.length === 0) return null;
         const now = Date.now();
         
-        // 1. Auto-heal keys past their cooldown
+        // Auto-heal keys past their cooldown
         for (const item of this.fleet) {
             if (item.health === 'COOLDOWN' && now >= item.cooldownUntil) {
                 item.health = 'HEALTHY';
@@ -29,7 +28,7 @@ export class KeyFleetManager {
             }
         }
 
-        // 2. Find available healthy key (Round-Robin)
+        // Find available healthy keys starting from pointer (Round-Robin)
         const total = this.fleet.length;
         for (let i = 0; i < total; i++) {
             const index = (this.pointer + i) % total;
@@ -41,18 +40,13 @@ export class KeyFleetManager {
             }
         }
 
-        // 3. Resilient Fallback: If all are in cooldown/quarantine, pick the least recently used non-quarantined key
-        const eligible = this.fleet.filter(k => k.health !== 'QUARANTINED');
-        if (eligible.length > 0) {
-            eligible.sort((a, b) => a.lastUsed - b.lastUsed);
-            const chosen = eligible[0];
-            chosen.health = 'HEALTHY'; // Give it a trial turn
-            chosen.lastUsed = now;
-            return chosen;
+        // If none healthy, find the one with nearest cooldown expiration
+        const cooldownKeys = this.fleet.filter(k => k.health === 'COOLDOWN').sort((a, b) => a.cooldownUntil - b.cooldownUntil);
+        if (cooldownKeys.length > 0) {
+            return cooldownKeys[0];
         }
 
-        // 4. Absolute fallback
-        return this.fleet[0];
+        return null;
     }
 
     recordSuccess(keyId, latencyMs) {
@@ -73,12 +67,12 @@ export class KeyFleetManager {
 
         if (errorClassification.action === 'QUARANTINE_KEY') {
             item.health = 'QUARANTINED';
-            console.warn(`[KeyFleetManager] 🚫 Key #${item.id} QUARANTINED.`);
+            console.warn(`[KeyFleetManager] 🚫 Key #${item.id} QUARANTINED (Invalid Auth).`);
         } else if (errorClassification.action === 'COOLDOWN_KEY') {
             item.health = 'COOLDOWN';
             item.total429++;
-            item.cooldownUntil = Date.now() + 20000; // 20s cooldown instead of 45s
-            console.warn(`[KeyFleetManager] ⏳ Key #${item.id} on cooldown for 20s.`);
+            item.cooldownUntil = Date.now() + (errorClassification.cooldownMs || 45000);
+            console.warn(`[KeyFleetManager] ⏳ Key #${item.id} placed on COOLDOWN for ${(errorClassification.cooldownMs || 45000) / 1000}s (429 Rate Limit).`);
         }
     }
 

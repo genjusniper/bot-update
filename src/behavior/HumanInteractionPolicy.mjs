@@ -1,17 +1,20 @@
 // src/behavior/HumanInteractionPolicy.mjs
-// Master Human Interaction Policy Engine (HIPE) with Response Budget & Closure Detection
+// V13.7 — Improved bubble splitting, reactions, and delivery logic
 
 import { BubbleSequencer } from './BubbleSequencer.mjs';
 import { HumanUXEngine } from '../subsystems/ux/HumanUXEngine.mjs';
 import { ConversationEndingDetector } from './ConversationEndingDetector.mjs';
-import { ResponseBudgetEngine } from './ResponseBudgetEngine.mjs';
 
 export class HumanInteractionPolicy {
     static decideDelivery(userMessage, rawResponse, options = {}) {
         const text = (userMessage || '').trim().toLowerCase();
         const responseText = (rawResponse || '').trim();
 
-        // 1. Check for explicit conversation ending / sign-offs
+        if (!responseText) {
+            return { action: 'REACT_ONLY', reactionEmoji: '👍', bubbles: [], typingDelays: [0], text: '' };
+        }
+
+        // 1. Conversation ending
         if (ConversationEndingDetector.isEnding(text)) {
             const signOff = ConversationEndingDetector.getSignOff(text);
             return {
@@ -28,42 +31,36 @@ export class HumanInteractionPolicy {
         let bubbles = [responseText];
         let typingDelays = [HumanUXEngine.calculateTypingDelay(responseText, options.hasMedia)];
 
-        // 2. Reaction Triggers & Probabilities
-        if (text.match(/^(wkwk|wkwkwk|haha|hahaha|ngakak|lucu banget)$/i)) {
+        // 2. Reaction-only triggers (35% chance for very short casual inputs)
+        if (text.match(/^(wkwk|wkwkwk|haha|ngakak|lucu banget)$/i)) {
             if (Math.random() < 0.35 && !options.hasMedia) {
-                action = 'REACT_ONLY';
-                reactionEmoji = '😂';
-                bubbles = [];
-                return { action, reactionEmoji, bubbles, typingDelays: [0], text: '' };
-            } else {
-                action = 'REPLY_SINGLE';
-                reactionEmoji = '😂';
+                return { action: 'REACT_ONLY', reactionEmoji: '😂', bubbles: [], typingDelays: [0], text: '' };
             }
-        } else if (text.match(/^(mantap|keren|makasih|suwun|tengkyu|jos)$/i)) {
-            if (Math.random() < 0.35) {
-                action = 'REACT_ONLY';
-                reactionEmoji = '👍';
-                bubbles = [];
-                return { action, reactionEmoji, bubbles, typingDelays: [0], text: '' };
+            reactionEmoji = '😂';
+        } else if (text.match(/^(mantap|keren|makasih|suwun|tengkyu|jos|thanks|thx|sip|siap)$/i)) {
+            if (Math.random() < 0.40) {
+                return { action: 'REACT_ONLY', reactionEmoji: '👍', bubbles: [], typingDelays: [0], text: '' };
+            }
+        } else if (text.match(/^(nice|wow|gila|gilak|anjir|parah)$/i)) {
+            if (Math.random() < 0.30) {
+                return { action: 'REACT_ONLY', reactionEmoji: '🔥', bubbles: [], typingDelays: [0], text: '' };
             }
         }
 
-        // 3. Sequence Bubbles naturally if multi-paragraph
+        // 3. Smart bubble splitting for longer responses
+        // Split into max 2 bubbles only for responses >80 chars with natural paragraph breaks
         if (responseText.length > 80 && responseText.includes('\n')) {
             const seqBubbles = BubbleSequencer.sequence(responseText, 2);
             if (seqBubbles.length > 1) {
                 action = 'REPLY_MULTI_BUBBLE';
                 bubbles = seqBubbles;
-                typingDelays = bubbles.map(b => HumanUXEngine.calculateTypingDelay(b));
+                typingDelays = bubbles.map((b, i) => {
+                    const delay = HumanUXEngine.calculateTypingDelay(b);
+                    return i === 0 ? delay : Math.min(delay, 1000); // cap subsequent bubbles
+                });
             }
         }
 
-        return {
-            action,
-            reactionEmoji,
-            bubbles,
-            typingDelays,
-            text: responseText
-        };
+        return { action, reactionEmoji, bubbles, typingDelays, text: responseText };
     }
 }
