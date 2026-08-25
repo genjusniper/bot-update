@@ -1,5 +1,5 @@
 // src/resilience/AIGatewayObservable.mjs
-// Observable AI Gateway with Quota Bucket Awareness & Payload Protection
+// Observable AI Gateway with Dynamic Fleet Refresh & Payload Protection
 
 import { KeyFleetManager } from '../fleet/KeyFleetManager.mjs';
 import { ErrorTaxonomy } from '../fleet/ErrorTaxonomy.mjs';
@@ -8,14 +8,19 @@ import { PayloadSanitizer } from './PayloadSanitizer.mjs';
 
 export class AIGatewayObservable {
     constructor() {
-        const rawKeys = process.env.GEMINI_API_KEY || '';
-        this.fleet = new KeyFleetManager(rawKeys);
+        this.fleet = null;
         this.models = [
             'gemini-flash-lite-latest',
             'gemini-3.1-flash-lite',
             'gemini-3.5-flash-lite'
         ];
         this.modelIndex = 0;
+        this.initFleet();
+    }
+
+    initFleet() {
+        const rawKeys = process.env.GEMINI_API_KEY || '';
+        this.fleet = new KeyFleetManager(rawKeys);
     }
 
     async generate(systemPrompt, rawContents, correlationId = 'req_gen') {
@@ -26,6 +31,11 @@ export class AIGatewayObservable {
             attempts: 0,
             traces: []
         };
+
+        // Ensure fleet is populated even if env was loaded after module import
+        if (!this.fleet || this.fleet.fleet.length === 0) {
+            this.initFleet();
+        }
 
         // 1. Strict Payload Sanitization
         const cleanContents = PayloadSanitizer.sanitizeContents(rawContents);
@@ -78,7 +88,6 @@ export class AIGatewayObservable {
                     ProviderHealthMatrix.recordMetric(currentModel, false, latency);
 
                     if (err.action === 'ABORT_NO_ROTATION') {
-                        // 400 Bad Request: STOP IMMEDIATELY! Do not retry keys!
                         console.error('[AIGatewayObservable] 🛑 400 Bad Request aborted without rotation.');
                         return { success: false, telemetry, error: 'BAD_REQUEST_ABORT' };
                     }
