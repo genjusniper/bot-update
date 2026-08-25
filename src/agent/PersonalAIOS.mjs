@@ -1,14 +1,16 @@
-// src/agent/PersonalAIOS.mjs — PERSONAL COMMUNICATION OS (V6.2 ARCHITECTURE)
+// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V6.3 ADVANCED CONVERSATION INTELLIGENCE)
 
 import { AIResourceManager2 } from '../fleet/AIResourceManager2.mjs';
 import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
 import { AdaptiveModelRouter } from '../fleet/AdaptiveModelRouter.mjs';
+import { ProviderHealthMatrix } from '../fleet/ProviderHealthMatrix.mjs';
 
 import { ContextBudgetManager } from '../context/ContextBudgetManager.mjs';
 import { StyleDNA } from '../communication/StyleDNA.mjs';
-import { TopicGraph } from '../topics/TopicGraph.mjs';
-import { HumorEngine } from '../humor/HumorEngine.mjs';
-import { CallbackMemory } from '../humor/CallbackMemory.mjs';
+import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
+import { TopicGraphEngine } from '../topics/TopicGraphEngine.mjs';
+import { AdvancedHumorEngine } from '../humor/AdvancedHumorEngine.mjs';
+import { CallbackRegistry } from '../humor/CallbackRegistry.mjs';
 import { CurhatEngine } from '../social/CurhatEngine.mjs';
 import { OpenLoopEngine } from '../communication/OpenLoopEngine.mjs';
 import { ConversationContinuation } from '../conversation/ConversationContinuation.mjs';
@@ -17,13 +19,11 @@ import { AntiRepetitionEngine } from '../communication/AntiRepetitionEngine.mjs'
 import { BubbleComposer } from '../communication/BubbleComposer.mjs';
 
 import { MemoryOS } from '../memory/MemoryOS.mjs';
+import { RelevanceMemoryRetrieval } from '../memory/RelevanceMemoryRetrieval.mjs';
 import { SecretVault } from '../security/SecretVault.mjs';
 import { MemoryFirewall } from '../security/MemoryFirewall.mjs';
 import { ReplayStudio } from '../eval/ReplayStudio.mjs';
 
-import { ConversationPerception } from '../perception/ConversationPerception.mjs';
-import { MomentumTracker } from '../perception/MomentumTracker.mjs';
-import { EmotionalState } from '../communication/EmotionalState.mjs';
 import { ConversationRepair } from '../communication/ConversationRepair.mjs';
 import { RelationshipProfile } from '../communication/RelationshipProfile.mjs';
 
@@ -41,7 +41,7 @@ export class PersonalAIOS {
         const corrId = correlationId || `conv_${chatId}_${Date.now()}`;
         const trace = { correlationId: corrId, chatId, message };
 
-        // 1. COMPLEXITY EVALUATION & LIGHTWEIGHT FAST PATH
+        // 1. COMPLEXITY ROUTER & LOCAL FAST PATH
         const complexity = AdaptiveModelRouter.evaluateComplexity(message);
         trace.complexityTier = complexity.tier;
         trace.routeSelected = complexity.recommendedRoute;
@@ -57,53 +57,60 @@ export class PersonalAIOS {
             }
         }
 
-        // 2. CONVERSATION PERCEPTION & MODE DETECTION
-        const perception = ConversationPerception.analyze(message);
+        // 2. MULTI-DIMENSIONAL CONVERSATION STATE & PHASE
+        const convState = ConversationStateEngine.evaluateState(message);
         const curhatMode = CurhatEngine.detectMode(message);
         const repairCheck = ConversationRepair.detectMisunderstanding(message);
-        const momentum = await MomentumTracker.updateState(chatId, perception);
-        const emotionalState = EmotionalState.evaluate(message, perception, momentum);
 
-        trace.intent = perception.intent;
+        trace.intent = convState.isQuestion ? 'question' : 'statement';
+        trace.phase = convState.phase;
         trace.mode = curhatMode.mode;
 
-        // 3. RELATIONSHIP & STYLE DNA
+        // 3. TOPIC GRAPH & ASSOCIATIVE CONTINUITY
+        const topicGraph = await TopicGraphEngine.updateGraph(chatId, message);
+        const topicDirectives = TopicGraphEngine.formatDirectives(topicGraph);
+        const openLoops = await OpenLoopEngine.getLoops(chatId);
+        const maturedLoops = OpenLoopEngine.getMaturedLoops(openLoops);
+        const loopDirective = maturedLoops.length > 0 
+            ? `- Rencana/Janji Tertunda: "${maturedLoops[0].statement}". Singgung jika relevan.` 
+            : '';
+
+        trace.topic = topicGraph.currentTopic;
+
+        // 4. CONTEXTUAL CALLBACK HUMOR & HUMOR ENGINE
+        const callbackEvents = await CallbackRegistry.getEvents(chatId);
+        const matchedCallback = CallbackRegistry.findMatchingCallback(message, callbackEvents);
+        const humorDecision = AdvancedHumorEngine.evaluate(message, convState, matchedCallback);
+
+        trace.humorMode = humorDecision.mode;
+
+        // 5. RELATIONSHIP & STYLE DNA (Authentic Jawa/Indonesian blend)
         const relationship = await RelationshipProfile.updateProfile(chatId);
         const dna = StyleDNA.getProfile(relationship.familiarity);
         const isJawa = Boolean(message.match(/(yo|ki|to|wae|lha|ngopo|piye|mangan|kue|kowe|opo|ora|ra|wis|wes|dadi)/i));
         const styleDirectives = StyleDNA.compileDirectives(dna, isJawa);
 
-        // 4. TOPIC GRAPH & OPEN LOOPS
-        const topicGraph = await TopicGraph.updateTopic(chatId, message);
-        const topicDirectives = TopicGraph.getTopicDirectives(topicGraph);
-        const openLoops = await OpenLoopEngine.getLoops(chatId);
-        const maturedLoops = OpenLoopEngine.getMaturedLoops(openLoops);
-        const loopDirective = maturedLoops.length > 0 
-            ? `- Rencana/Topik Tertunda: "${maturedLoops[0].statement}". Boleh di-follow up jika nyambung.` 
-            : '';
-
-        trace.topic = topicGraph.currentTopic;
-
-        // 5. HUMOR & CALLBACK MEMORY
-        const jokes = await CallbackMemory.getJokes(chatId);
-        const matchedJoke = CallbackMemory.findMatchingJoke(chatId, message, jokes);
-        const humorDecision = HumorEngine.evaluate(message, relationship.familiarity, matchedJoke);
-        trace.humorMode = humorDecision.mode;
-
         // 6. CONTINUATION & LENGTH CONTROL
         const continuation = ConversationContinuation.evaluate(message, curhatMode.mode);
         const lengthBudget = ResponseLengthController.getLengthBudget(message, curhatMode.mode);
 
-        // 7. MULTI-TIER MEMORY OS (L1-L4 with decay)
+        // 7. MEMORY OS RETRIEVAL 2.0 (Scored relevance selection)
         let memOSData = await MemoryOS.getMemory(chatId);
         memOSData = MemoryOS.applyDecay(memOSData);
-        const memoryOSContext = MemoryOS.formatPromptContext(memOSData);
 
-        // 8. WORKING MEMORY & CONTEXT BUDGET ALLOCATION
+        const allFacts = [
+            ...(memOSData.L2_semantic || []),
+            ...(memOSData.L1_episodic || []).map(e => ({ predicate: 'kejadian', object: e.summary, importance: e.importance }))
+        ];
+        const relevantMemories = RelevanceMemoryRetrieval.retrieveTopMemories(allFacts, message, topicGraph.currentTopic, 3);
+        const memoryPromptStr = relevantMemories.length > 0
+            ? "=== MEMORI RELEVAN (RELEVANCE 2.0) ===\n" + relevantMemories.map(m => `- ${m.predicate}: ${m.object}`).join('\n')
+            : '';
+
+        // 8. WORKING MEMORY & CONTEXT BUDGET ALLOCATION (~2000 token limit)
         let memData = await loadMemory(chatId);
         if (!memData.working_memory) memData.working_memory = [];
 
-        // Clean out legacy error strings
         memData.working_memory = memData.working_memory.filter(m => 
             !m.text.includes('nge-lag') && !m.text.includes('offline')
         );
@@ -116,7 +123,9 @@ export class PersonalAIOS {
 
 ${styleDirectives}
 
-=== MODE PERCAKAPAN: ${curhatMode.mode} ===
+${convState.directive}
+
+=== MODE: ${curhatMode.mode} ===
 ${curhatMode.directive}
 ${lengthBudget.directive}
 ${continuation.suggestedBounce ? `[MOMENTUM]: ${continuation.suggestedBounce}` : ''}
@@ -125,7 +134,7 @@ ${humorDecision.directive ? `${humorDecision.directive}` : ''}
 
 ${topicDirectives}
 ${loopDirective}
-${memoryOSContext}
+${memoryPromptStr}
 
 Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
@@ -142,15 +151,18 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         }
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        // 11. FLEET GENERATION
+        // 11. HEALTH-AWARE FLEET GENERATION
+        const targetModel = ProviderHealthMatrix.getOptimalModel();
         let rawDraft = "";
         try {
             rawDraft = await this.fleet.generateText(cleanPrompt, contents);
-            trace.modelUsed = this.fleet.getHealthyModel();
+            trace.modelUsed = targetModel;
+            ProviderHealthMatrix.recordMetric(targetModel, true, Date.now() - startTime);
         } catch (e) {
             console.error('[PersonalAIOS Error]', e);
             rawDraft = "Bentar, agak nge-lag tadi jaringannya. Coba ulangi lagi ya!";
             trace.modelUsed = 'OFFLINE_FALLBACK';
+            ProviderHealthMatrix.recordMetric(targetModel, false, Date.now() - startTime);
         }
 
         // 12. ANTI-REPETITION & REFINEMENT
@@ -168,7 +180,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         ReplayStudio.recordTrace(corrId, trace).catch(() => {});
         AntiRepetitionEngine.recordResponse(chatId, refinedOutput).catch(() => {});
 
-        // 14. PERSIST CLEAN MEMORY
+        // 14. PERSIST CLEAN WORKING MEMORY & EVENT REGISTRATION
         if (!refinedOutput.includes('nge-lag') && !refinedOutput.includes('offline')) {
             memData.working_memory.push({ role: 'user', text: message, timestamp: Date.now() });
             memData.working_memory.push({ role: 'assistant', text: refinedOutput, timestamp: Date.now() });
@@ -177,8 +189,15 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             }
             await saveMemory(chatId, memData);
 
-            // Background Memory OS Extractors
             this.memoryManager.extractAndStore(chatId, `${message}\n${refinedOutput}`).catch(() => {});
+
+            // Auto-register funny callback event if humor detected
+            if (message.match(/(diet|salah kirim|nabrak|apes|lucu)/i)) {
+                CallbackRegistry.registerFunnyEvent(chatId, {
+                    triggerKeyword: message.match(/(diet|salah kirim|nabrak|apes)/i)?.[0] || 'kejadian',
+                    description: message.slice(0, 80)
+                }).catch(() => {});
+            }
 
             if (message.match(/(besok mau|nanti mau|rencananya mau|pengen nyoba)/i)) {
                 OpenLoopEngine.registerLoop(chatId, {
