@@ -1,18 +1,24 @@
 // src/security/copilot/PersonalCoPilotGuard.mjs
 // Master Gatekeeper for Personal WhatsApp Number Co-Pilot
+// V14.1 — Fixed: isSelfChat strictly locked to Owner ID (never misidentifies other @lid contacts)
 
 import { ContactPolicyEngine } from './ContactPolicyEngine.mjs';
 import { GroupSafetyPolicy } from './GroupSafetyPolicy.mjs';
 import { OwnerPresenceEngine } from './OwnerPresenceEngine.mjs';
 
+const OWNER_LID = '236322690191595@lid';
+
 export class PersonalCoPilotGuard {
     static async evaluateGatekeeper({ chatId, groupSubject = '', text, fromMe, isGroup, rawMessage, ownerJid }) {
+        const ownerPhone = ownerJid ? ownerJid.split(':')[0].split('@')[0] : '';
+        
+        // STRICT SELF-CHAT: Only true if chatting with Owner's exact LID or Owner's phone
         const isSelfChat = Boolean(
-            chatId.endsWith('@lid') || 
-            (ownerJid && chatId.includes(ownerJid.split(':')[0].split('@')[0]))
+            chatId === OWNER_LID || 
+            (ownerPhone && chatId.replace(/\D/g, '').includes(ownerPhone))
         );
 
-        // 1. If message was typed by Owner to ANOTHER person -> Record takeover & Do NOT process
+        // 1. If message was typed manually by Owner to ANOTHER person -> Record takeover & STAND DOWN
         if (fromMe && !isSelfChat) {
             OwnerPresenceEngine.recordOwnerMessage(chatId);
             return {
@@ -22,7 +28,7 @@ export class PersonalCoPilotGuard {
             };
         }
 
-        // 2. If Human Takeover is actively running on this chat -> Yield control to Owner (unless self-chat)
+        // 2. If Human Takeover is actively running on this chat -> Yield control to Owner
         if (!isSelfChat && OwnerPresenceEngine.isTakeoverActive(chatId)) {
             return {
                 allowAI: false,
@@ -40,7 +46,7 @@ export class PersonalCoPilotGuard {
             };
         }
 
-        // 4. If Group Chat -> Evaluate Strict Group Safety (Matches by JID & Group Name)
+        // 4. If Group Chat -> Evaluate Strict Group Safety
         if (isGroup) {
             const groupVerdict = await GroupSafetyPolicy.evaluateGroupSafety({
                 groupId: chatId,
@@ -64,7 +70,7 @@ export class PersonalCoPilotGuard {
             };
         }
 
-        // 5. If Private 1-on-1 Chat -> Evaluate Contact Policy (AUTO, MANUAL, SILENT)
+        // 5. If Private 1-on-1 Chat from other people -> Evaluate Contact Policy (VIP/AUTO vs SILENT)
         const contactVerdict = await ContactPolicyEngine.getPolicyForContact(chatId);
 
         if (contactVerdict.policy === 'MANUAL' || contactVerdict.policy === 'SILENT') {

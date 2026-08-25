@@ -414,11 +414,10 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GENERATED', { model: gatewayRes.modelUsed, latencyMs: gatewayRes.latencyMs });
             ProductionTelemetry72h.increment('aiGateway', 'geminiSuccess').catch(() => {});
         } else {
-            console.warn(`[PersonalAIOS] AI Gateway fallback engaged (${gatewayRes.error}).`);
-            rawDraft = EmergencyBrainExpanded.generateReply(inputSnippet);
-            trace.modelUsed = 'EMERGENCY_BRAIN_EXPANDED';
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'EMERGENCY_BRAIN_ENGAGED', { reason: gatewayRes.error });
-            ProductionTelemetry72h.increment('conversation', 'emergencyBrainUsage').catch(() => {});
+            console.warn(`[PersonalAIOS] AI Gateway failed (${gatewayRes.error}). Staying SILENT.`);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GATEWAY_FAILED_SILENT', { reason: gatewayRes.error });
+            ProductionTelemetry72h.increment('conversation', 'aiFailedSilent').catch(() => {});
+            return null; // SILENT: Never send robotic/canned templates to WhatsApp!
         }
 
         // 26. CONVERSATION QUALITY GATE & BUDGET ENFORCEMENT
@@ -439,10 +438,9 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         const allowSend = DuplicateResponseGuard.shouldSend(chatId, sanitizedOutput);
         if (!allowSend) {
-            sanitizedOutput = EmergencyBrainExpanded.generateReply(inputSnippet);
-            DuplicateResponseGuard.record(chatId, sanitizedOutput);
-            ProductionTelemetry72h.increment('resilience', 'duplicateBlocked').catch(() => {});
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'DUPLICATE_BLOCK_VARIED', { text: sanitizedOutput });
+            console.warn(`[PersonalAIOS] Duplicate response blocked for ${chatId}. Staying SILENT.`);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'DUPLICATE_BLOCKED_SILENT', {});
+            return null; // SILENT
         }
 
         trace.finalMessage = sanitizedOutput;

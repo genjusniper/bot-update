@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V14.0 PLUMBING ENHANCED — MASTER UNIVERSAL CO-PILOT)
+// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V14.1 — STRICT OWNER ISOLATION & SILENT FAILURE)
 process.on("unhandledRejection", (reason) => { console.error("[FATAL] Unhandled Rejection:", reason); });
 process.on("uncaughtException", (error) => { console.error("[FATAL] Uncaught Exception:", error); });
 
@@ -16,8 +16,10 @@ import { PersonalAIOS } from './src/agent/PersonalAIOS.mjs';
 import { WebCockpit } from './src/server/WebCockpit.mjs';
 import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
 
+const OWNER_LID = '236322690191595@lid';
+
 console.log('=============================================');
-console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V14.0 PLUMBING)');
+console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V14.1)');
 console.log('=============================================');
 
 const personalAI = new PersonalAIOS();
@@ -29,7 +31,7 @@ if (!EventBus.publish) {
 
 // Group metadata cache: { groupId -> { subject, cachedAt } }
 const groupMetaCache = new Map();
-const GROUP_CACHE_TTL_MS = 5 * 60 * 1000; // Cache 5 menit
+const GROUP_CACHE_TTL_MS = 5 * 60 * 1000;
 
 async function getGroupSubject(chatId) {
     const cached = groupMetaCache.get(chatId);
@@ -106,12 +108,17 @@ async function start() {
 
         const ownerId = waGateway.sock?.user?.id || '';
         const ownerPhone = ownerId ? ownerId.split(':')[0].split('@')[0] : '';
-        const isSelfChat = Boolean(chatId.endsWith('@lid') || (ownerPhone && chatId.includes(ownerPhone)));
+        
+        // STRICT SELF-CHAT: Only true if chatting with Owner's exact LID or Owner's phone
+        const isSelfChat = Boolean(
+            chatId === OWNER_LID || 
+            (ownerPhone && chatId.replace(/\D/g, '').includes(ownerPhone))
+        );
 
-        // If the owner typed manually to another person → Human Takeover
-        if (fromMe && chatId && !isSelfChat) {
+        // If the owner typed manually to ANOTHER person -> Record Human Takeover & NEVER let AI reply
+        if (fromMe && !isSelfChat) {
             OwnerPresenceEngine.recordOwnerMessage(chatId);
-            console.log(`[OwnerPresence] 👤 Owner active on ${chatId}. AI standing down.`);
+            console.log(`[OwnerPresence] 👤 Owner typed manually to ${chatId}. AI standing down.`);
             return;
         }
 
@@ -217,7 +224,7 @@ async function start() {
                 groupSubject = await getGroupSubject(chatId);
             }
 
-            // Standardized extraction from Schema V1 (with fallback for flat payloads)
+            // Standardized extraction from Schema V1
             const msg = payload.message || payload;
             const media = payload.media || {};
             const ctx = payload.context || {};
@@ -251,6 +258,13 @@ async function start() {
                 mediaOptions
             );
 
+            // If deliveryPlan is null (Silent / Human in control / AI Failure), complete job silently
+            if (!deliveryPlan || !deliveryPlan.text && !deliveryPlan.reactionEmoji && deliveryPlan.action !== 'REACT_ONLY') {
+                if (jobId && claimToken) JobQueue.complete(jobId, claimToken);
+                ConversationFSM.transition(chatId, 'IDLE');
+                return;
+            }
+
             if (deliveryPlan && ConversationFSM.transition(chatId, 'RESPONDING', {}, version)) {
                 // 1. Send WhatsApp Reaction if planned
                 if (deliveryPlan.reactionEmoji && waGateway.sock && rawKey) {
@@ -280,6 +294,8 @@ async function start() {
 
                 for (let bIndex = 0; bIndex < bubbles.length; bIndex++) {
                     const bubble = bubbles[bIndex];
+                    if (!bubble || !bubble.trim()) continue;
+                    
                     const delayMs = delays[bIndex] || 300;
 
                     try { await waGateway.sendPresenceUpdate('composing', chatId); } catch(e){}
@@ -314,11 +330,11 @@ async function start() {
     });
 
     await waGateway.connect();
-    console.log('✅ [V14.0 Bootloader] Master Universal Co-Pilot (Plumbing Stabilized) Online.');
+    console.log('✅ [V14.1 Bootloader] Master Universal Co-Pilot (Strict Isolation) Online.');
 }
 
 process.on('SIGINT', () => {
-    console.log('\n[V14.0 Bootloader] Received SIGINT. Flushing & Shutting down...');
+    console.log('\n[V14.1 Bootloader] Received SIGINT. Flushing & Shutting down...');
     burstAggregator.flushAll();
     QueueWorker.stop();
     waGateway.shutdown();
