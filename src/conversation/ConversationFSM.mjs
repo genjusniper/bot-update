@@ -1,4 +1,4 @@
-// src/conversation/ConversationFSM.mjs — PATCHED (FIX #2: close() on shutdown)
+// src/conversation/ConversationFSM.mjs — FIXED JOB CONTEXT EMISSION
 import { EventEmitter } from 'events';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
@@ -11,7 +11,6 @@ export class ConversationFSM {
     
     static init() {
         if (this.db) return;
-        // FIX #2: Ensure directory exists
         const memDir = path.resolve(process.cwd(), 'memory');
         if (!fs.existsSync(memDir)) fs.mkdirSync(memDir, { recursive: true });
 
@@ -30,11 +29,9 @@ export class ConversationFSM {
             updatedAt INTEGER
           );
         `);
-        // FIX #8: Index on state for cockpit queries
         this.db.exec(`CREATE INDEX IF NOT EXISTS idx_fsm_state ON fsm_states(state);`);
     }
 
-    // FIX #2: Graceful close for shutdown hooks
     static close() {
         if (this.db) {
             try { this.db.close(); } catch(e) {}
@@ -64,7 +61,6 @@ export class ConversationFSM {
         const corrId = ctx.correlationId || currentState.correlationId;
         const genId = ctx.generationId || currentState.generationId;
 
-        // Ensure row exists (upsert)
         this.db.prepare("INSERT OR IGNORE INTO fsm_states (chatId, state, version, updatedAt) VALUES (?, 'IDLE', 0, ?)").run(chatId, now);
 
         const info = this.db.prepare(`
@@ -80,8 +76,18 @@ export class ConversationFSM {
 
         console.log(`[FSM] ${chatId}: ${currentState.current} -> ${toState} (v${version + 1})`);
         
-        if (toState === 'THINKING') FSMEventBus.emit('state.thinking', { chatId, payload: ctx.payload, version: version + 1 });
-        if (toState === 'IDLE') FSMEventBus.emit('state.idle', { chatId });
+        if (toState === 'THINKING') {
+            FSMEventBus.emit('state.thinking', { 
+                chatId, 
+                payload: ctx.payload, 
+                jobId: ctx.jobId, 
+                claimToken: ctx.claimToken, 
+                version: version + 1 
+            });
+        }
+        if (toState === 'IDLE') {
+            FSMEventBus.emit('state.idle', { chatId });
+        }
         return true;
     }
 

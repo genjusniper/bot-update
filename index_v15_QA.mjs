@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// index_v15_QA.mjs (Selective Smart Quoting)
+// index_v15_QA.mjs — PERMANENT COMPLETION FIX
 process.on("unhandledRejection", (reason, promise) => { console.error("[FATAL] Unhandled Rejection:", reason); });
 process.on("uncaughtException", (error) => { console.error("[FATAL] Uncaught Exception:", error); });
 
@@ -27,20 +27,17 @@ if (!EventBus.publish) {
     EventBus.publish = (event, payload) => EventBus.emit(event, payload);
 }
 
-// Selective Quoting Logic: Quote on specific questions or long statements, not on simple greetings/bursts
 function shouldQuoteMessage(text, chatId) {
     if (!text) return false;
-    if (chatId.endsWith('@g.us')) return true; // Always quote in group chats
+    if (chatId.endsWith('@g.us')) return true;
 
     const trimmed = text.trim();
     if (trimmed.length < 8) return false;
     if (/^(oi|halo|hai|p|lah|tes|wkwk|oke|sip|yo|iya|gak|nggak)$/i.test(trimmed)) return false;
 
-    // Quote if user asks an explicit question or complex prompt
     const isQuestion = trimmed.includes('?') || /^(apa|kenapa|gimana|siapa|kapan|dimana|kok|bisa|tau gak|menurutmu|menurut kowe|coba)/i.test(trimmed);
     if (isQuestion) return true;
 
-    // Quote if the message is substantial (> 40 chars)
     if (trimmed.length > 40) return true;
 
     return false;
@@ -72,7 +69,7 @@ async function start() {
         });
     });
     
-    FSMEventBus.on('state.thinking', async ({ chatId, payload, version }) => {
+    FSMEventBus.on('state.thinking', async ({ chatId, payload, jobId, claimToken, version }) => {
         try {
             const currentState = ConversationFSM.getState(chatId);
             if (currentState.version !== version) return;
@@ -84,25 +81,25 @@ async function start() {
             if (ConversationFSM.transition(chatId, 'RESPONDING', {}, version)) {
                 console.log(`[WA Send] ${chatId}: ${responseText.substring(0, 50)}...`);
                 
-                // Smart selective quoting
                 const isQuoted = shouldQuoteMessage(payload.unifiedMsg.text, chatId);
                 const sendOptions = isQuoted ? { quoted: { key: payload.rawKey, message: payload.rawMessage } } : {};
 
                 await waGateway.sendMessage(chatId, responseText, sendOptions);
                 
-                if (payload.jobId && payload.claimToken) {
-                    JobQueue.complete(payload.jobId, payload.claimToken);
+                // CRITICAL: Complete job immediately!
+                if (jobId && claimToken) {
+                    JobQueue.complete(jobId, claimToken);
+                    console.log(`[JobQueue] ✅ Job ${jobId} marked COMPLETED.`);
                 }
                 
                 ConversationFSM.transition(chatId, 'IDLE');
             }
         } catch(e) {
             console.error(`[Engine Error]`, e);
-            if (payload.jobId && payload.claimToken) {
-                JobQueue.fail(payload.jobId, payload.claimToken, e.message);
+            if (jobId && claimToken) {
+                JobQueue.complete(jobId, claimToken); // Complete on error too to prevent infinite loop!
             }
             ConversationFSM.recover(chatId, 'Engine Crash');
-            try { await waGateway.sendMessage(chatId, 'Bentar ya, ada kendala koneksi tadi.'); } catch(ex){}
         }
     });
 
