@@ -1,10 +1,12 @@
-// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V8 PRODUCTION HARDENED RUNTIME)
+// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V8.1 MESSAGE LIFECYCLE & TELEMETRY TRACKED)
 
 import { AIGatewayObservable } from '../resilience/AIGatewayObservable.mjs';
 import { CircuitBreakerHardened } from '../resilience/CircuitBreakerHardened.mjs';
 import { KeyHealthRegistry } from '../resilience/KeyHealthRegistry.mjs';
 import { EmergencyBrainExpanded } from '../resilience/EmergencyBrainExpanded.mjs';
 import { DuplicateResponseGuard } from '../resilience/DuplicateResponseGuard.mjs';
+import { MessageLifecycleTracker } from '../telemetry/MessageLifecycleTracker.mjs';
+import { ProductionTelemetry72h } from '../metrics/ProductionTelemetry72h.mjs';
 
 import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
 import { AdaptiveModelRouter } from '../fleet/AdaptiveModelRouter.mjs';
@@ -49,12 +51,17 @@ export class PersonalAIOS {
     async process(chatId, message, correlationId = null, senderId = null) {
         const startTime = Date.now();
         const corrId = correlationId || `conv_${chatId}_${Date.now()}`;
-        const trace = { correlationId: corrId, chatId, message };
+        const lifecycleId = await MessageLifecycleTracker.createLifecycle(chatId, message);
+        const trace = { correlationId: corrId, lifecycleId, chatId, message };
+
+        ProductionTelemetry72h.increment('messages', 'received').catch(() => {});
 
         // 1. GROUP CHAT POLICY & SILENCE ENFORCEMENT
         const groupPolicy = GroupChatPolicyEngine.evaluateGroupMessage(chatId, message, senderId);
         if (!groupPolicy.shouldRespond) {
             trace.status = 'GROUP_SILENCE';
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'DROPPED', { reason: 'GROUP_SILENCE' });
+            ProductionTelemetry72h.increment('messages', 'dropped').catch(() => {});
             ReplayStudio.recordTrace(corrId, trace).catch(() => {});
             return null;
         }
@@ -63,6 +70,7 @@ export class PersonalAIOS {
         const complexity = AdaptiveModelRouter.evaluateComplexity(message);
         trace.complexityTier = complexity.tier;
         trace.routeSelected = complexity.recommendedRoute;
+        await MessageLifecycleTracker.logPhase(lifecycleId, 'ROUTED', { route: complexity.recommendedRoute, tier: complexity.tier });
 
         if (complexity.recommendedRoute === 'LOCAL_FAST_PATH') {
             const lightResult = LightweightRouter.route(message);
@@ -70,6 +78,9 @@ export class PersonalAIOS {
                 trace.modelUsed = 'LOCAL_FAST_PATH';
                 trace.finalMessage = lightResult.response;
                 trace.latencyMs = Date.now() - startTime;
+
+                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'LOCAL_FAST_PATH', text: lightResult.response });
+                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
                 ReplayStudio.recordTrace(corrId, trace).catch(() => {});
                 DuplicateResponseGuard.record(chatId, lightResult.response);
                 return lightResult.response;
@@ -181,18 +192,23 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         }
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        // 12. OBSERVABLE AI GATEWAY EXECUTION WITH EMERGENCY BRAIN FALLBACK
+        // 12. OBSERVABLE AI GATEWAY EXECUTION
         let rawDraft = "";
+        await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GATEWAY_ATTEMPT', { model: 'gemini-flash-lite' });
         const gatewayRes = await this.gateway.generate(cleanPrompt, contents, corrId);
 
         if (gatewayRes.success) {
             rawDraft = gatewayRes.text;
             trace.modelUsed = gatewayRes.modelUsed;
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GENERATED', { model: gatewayRes.modelUsed, latencyMs: gatewayRes.latencyMs });
+            ProductionTelemetry72h.increment('aiGateway', 'geminiSuccess').catch(() => {});
         } else {
             // ENGAGE EXPANDED EMERGENCY BRAIN (Zero error leakage, organic contextual reply)
-            console.warn(`[PersonalAIOS] External AI Gateway unavailable (${gatewayRes.error}). Engaging Emergency Conversation Brain.`);
+            console.warn(`[PersonalAIOS] AI Gateway fallback engaged (${gatewayRes.error}).`);
             rawDraft = EmergencyBrainExpanded.generateReply(message);
             trace.modelUsed = 'EMERGENCY_BRAIN_EXPANDED';
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'EMERGENCY_BRAIN_ENGAGED', { reason: gatewayRes.error });
+            ProductionTelemetry72h.increment('conversation', 'emergencyBrainUsage').catch(() => {});
         }
 
         // 13. CONVERSATION QUALITY GATE (Pre-Send Validation & Hallucination Guard)
@@ -202,6 +218,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         });
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
+        await MessageLifecycleTracker.logPhase(lifecycleId, 'QUALITY_CHECKED', { score: qualityVerdict.qualityScore });
 
         // 14. ANTI-REPETITION & DUPLICATE RESPONSE GUARD
         const recentResponses = await AntiRepetitionEngine.getRecentResponses(chatId);
@@ -209,16 +226,20 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             sanitizedOutput = AntiRepetitionEngine.applyControlledVariance(sanitizedOutput);
         }
 
-        // Check 60-second duplicate response window
         const allowSend = DuplicateResponseGuard.shouldSend(chatId, sanitizedOutput);
         if (!allowSend) {
             sanitizedOutput = EmergencyBrainExpanded.generateReply(message);
             DuplicateResponseGuard.record(chatId, sanitizedOutput);
+            ProductionTelemetry72h.increment('resilience', 'duplicateBlocked').catch(() => {});
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'DUPLICATE_BLOCK_VARIED', { text: sanitizedOutput });
         }
 
         trace.finalMessage = sanitizedOutput;
         trace.qualityScore = qualityVerdict.qualityScore;
         trace.latencyMs = Date.now() - startTime;
+
+        await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: trace.modelUsed, outputText: sanitizedOutput });
+        ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
 
         // 15. RECORD TELEMETRY & REPLAY STUDIO
         ReplayStudio.recordTrace(corrId, trace).catch(() => {});
