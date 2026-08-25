@@ -52,6 +52,7 @@ import { ContextBudgetManager } from '../context/ContextBudgetManager.mjs';
 import { StyleDNA } from '../communication/StyleDNA.mjs';
 import { NaturalConversationEnhancer } from '../communication/NaturalConversationEnhancer.mjs';
 import { ContextualConversationIntelligence } from '../communication/ContextualConversationIntelligence.mjs';
+import { ConversationalLogicEngine } from '../communication/ConversationalLogicEngine.mjs';
 
 import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
 import { ConversationContinuityLock } from '../conversation/ConversationContinuityLock.mjs';
@@ -275,6 +276,7 @@ export class PersonalAIOS {
         const naturalEnhancement = NaturalConversationEnhancer.evaluate({ text: inputSnippet, chatId, pushName });
         const contextualIntelligence = ContextualConversationIntelligence.evaluate({ text: inputSnippet, hasAudio, hasImages, quotedContext, chatId });
         const moodEvaluation = MoodEnergyMatcher.evaluate(inputSnippet);
+        const conversationalLogic = ConversationalLogicEngine.evaluate({ text: inputSnippet, pushName, chatId });
 
         const masterPrompt = `${roleIdentity}
 
@@ -284,6 +286,7 @@ ${outcomeDirectives}
 ${naturalEnhancement}
 ${contextualIntelligence}
 ${moodEvaluation.directive}
+${conversationalLogic}
 ${tempEval.directive}
 ${repairDirective}
 ${visualContinuity}
