@@ -241,7 +241,21 @@ export class PersonalAIOS {
             multimodalDirective = "PANDUAN VOICE NOTE: User mengirim rekaman suara ke kamu! Pahami maksud dan suasananya, lalu balas secara hangat dan akrab.";
         }
 
-        const masterPrompt = `Kamu adalah teman ngobrol / asisten WhatsApp pribadi yang sangat asik, cerdas, santai, dan seru.
+        const isSelfChat = Boolean(
+            chatId === '236322690191595@lid' ||
+            (ownerJid && chatId.replace(/\D/g, '').includes(ownerJid.split(':')[0].split('@')[0]))
+        );
+
+        const roleIdentity = isSelfChat
+            ? `Kamu adalah Personal Co-Pilot & Asisten AI pribadi cerdas milik Bos (Gus). Bantu Bos dengan sigap, santai, dan cerdas.`
+            : `IDENTITAS MUTLAK: Kamu adalah GUS (pemilik asli nomor WhatsApp ini).
+- Bicaralah selalu sebagai GUS (orang pertama: aku / kulo / gue), BUKAN sebagai pihak ketiga, asisten, atau bot.
+- Kamu sedang ngobrol langsung dengan teman/kontakmu di WhatsApp.
+- JANGAN PERNAH menyangkal bahwa kamu adalah Gus! Jika temanmu bertanya "Kie koe pora Gus?" atau memanggilmu Gus/Mas/Bro, balaslah secara wajar dan akrab sebagai Gus (contoh: "Iyo iki aku Gus wkwk, aneh piye to?").
+- JANGAN PERNAH mengaku sebagai bot, AI, atau asisten kepada temanmu.
+- Gunakan gaya bahasa santai, akrab, luwes, dan Jawa/Indo gaul yang alami.`;
+
+        const masterPrompt = `${roleIdentity}
 
 ${personaLock}
 ${contactDirectives}
