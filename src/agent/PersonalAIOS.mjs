@@ -1,10 +1,12 @@
-// src/agent/PersonalAIOS.mjs — TRUSTED UNIVERSAL PERSONAL AI RUNTIME (V7.5 / V8.0)
+// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V7.1 FAILURE-PROOF RESILIENT RUNTIME)
 
-import { BoundedRecoveryFleet } from '../fleet/BoundedRecoveryFleet.mjs';
+import { AIGatewayObservable } from '../resilience/AIGatewayObservable.mjs';
+import { FailureContainment } from '../resilience/FailureContainment.mjs';
+import { EmergencyConversationBrain } from '../resilience/EmergencyConversationBrain.mjs';
+import { DuplicateResponseGuard } from '../resilience/DuplicateResponseGuard.mjs';
+
 import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
 import { AdaptiveModelRouter } from '../fleet/AdaptiveModelRouter.mjs';
-import { ProviderHealthMatrix } from '../fleet/ProviderHealthMatrix.mjs';
-
 import { ContextBudgetManager } from '../context/ContextBudgetManager.mjs';
 import { StyleDNA } from '../communication/StyleDNA.mjs';
 import { StyleLearningEngine } from '../communication/StyleLearningEngine.mjs';
@@ -21,7 +23,6 @@ import { HumorTimingDetector } from '../humor/HumorTimingDetector.mjs';
 import { SocialMemoryOS } from '../social/SocialMemoryOS.mjs';
 import { EmotionalCalibrationEngine } from '../social/EmotionalCalibrationEngine.mjs';
 import { CurhatEngine } from '../social/CurhatEngine.mjs';
-import { OpenLoopEngine } from '../communication/OpenLoopEngine.mjs';
 import { AntiRepetitionEngine } from '../communication/AntiRepetitionEngine.mjs';
 
 import { MemoryOS } from '../memory/MemoryOS.mjs';
@@ -30,7 +31,6 @@ import { MemoryConsolidationPipeline } from '../memory/MemoryConsolidationPipeli
 
 import { ConversationQualityGate } from '../quality/ConversationQualityGate.mjs';
 import { GroupChatPolicyEngine } from '../group/GroupChatPolicyEngine.mjs';
-import { CapabilitySecurityEngine } from '../security/CapabilitySecurityEngine.mjs';
 import { SecretVault } from '../security/SecretVault.mjs';
 import { ReplayStudio } from '../eval/ReplayStudio.mjs';
 
@@ -39,8 +39,8 @@ import { MemoryManager } from '../memory/MemoryManager.mjs';
 
 export class PersonalAIOS {
     constructor() {
-        this.fleet = new BoundedRecoveryFleet();
-        this.memoryManager = new MemoryManager(this.fleet);
+        this.gateway = new AIGatewayObservable();
+        this.memoryManager = new MemoryManager(this.gateway);
     }
 
     async process(chatId, message, correlationId = null, senderId = null) {
@@ -53,7 +53,7 @@ export class PersonalAIOS {
         if (!groupPolicy.shouldRespond) {
             trace.status = 'GROUP_SILENCE';
             ReplayStudio.recordTrace(corrId, trace).catch(() => {});
-            return null; // Stay silent in group
+            return null;
         }
 
         // 2. COMPLEXITY ROUTER & LOCAL FAST PATH
@@ -68,6 +68,7 @@ export class PersonalAIOS {
                 trace.finalMessage = lightResult.response;
                 trace.latencyMs = Date.now() - startTime;
                 ReplayStudio.recordTrace(corrId, trace).catch(() => {});
+                DuplicateResponseGuard.record(chatId, lightResult.response);
                 return lightResult.response;
             }
         }
@@ -79,7 +80,6 @@ export class PersonalAIOS {
             !m.text.includes('nge-lag') && !m.text.includes('offline')
         );
 
-        // Run background consolidation if working memory grows > 15
         if (memData.working_memory.length > 15) {
             MemoryConsolidationPipeline.consolidateWorkingMemory(chatId, memData.working_memory).catch(() => {});
         }
@@ -168,10 +168,20 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         }
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        // 12. BOUNDED RECOVERY FLEET GENERATION
-        const fleetResult = await this.fleet.executeRequest(cleanPrompt, contents);
-        let rawDraft = fleetResult.text || "Bentar, agak nge-lag tadi jaringannya. Coba ulangi lagi ya!";
-        trace.modelUsed = fleetResult.modelUsed || 'BOUNDED_FALLBACK';
+        // 12. OBSERVABLE AI GATEWAY EXECUTION
+        let rawDraft = "";
+        const gatewayRes = await this.gateway.generate(cleanPrompt, contents, corrId);
+
+        if (gatewayRes.success) {
+            rawDraft = gatewayRes.text;
+            trace.modelUsed = gatewayRes.modelUsed;
+            FailureContainment.recordSuccess(chatId);
+        } else {
+            // FAILURE CONTAINMENT -> EMERGENCY CONVERSATION BRAIN (Zero fallback spam!)
+            console.warn(`[PersonalAIOS] External AI Gateway failed (${gatewayRes.error}). Engaging Emergency Conversation Brain.`);
+            rawDraft = FailureContainment.handleFailure(chatId, message);
+            trace.modelUsed = 'EMERGENCY_CONVERSATION_BRAIN';
+        }
 
         // 13. CONVERSATION QUALITY GATE (Pre-Send Validation & Hallucination Guard)
         const qualityVerdict = ConversationQualityGate.validateDraft(rawDraft, {
@@ -181,10 +191,18 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
 
-        // 14. ANTI-REPETITION & VARIANCE
+        // 14. ANTI-REPETITION & DUPLICATE RESPONSE GUARD
         const recentResponses = await AntiRepetitionEngine.getRecentResponses(chatId);
         if (AntiRepetitionEngine.isRepetitive(sanitizedOutput, recentResponses)) {
             sanitizedOutput = AntiRepetitionEngine.applyControlledVariance(sanitizedOutput);
+        }
+
+        // Check 60-second duplicate response window
+        const allowSend = DuplicateResponseGuard.shouldSend(chatId, sanitizedOutput);
+        if (!allowSend) {
+            // Pick an emergency varied sentence if duplicate detected
+            sanitizedOutput = EmergencyConversationBrain.generateEmergencyReply(message);
+            DuplicateResponseGuard.record(chatId, sanitizedOutput);
         }
 
         trace.finalMessage = sanitizedOutput;
