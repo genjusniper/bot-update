@@ -1,24 +1,27 @@
-// src/agent/PersonalAIOS.mjs — PROTECTED WORKING MEMORY
-import { AIResourceManager } from '../fleet/AIResourceManager.mjs';
+// src/agent/PersonalAIOS.mjs — MILESTONE V6.1 (CONVERSATION INTELLIGENCE LAYER)
+
+import { AIResourceManager2 } from '../fleet/AIResourceManager2.mjs';
+import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
+import { StyleDNA } from '../communication/StyleDNA.mjs';
+import { TopicGraph } from '../topics/TopicGraph.mjs';
+import { HumorEngine } from '../humor/HumorEngine.mjs';
+import { CallbackMemory } from '../humor/CallbackMemory.mjs';
+import { CurhatEngine } from '../social/CurhatEngine.mjs';
+import { OpenLoopEngine } from '../communication/OpenLoopEngine.mjs';
+import { ConversationContinuation } from '../conversation/ConversationContinuation.mjs';
+import { ResponseLengthController } from '../communication/ResponseLengthController.mjs';
+import { BubbleComposer } from '../communication/BubbleComposer.mjs';
+
 import { ContextCompressor } from '../context/ContextCompressor.mjs';
 import { SecretVault } from '../security/SecretVault.mjs';
 import { MemoryFirewall } from '../security/MemoryFirewall.mjs';
 import { ReplayDebugger } from '../eval/ReplayDebugger.mjs';
-import { ConversationEvalCI } from '../eval/ConversationEvalCI.mjs';
 
 import { ConversationPerception } from '../perception/ConversationPerception.mjs';
 import { MomentumTracker } from '../perception/MomentumTracker.mjs';
 import { EmotionalState } from '../communication/EmotionalState.mjs';
 import { ConversationRepair } from '../communication/ConversationRepair.mjs';
 import { RelationshipProfile } from '../communication/RelationshipProfile.mjs';
-import { ResponseStrategy } from '../communication/ResponseStrategy.mjs';
-import { ConversationRhythm } from '../communication/ConversationRhythm.mjs';
-import { FeedbackLearner } from '../communication/FeedbackLearner.mjs';
-
-import { SocialBrain } from '../social/SocialBrain.mjs';
-import { TopicMemoryGraph } from '../topics/TopicMemoryGraph.mjs';
-import { OpenLoopManager } from '../communication/OpenLoopManager.mjs';
-import { InsideJokeRegistry } from '../humor/InsideJokeRegistry.mjs';
 import { MemoryEvolution } from '../communication/MemoryEvolution.mjs';
 
 import { loadMemory, saveMemory } from '../memory/MemoryStore.mjs';
@@ -26,7 +29,7 @@ import { MemoryManager } from '../memory/MemoryManager.mjs';
 
 export class PersonalAIOS {
     constructor() {
-        this.fleet = new AIResourceManager();
+        this.fleet = new AIResourceManager2();
         this.memoryManager = new MemoryManager(this.fleet);
     }
 
@@ -34,32 +37,51 @@ export class PersonalAIOS {
         const corrId = correlationId || `conv_${chatId}_${Date.now()}`;
         const trace = { correlationId: corrId, chatId, message, steps: {} };
 
-        // 1. FEEDBACK & PREFERENCE LEARNER
-        await FeedbackLearner.recordFeedback(message);
-        const learnedPrefs = (await FeedbackLearner.getPreferences()).map(p => p.rule);
+        // 1. FAST LIGHTWEIGHT ROUTER (Zero API quota on trivial single words)
+        const lightResult = LightweightRouter.route(message);
+        if (lightResult.handled) {
+            trace.steps.source = 'LIGHTWEIGHT_ROUTER';
+            ReplayDebugger.recordTrace(corrId, trace).catch(() => {});
+            return lightResult.response;
+        }
 
-        // 2. CONVERSATION PERCEPTION & MOMENTUM
+        // 2. CONVERSATION PERCEPTION & CURHAT / MODE DETECTION
         const perception = ConversationPerception.analyze(message);
+        const curhatMode = CurhatEngine.detectMode(message);
         const repairCheck = ConversationRepair.detectMisunderstanding(message);
         const momentum = await MomentumTracker.updateState(chatId, perception);
         const emotionalState = EmotionalState.evaluate(message, perception, momentum);
 
-        // 3. RELATIONSHIP
+        // 3. RELATIONSHIP & STYLE DNA
         const relationship = await RelationshipProfile.updateProfile(chatId);
-        const strategy = ResponseStrategy.evaluate(message, relationship);
-        const rhythm = ConversationRhythm.determineRhythm(message, momentum, emotionalState);
+        const dna = StyleDNA.getProfile(relationship.familiarity);
+        const isJawa = Boolean(message.match(/(yo|ki|to|wae|lha|ngopo|piye|mangan|kue|kowe|opo|ora|ra|wis|wes|dadi)/i));
+        const styleDirectives = StyleDNA.compileDirectives(dna, isJawa);
 
-        // 4. TOPIC & OPEN LOOPS
-        const topicGraph = await TopicMemoryGraph.getGraph(chatId);
-        const jokeRegistry = await InsideJokeRegistry.getRegistry(chatId);
-        const matchedJoke = InsideJokeRegistry.findMatchingJoke(chatId, message, jokeRegistry);
+        // 4. TOPIC GRAPH & OPEN LOOPS
+        const topicGraph = await TopicGraph.updateTopic(chatId, message);
+        const topicDirectives = TopicGraph.getTopicDirectives(topicGraph);
+        const openLoops = await OpenLoopEngine.getLoops(chatId);
+        const maturedLoops = OpenLoopEngine.getMaturedLoops(openLoops);
+        const loopDirective = maturedLoops.length > 0 
+            ? `- Rencana/Topik Tertunda: "${maturedLoops[0].statement}". Boleh di-follow up jika nyambung.` 
+            : '';
 
-        // 5. MEMORY RETRIEVAL & FIREWALL
+        // 5. HUMOR & CALLBACK MEMORY
+        const jokes = await CallbackMemory.getJokes(chatId);
+        const matchedJoke = CallbackMemory.findMatchingJoke(chatId, message, jokes);
+        const humorDecision = HumorEngine.evaluate(message, relationship.familiarity, matchedJoke);
+
+        // 6. CONVERSATION CONTINUATION & LENGTH CONTROL
+        const continuation = ConversationContinuation.evaluate(message, curhatMode.mode);
+        const lengthBudget = ResponseLengthController.getLengthBudget(message, curhatMode.mode);
+
+        // 7. MEMORY RETRIEVAL & FIREWALL
         let memData = await loadMemory(chatId);
         if (!memData.working_memory) memData.working_memory = [];
         if (!memData.facts) memData.facts = [];
 
-        // Filter out any legacy contaminated fallback errors from working memory
+        // Purge any contaminated error strings
         memData.working_memory = memData.working_memory.filter(m => 
             !m.text.includes('nge-lag') && !m.text.includes('offline')
         );
@@ -71,27 +93,30 @@ export class PersonalAIOS {
             ? relevantFacts.map(f => `- ${f.predicate || 'fakta'}: ${f.object}`).join('\n')
             : '';
 
-        // 6. CONTEXT COMPRESSION
+        // 8. CONTEXT COMPRESSION
         const { summary, recentHistory } = ContextCompressor.compress(memData.working_memory, 8);
 
-        // 7. MASTER SYSTEM INSTRUCTION
-        const masterPrompt = `Kamu adalah teman ngobrol / asisten WhatsApp pribadi yang sangat asik, cerdas, ceplas-ceplos, santai, dan seru.
+        // 9. MASTER SYSTEM INSTRUCTION
+        const masterPrompt = `Kamu adalah teman ngobrol / asisten WhatsApp pribadi yang sangat asik, cerdas, santai, dan seru.
 
-GAYA & RASA BAHASA:
-- Bahasa: Santai khas obrolan WhatsApp Indonesia sehari-hari. Jika user pakai bahasa Jawa / logat Semarangan (contoh: "makan apa yo enak e", "dadi MJ wae", "ra gelem", "pie to"), IKUTI DAN IMBANGI dengan luwes pakai bahasa Jawa santai yang natural (misal: "lha", "to", "wae", "ki", "mosok", "wkwk").
-- Karakter: Spontan, lucu, suka bercanda/meledek ringan (teasing) seperti teman nongkrong akrab, tapi peka konteks saat user lagi capek/serius.
-- Format: Singkat, to-the-point, 1-2 kalimat mengalir alami. DILARANG membuat paragraf panjang atau format kaku seperti bot tutorial.
-- Emosi: Natural! Jangan awali dengan "Halo" atau basa-basi robot.
+${styleDirectives}
 
+=== MODE PERCAKAPAN: ${curhatMode.mode} ===
+${curhatMode.directive}
+${lengthBudget.directive}
+${continuation.suggestedBounce ? `[MOMENTUM]: ${continuation.suggestedBounce}` : ''}
 ${repairCheck.directive ? `[KOREKSI]: ${repairCheck.directive}` : ''}
-${matchedJoke ? `[INSIDE JOKE]: Selipkan lelucon lama tentang "${matchedJoke.topic}" jika momennya pas.` : ''}
-${factsSummary ? `Memori yang kamu ingat tentang orang ini:\n${factsSummary}` : ''}
+${humorDecision.directive ? `${humorDecision.directive}` : ''}
 
-Waktu sekarang: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
+${topicDirectives}
+${loopDirective}
+${factsSummary ? `Memori orang ini:\n${factsSummary}` : ''}
+
+Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         const cleanPrompt = SecretVault.sanitizePrompt(masterPrompt);
 
-        // 8. MULTI-TURN CONTENTS
+        // 10. MULTI-TURN CONTENTS
         const contents = [];
         for (const item of recentHistory) {
             if (item.role === 'user') {
@@ -102,7 +127,7 @@ Waktu sekarang: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' 
         }
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        // 9. FLEET GENERATION
+        // 11. SUB-SECOND FLEET GENERATION
         let rawDraft = "";
         try {
             rawDraft = await this.fleet.generateText(cleanPrompt, contents);
@@ -111,27 +136,36 @@ Waktu sekarang: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' 
             rawDraft = "Bentar, agak nge-lag tadi jaringannya. Coba ulangi lagi ya!";
         }
 
-        let finalMessage = rawDraft.trim()
-            .replace(/^halo[!.,]?\s*/i, '')
-            .replace(/tentu saja,?\s*/i, '')
-            .replace(/ada yang bisa dibantu\??/i, '')
-            .trim();
+        let refinedOutput = StyleDNA.formatOutput(rawDraft, dna);
 
-        // 10. RECORD TRACE
-        trace.steps = { perception, momentum, finalMessage };
+        // 12. RECORD TRACE
+        trace.steps = {
+            mode: curhatMode.mode,
+            humor: humorDecision.mode,
+            topic: topicGraph.currentTopic,
+            finalMessage: refinedOutput
+        };
         ReplayDebugger.recordTrace(corrId, trace).catch(() => {});
 
-        // 11. PERSIST WORKING MEMORY (ONLY IF NOT AN ERROR FALLBACK)
-        if (!finalMessage.includes('nge-lag') && !finalMessage.includes('offline')) {
+        // 13. PERSIST CLEAN WORKING MEMORY
+        if (!refinedOutput.includes('nge-lag') && !refinedOutput.includes('offline')) {
             memData.working_memory.push({ role: 'user', text: message, timestamp: Date.now() });
-            memData.working_memory.push({ role: 'assistant', text: finalMessage, timestamp: Date.now() });
+            memData.working_memory.push({ role: 'assistant', text: refinedOutput, timestamp: Date.now() });
             if (memData.working_memory.length > 20) {
                 memData.working_memory = memData.working_memory.slice(-20);
             }
             await saveMemory(chatId, memData);
-            this.memoryManager.extractAndStore(chatId, `${message}\n${finalMessage}`).catch(() => {});
+            this.memoryManager.extractAndStore(chatId, `${message}\n${refinedOutput}`).catch(() => {});
+
+            // Register open loop if promising future activity
+            if (message.match(/(besok mau|nanti mau|rencananya mau|pengen nyoba)/i)) {
+                OpenLoopEngine.registerLoop(chatId, {
+                    topic: topicGraph.currentTopic,
+                    statement: message.slice(0, 100)
+                }).catch(() => {});
+            }
         }
 
-        return finalMessage;
+        return refinedOutput;
     }
 }

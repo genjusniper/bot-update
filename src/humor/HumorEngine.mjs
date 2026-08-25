@@ -1,50 +1,47 @@
 // src/humor/HumorEngine.mjs
+// Humor Engine with Adaptive Probability & Modes
 
 export class HumorEngine {
-    static evaluate(message, perception, momentum, relationship, matchedJoke) {
-        // 1. Safety & Timing Gate: NEVER joke during serious grief or intense sadness
-        if (perception.emotion === 'sad' || (perception.intent === 'venting' && momentum.emotionalIntensity > 0.8)) {
-            return {
-                allowHumor: false,
-                risk: 'HIGH',
-                directive: 'JANGAN BERCANDA. User sedang dalam emosi rapuh/sedih/frustrasi berat. Fokus mendengar dan empati.'
-            };
-        }
+    static modes = [
+        'PLAYFUL_TEASING',
+        'SELF_DEPRECATION',
+        'OBSERVATIONAL',
+        'ABSURD',
+        'CALLBACK',
+        'WORDPLAY',
+        'SITUATIONAL'
+    ];
 
-        // 2. Callback Joke Priority
-        if (matchedJoke && momentum.humorMomentum > 0.4) {
-            return {
-                allowHumor: true,
-                style: 'CALLBACK_JOKE',
-                risk: 'LOW',
-                directive: `INSIDE JOKE TERDETEKSI: Selipkan callback humor terkait "${matchedJoke.topic}" secara halus dan cerdas.`
-            };
-        }
+    static evaluate(message, relationshipLevel = 'CLOSE', matchedCallback = null) {
+        let probability = 0.50; // default 50%
+        if (relationshipLevel === 'STRANGER') probability = 0.15;
+        else if (relationshipLevel === 'ACQUAINTANCE') probability = 0.35;
+        else if (relationshipLevel === 'CLOSE' || relationshipLevel === 'close_friend') probability = 0.70;
 
-        // 3. Playful Teasing for close friends on light complaints
-        if (relationship.familiarity === 'close_friend' && perception.emotion === 'frustrated') {
-            return {
-                allowHumor: true,
-                style: 'PLAYFUL_TEASING',
-                risk: 'LOW_MEDIUM',
-                directive: 'Boleh ledek/bercanda akrab tipis-tipis khas teman nongkrong sebelum memberi semangat.'
-            };
-        }
+        const isHumorousContext = message.match(/(wkwk|haha|lucu|canda|njir|lawak|lelucon|becanda)/i);
+        if (isHumorousContext) probability += 0.20;
 
-        // 4. Situational Banter on excited / laughing context
-        if (perception.emotion === 'excited' || perception.emotion === 'happy') {
-            return {
-                allowHumor: true,
-                style: 'SITUATIONAL_BANTER',
-                risk: 'LOW',
-                directive: 'Ikuti vibe seru/tawa user, tanggapi dengan celetukan kocak yang nyambung.'
-            };
+        const isSeriousContext = message.match(/(capek|sedih|masalah|kecewa|sakit|parah|benci|nangis)/i);
+        if (isSeriousContext) probability = 0.05; // Don't joke when user is sad/serious
+
+        const roll = Math.random();
+        const shouldHumor = roll <= probability;
+
+        let selectedMode = 'PLAYFUL_TEASING';
+        if (matchedCallback) {
+            selectedMode = 'CALLBACK';
+        } else if (shouldHumor) {
+            selectedMode = this.modes[Math.floor(Math.random() * this.modes.length)];
         }
 
         return {
-            allowHumor: false,
-            risk: 'NONE',
-            directive: ''
+            shouldHumor,
+            mode: selectedMode,
+            directive: shouldHumor 
+                ? (selectedMode === 'CALLBACK' 
+                    ? `[HUMOR CALLBACK]: Selipkan lelucon lama tentang '${matchedCallback.keyword}'.` 
+                    : `[HUMOR MODE: ${selectedMode}]: Berikan respon dengan sentuhan humor santai/teasing yang natural.`)
+                : ''
         };
     }
 }
