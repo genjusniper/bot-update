@@ -1,4 +1,4 @@
-// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V8.1 MESSAGE LIFECYCLE & TELEMETRY TRACKED)
+// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL ASSISTANT OS (V13.3 CONTACT NAME RECOGNITION)
 
 import { AIGatewayObservable } from '../resilience/AIGatewayObservable.mjs';
 import { CircuitBreakerHardened } from '../resilience/CircuitBreakerHardened.mjs';
@@ -8,11 +8,47 @@ import { DuplicateResponseGuard } from '../resilience/DuplicateResponseGuard.mjs
 import { MessageLifecycleTracker } from '../telemetry/MessageLifecycleTracker.mjs';
 import { ProductionTelemetry72h } from '../metrics/ProductionTelemetry72h.mjs';
 
+// V13 Personal Number Co-Pilot & Safety Layer
+import { PersonalCoPilotGuard } from '../security/copilot/PersonalCoPilotGuard.mjs';
+
+import { DeepIntentRouter } from '../multimodal/DeepIntentRouter.mjs';
+import { VoiceIntelligenceEngine } from '../multimodal/VoiceIntelligenceEngine.mjs';
+import { LinkIntelligenceEngine } from '../multimodal/LinkIntelligenceEngine.mjs';
+import { SemanticCache } from '../multimodal/SemanticCache.mjs';
+import { AttachmentFactExtractor } from '../multimodal/AttachmentFactExtractor.mjs';
+
+import { TaskPromiseTracker } from '../tasks/TaskPromiseTracker.mjs';
+import { DeviceServerMonitor } from '../monitor/DeviceServerMonitor.mjs';
+import { LocalCalculatorEngine } from '../utility/LocalCalculatorEngine.mjs';
+import { PersonalSearchEngine } from '../memory/PersonalSearchEngine.mjs';
+import { ProactiveMemoryGraph } from '../memory/ProactiveMemoryGraph.mjs';
+import { ProductLocationAdvisor } from '../advisor/ProductLocationAdvisor.mjs';
+
+// V12 Social Intelligence Subsystem
+import { ConversationTemperatureEngine } from '../social/v12/ConversationTemperatureEngine.mjs';
+import { DontOverhelpEngine } from '../social/v12/DontOverhelpEngine.mjs';
+import { ConversationRepairEngine } from '../social/v12/ConversationRepairEngine.mjs';
+import { VisualConversationContinuity } from '../social/v12/VisualConversationContinuity.mjs';
+
+// Multi-Person Context Isolation & Profiles
+import { PerContactMemoryNamespace } from '../social/multiperson/PerContactMemoryNamespace.mjs';
+import { ContactProfileStore } from '../social/multiperson/ContactProfileStore.mjs';
+
+// Behavioral & HIPE
+import { HumanInteractionPolicy } from '../behavior/HumanInteractionPolicy.mjs';
+import { TimeAwarenessPersona } from '../behavior/TimeAwarenessPersona.mjs';
+import { ResponseBudgetEngine } from '../behavior/ResponseBudgetEngine.mjs';
+import { ConversationEndingDetector } from '../behavior/ConversationEndingDetector.mjs';
+
+import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
+import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
+import { SocialBrain } from '../subsystems/social/SocialBrain.mjs';
+import { HumanUXEngine } from '../subsystems/ux/HumanUXEngine.mjs';
+import { ConversationDebugger } from '../subsystems/observability/ConversationDebugger.mjs';
+
 import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
-import { AdaptiveModelRouter } from '../fleet/AdaptiveModelRouter.mjs';
 import { ContextBudgetManager } from '../context/ContextBudgetManager.mjs';
 import { StyleDNA } from '../communication/StyleDNA.mjs';
-import { StyleLearningEngine } from '../communication/StyleLearningEngine.mjs';
 
 import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
 import { ConversationContinuityLock } from '../conversation/ConversationContinuityLock.mjs';
@@ -35,7 +71,6 @@ import { RelevanceMemoryRetrieval } from '../memory/RelevanceMemoryRetrieval.mjs
 import { MemoryConsolidationPipeline } from '../memory/MemoryConsolidationPipeline.mjs';
 
 import { ConversationQualityGate } from '../quality/ConversationQualityGate.mjs';
-import { GroupChatPolicyEngine } from '../group/GroupChatPolicyEngine.mjs';
 import { SecretVault } from '../security/SecretVault.mjs';
 import { ReplayStudio } from '../eval/ReplayStudio.mjs';
 
@@ -48,32 +83,136 @@ export class PersonalAIOS {
         this.memoryManager = new MemoryManager(this.gateway);
     }
 
-    async process(chatId, message, correlationId = null, senderId = null) {
+    async process(chatId, message, correlationId = null, senderId = null, mediaOptions = {}) {
         const startTime = Date.now();
         const corrId = correlationId || `conv_${chatId}_${Date.now()}`;
-        const lifecycleId = await MessageLifecycleTracker.createLifecycle(chatId, message);
-        const trace = { correlationId: corrId, lifecycleId, chatId, message };
+        const effectiveSender = senderId || chatId;
+        const isGroup = chatId.endsWith('@g.us');
+        
+        const images = mediaOptions.images || (mediaOptions.imageBase64 ? [{ base64: mediaOptions.imageBase64, mimeType: mediaOptions.mimeType }] : []);
+        const audio = mediaOptions.audio || (mediaOptions.audioBase64 ? { base64: mediaOptions.audioBase64, mimeType: mediaOptions.mimeType } : null);
+        const quotedContext = mediaOptions.quotedContext || null;
+        const rawMessage = mediaOptions.rawMessage || null;
+        const ownerJid = mediaOptions.ownerJid || null;
+        const groupSubject = mediaOptions.groupSubject || '';
+        const pushName = mediaOptions.pushName || '';
+
+        const hasImages = images.length > 0;
+        const hasAudio = Boolean(audio);
+        const inputSnippet = (message || '').trim() || (hasImages ? `[${images.length} FOTO / SLIDE]` : (hasAudio ? '[VOICE NOTE]' : 'Halo'));
+
+        const lifecycleId = await MessageLifecycleTracker.createLifecycle(chatId, inputSnippet);
+        const trace = { correlationId: corrId, lifecycleId, chatId, senderId: effectiveSender, pushName, groupSubject, message: inputSnippet, imageCount: images.length, hasAudio };
 
         ProductionTelemetry72h.increment('messages', 'received').catch(() => {});
 
-        // 1. GROUP CHAT POLICY & SILENCE ENFORCEMENT
-        const groupPolicy = GroupChatPolicyEngine.evaluateGroupMessage(chatId, message, senderId);
-        if (!groupPolicy.shouldRespond) {
-            trace.status = 'GROUP_SILENCE';
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'DROPPED', { reason: 'GROUP_SILENCE' });
+        // 1. MASTER PERSONAL NUMBER CO-PILOT GATEKEEPER (V13.3)
+        const copilotGate = await PersonalCoPilotGuard.evaluateGatekeeper({
+            chatId,
+            groupSubject,
+            text: inputSnippet,
+            fromMe: mediaOptions.fromMe || false,
+            isGroup,
+            rawMessage,
+            ownerJid
+        });
+
+        if (!copilotGate.allowAI) {
+            trace.status = copilotGate.reason;
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'DROPPED', { reason: copilotGate.reason, action: copilotGate.action });
             ProductionTelemetry72h.increment('messages', 'dropped').catch(() => {});
             ReplayStudio.recordTrace(corrId, trace).catch(() => {});
             return null;
         }
 
-        // 2. COMPLEXITY ROUTER & LOCAL FAST PATH
-        const complexity = AdaptiveModelRouter.evaluateComplexity(message);
-        trace.complexityTier = complexity.tier;
-        trace.routeSelected = complexity.recommendedRoute;
-        await MessageLifecycleTracker.logPhase(lifecycleId, 'ROUTED', { route: complexity.recommendedRoute, tier: complexity.tier });
+        // 2. DON'T OVERHELP ENGINE (V12: Listen -> Validate before offering unwanted advice)
+        if (DontOverhelpEngine.isVentingWithoutAdviceRequest(inputSnippet)) {
+            const validationReply = DontOverhelpEngine.getEmpatheticValidation(inputSnippet);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'DONT_OVERHELP_VALIDATION', text: validationReply });
+            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+            DuplicateResponseGuard.record(chatId, validationReply);
+            return { action: 'REPLY_SINGLE', bubbles: [validationReply], text: validationReply, reactionEmoji: '🫂' };
+        }
 
-        if (complexity.recommendedRoute === 'LOCAL_FAST_PATH') {
-            const lightResult = LightweightRouter.route(message);
+        // 3. MULTI-PERSON PROFILE STORE & NAME RECOGNITION (V13.3)
+        const contactProfile = await ContactProfileStore.updateFromMessage(effectiveSender, inputSnippet, pushName);
+        const contactDirectives = ContactProfileStore.formatDirectives(contactProfile);
+
+        // 4. CONVERSATION ENDING DETECTOR
+        if (ConversationEndingDetector.isEnding(inputSnippet)) {
+            const signOff = ConversationEndingDetector.getSignOff(inputSnippet);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'CONVERSATION_ENDING', text: signOff.reply });
+            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+            DuplicateResponseGuard.record(chatId, signOff.reply);
+            return { action: 'REPLY_SINGLE', bubbles: [signOff.reply], text: signOff.reply, reactionEmoji: signOff.reactionEmoji };
+        }
+
+        // 5. CONVERSATION DEBUGGER / TRACE EXPLAINER (<1ms)
+        if (ConversationDebugger.isDebugQuery(inputSnippet)) {
+            const explainText = ConversationDebugger.explainLatestTrace(chatId);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'DEBUGGER_EXPLAIN', text: explainText });
+            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+            DuplicateResponseGuard.record(chatId, explainText);
+            return { action: 'REPLY_SINGLE', bubbles: [explainText], text: explainText, reactionEmoji: null };
+        }
+
+        // 6. LOCAL CALCULATOR & UTILITY ENGINE (<1ms, 0 Token)
+        if (LocalCalculatorEngine.isMathQuery(inputSnippet)) {
+            const mathRes = LocalCalculatorEngine.calculate(inputSnippet);
+            if (mathRes.handled) {
+                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'LOCAL_CALCULATOR', text: mathRes.result });
+                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+                DuplicateResponseGuard.record(chatId, mathRes.result);
+                return { action: 'REPLY_SINGLE', bubbles: [mathRes.result], text: mathRes.result, reactionEmoji: '🧮' };
+            }
+        }
+
+        // 7. PROACTIVE IDEA GENERATOR
+        const ideaRes = await LifeCompanionEngine.generateProactiveIdea(chatId, inputSnippet);
+        if (ideaRes.handled) {
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'PROACTIVE_IDEA', text: ideaRes.response });
+            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+            DuplicateResponseGuard.record(chatId, ideaRes.response);
+            return { action: 'REPLY_SINGLE', bubbles: [ideaRes.response], text: ideaRes.response, reactionEmoji: '💡' };
+        }
+
+        // 8. PERSONAL SEARCH ENGINE & MEMORY CONTROL (Instant Local)
+        if (PersonalSearchEngine.isSearchOrControl(inputSnippet)) {
+            const searchReport = await PersonalSearchEngine.handleSearch(chatId, inputSnippet);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'PERSONAL_SEARCH', text: searchReport });
+            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+            DuplicateResponseGuard.record(chatId, searchReport);
+            return { action: 'REPLY_SINGLE', bubbles: [searchReport], text: searchReport, reactionEmoji: null };
+        }
+
+        // 9. DEVICE / SERVER TELEMETRY INQUIRY (Instant Local)
+        if (DeviceServerMonitor.isMonitorQuery(inputSnippet)) {
+            const monitorReport = await DeviceServerMonitor.handleQuery(inputSnippet, this.gateway.fleet);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'DEVICE_MONITOR', text: monitorReport });
+            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+            DuplicateResponseGuard.record(chatId, monitorReport);
+            return { action: 'REPLY_SINGLE', bubbles: [monitorReport], text: monitorReport, reactionEmoji: null };
+        }
+
+        // 10. TASK & PROMISE TRACKER (Instant Local)
+        const taskAction = TaskPromiseTracker.detectAndExtractTask(inputSnippet);
+        if (taskAction.isTask) {
+            const taskResult = await TaskPromiseTracker.handleTaskAction(chatId, taskAction);
+            if (taskResult?.handled) {
+                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'TASK_TRACKER', text: taskResult.response });
+                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+                DuplicateResponseGuard.record(chatId, taskResult.response);
+                return { action: 'REPLY_SINGLE', bubbles: [taskResult.response], text: taskResult.response, reactionEmoji: '📌' };
+            }
+        }
+
+        // 11. DEEP INTENT ROUTER (Local Fast Path & Semantic Cache in 1-5ms)
+        const intentRoute = DeepIntentRouter.classify(inputSnippet, { hasImage: hasImages, hasAudio });
+        trace.intent = intentRoute.intent;
+        await MessageLifecycleTracker.logPhase(lifecycleId, 'INTENT_ROUTED', { intent: intentRoute.intent, targetRoute: intentRoute.targetRoute });
+
+        if (intentRoute.targetRoute === 'LOCAL_FAST_PATH') {
+            const lightResult = LightweightRouter.route(inputSnippet);
             if (lightResult.handled) {
                 trace.modelUsed = 'LOCAL_FAST_PATH';
                 trace.finalMessage = lightResult.response;
@@ -82,12 +221,65 @@ export class PersonalAIOS {
                 await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'LOCAL_FAST_PATH', text: lightResult.response });
                 ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
                 ReplayStudio.recordTrace(corrId, trace).catch(() => {});
+                ConversationDebugger.recordTrace(chatId, trace);
                 DuplicateResponseGuard.record(chatId, lightResult.response);
-                return lightResult.response;
+                
+                const delivery = HumanInteractionPolicy.decideDelivery(inputSnippet, lightResult.response, { hasMedia: false });
+                return { ...delivery, text: lightResult.response };
             }
         }
 
-        // 3. LOAD & CONSOLIDATE MEMORY
+        if (intentRoute.targetRoute === 'SEMANTIC_CACHE_PATH') {
+            const cacheResult = SemanticCache.match(inputSnippet);
+            if (cacheResult.hit) {
+                trace.modelUsed = 'SEMANTIC_CACHE';
+                trace.finalMessage = cacheResult.response;
+                trace.latencyMs = Date.now() - startTime;
+
+                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'SEMANTIC_CACHE', text: cacheResult.response });
+                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
+                ReplayStudio.recordTrace(corrId, trace).catch(() => {});
+                ConversationDebugger.recordTrace(chatId, trace);
+                DuplicateResponseGuard.record(chatId, cacheResult.response);
+                
+                const delivery = HumanInteractionPolicy.decideDelivery(inputSnippet, cacheResult.response, { hasMedia: false });
+                return { ...delivery, text: cacheResult.response };
+            }
+        }
+
+        // 12. CONVERSATION TEMPERATURE & REPAIR DIRECTIVES (V12)
+        const tempEval = ConversationTemperatureEngine.evaluateTemperature(inputSnippet);
+        const isCorrection = ConversationRepairEngine.isCorrection(inputSnippet);
+        const repairDirective = isCorrection ? ConversationRepairEngine.getRepairPromptDirective(inputSnippet) : '';
+        const visualContinuity = VisualConversationContinuity.getContinuityContext(chatId, inputSnippet);
+
+        trace.temperature = tempEval.temperature;
+
+        // 13. LINK INTELLIGENCE RESOLVER
+        let linkContext = '';
+        if (intentRoute.intent === 'LINK_ANALYSIS') {
+            const linkData = await LinkIntelligenceEngine.resolveUrl(intentRoute.url);
+            linkContext = LinkIntelligenceEngine.formatLinkContext(linkData);
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'LINK_RESOLVED', { url: intentRoute.url, title: linkData.title });
+        }
+
+        // 14. TIME AWARENESS & PERSONA DRIFT LOCK
+        const timeCtx = TimeAwarenessPersona.getTimeContext();
+        const personaLock = TimeAwarenessPersona.getPersonaLock();
+
+        // 15. LIFE BRAIN & SOCIAL BRAIN DYNAMICS
+        LifeBrain.recordOpenLoop(chatId, inputSnippet).catch(() => {});
+        const lifeData = await LifeBrain.load(chatId);
+        const lifeContext = LifeBrain.formatContext(lifeData);
+        const socialDynamics = SocialBrain.evaluateSocialDynamics(inputSnippet);
+        const moodState = LifeCompanionEngine.detectMood(inputSnippet);
+        const responseBudget = ResponseBudgetEngine.calculateBudget(inputSnippet, moodState, { hasImage: hasImages, hasAudio });
+
+        trace.socialMode = socialDynamics.mode;
+        trace.energy = socialDynamics.energy;
+        trace.budgetTier = responseBudget.tier;
+
+        // 16. LOAD & CONSOLIDATE MEMORY (HARD ISOLATED BY CHATID)
         let memData = await loadMemory(chatId);
         if (!memData.working_memory) memData.working_memory = [];
         memData.working_memory = memData.working_memory.filter(m => 
@@ -98,26 +290,22 @@ export class PersonalAIOS {
             MemoryConsolidationPipeline.consolidateWorkingMemory(chatId, memData.working_memory).catch(() => {});
         }
 
-        // 4. CONVERSATION STATE, CONTINUITY LOCK & HUMAN RHYTHM
-        const convState = ConversationStateEngine.evaluateState(message);
-        const emotionalCalibration = EmotionalCalibrationEngine.calibrate(message);
-        const turnTaking = TurnTakingEngine.evaluateTurn(message, memData.working_memory, 1);
-        const rhythm = HumanRhythmEngine.determineRhythm(message, convState);
-        const curhatMode = CurhatEngine.detectMode(message);
+        // 17. CONVERSATION STATE & CONTINUITY LOCK
+        const convState = ConversationStateEngine.evaluateState(inputSnippet);
+        const emotionalCalibration = EmotionalCalibrationEngine.calibrate(inputSnippet);
+        const turnTaking = TurnTakingEngine.evaluateTurn(inputSnippet, memData.working_memory, 1);
+        const rhythm = HumanRhythmEngine.determineRhythm(inputSnippet, convState);
 
         const continuityLock = await ConversationContinuityLock.updateLock(chatId, {
-            currentTopic: convState.phase === 'CURHAT_VENTING' ? 'curhat' : undefined,
+            currentTopic: convState.phase === 'CURHAT_VENTING' ? 'curhat' : (hasImages ? 'foto_vision' : undefined),
             emotionalTone: emotionalCalibration.tone
         });
         const continuityDirectives = ConversationContinuityLock.formatDirectives(continuityLock);
 
         trace.phase = convState.phase;
-        trace.mode = curhatMode.mode;
-        trace.emotionalTone = emotionalCalibration.tone;
-        trace.rhythm = rhythm.behavior;
 
-        // 5. TOPIC GRAPH & STORY THREADS
-        const topicGraph = await TopicGraphEngine.updateGraph(chatId, message);
+        // 18. TOPIC GRAPH & STORY THREADS
+        const topicGraph = await TopicGraphEngine.updateGraph(chatId, inputSnippet);
         const topicDirectives = TopicGraphEngine.formatDirectives(topicGraph);
         const storyThreads = await StoryThreadTracker.getThreads(chatId);
         const activeStories = StoryThreadTracker.getActiveThreads(storyThreads);
@@ -127,42 +315,61 @@ export class PersonalAIOS {
 
         trace.topic = topicGraph.currentTopic;
 
-        // 6. HUMOR TIMING & CALLBACK MATCHING
-        const humorTiming = HumorTimingDetector.calculateIntensity(message, emotionalCalibration.tone);
+        // 19. HUMOR TIMING & CALLBACK MATCHING
+        const humorTiming = HumorTimingDetector.calculateIntensity(inputSnippet, emotionalCalibration.tone);
         const callbackEvents = await CallbackRegistry.getEvents(chatId);
-        const matchedCallback = CallbackRegistry.findMatchingCallback(message, callbackEvents);
-        const humorDecision = AdvancedHumorEngine.evaluate(message, convState, matchedCallback);
+        const matchedCallback = CallbackRegistry.findMatchingCallback(inputSnippet, callbackEvents);
+        const humorDecision = AdvancedHumorEngine.evaluate(inputSnippet, convState, matchedCallback);
 
-        trace.humorMode = humorDecision.mode;
+        // 20. PROACTIVE GRAPH & ISOLATED MEMORY
+        const proactiveGraph = await ProactiveMemoryGraph.getGraph(chatId);
+        const proactiveContext = ProactiveMemoryGraph.formatGraphContext(proactiveGraph);
 
-        // 7. SOCIAL MEMORY & STYLE LEARNING
-        const socialProfile = await SocialMemoryOS.getProfile(chatId);
-        const socialContext = SocialMemoryOS.formatSocialContext(socialProfile);
-        const learnedStyle = await StyleLearningEngine.learnFromMessage(chatId, message);
         const dna = StyleDNA.getProfile('CLOSE');
-        const isJawa = Boolean(message.match(/(yo|ki|to|wae|lha|ngopo|piye|mangan|kue|kowe|opo|ora|ra|wis|wes|dadi)/i));
+        const isJawa = Boolean(inputSnippet.match(/(yo|ki|to|wae|lha|ngopo|piye|mangan|kue|kowe|opo|ora|ra|wis|wes|dadi)/i));
         const styleDirectives = StyleDNA.compileDirectives(dna, isJawa);
 
-        // 8. SCORED TOP-K MEMORY RETRIEVAL (RELEVANCE 2.0)
+        // 21. SCORED TOP-K MEMORY RETRIEVAL (STRICTLY ISOLATED BY CHATID)
         let memOSData = await MemoryOS.getMemory(chatId);
         memOSData = MemoryOS.applyDecay(memOSData);
-        const allFacts = [
+        const rawFacts = [
             ...(memOSData.L2_semantic || []),
             ...(memOSData.L1_episodic || []).map(e => ({ predicate: 'kejadian', object: e.summary, importance: e.importance }))
         ];
-        const relevantMemories = RelevanceMemoryRetrieval.retrieveTopMemories(allFacts, message, topicGraph.currentTopic, 3);
+        const isolatedFacts = PerContactMemoryNamespace.sanitizeIsolatedMemory(rawFacts, chatId);
+        const relevantMemories = RelevanceMemoryRetrieval.retrieveTopMemories(isolatedFacts, inputSnippet, topicGraph.currentTopic, 3);
         const memoryPromptStr = relevantMemories.length > 0
-            ? "=== MEMORI RELEVAN ===\n" + relevantMemories.map(m => `- ${m.predicate}: ${m.object}`).join('\n')
+            ? "=== MEMORI RELEVAN (ISOLASI PRIVATE) ===\n" + relevantMemories.map(m => `- ${m.predicate}: ${m.object}`).join('\n')
             : '';
 
-        // 9. CONTEXT BUDGET ALLOCATION (~2000 tokens)
+        // 22. CONTEXT BUDGET ALLOCATION
         const { history: budgetedHistory, estimatedTokens } = ContextBudgetManager.fitToBudget(memData.working_memory, 8);
         trace.tokensEstimated = estimatedTokens;
 
-        // 10. MASTER PROMPT
+        // 23. MULTIMODAL DIRECTIVES
+        let multimodalDirective = '';
+        if (hasImages) {
+            multimodalDirective = `PANDUAN MULTI-FOTO / SLIDE / VISION: User mengirim ${images.length} foto/slide ke kamu! Analisis seluruh sudut/slide foto secara komprehensif, santai, dan to-the-point.\n${ProductLocationAdvisor.getProductDirective()}\n${ProductLocationAdvisor.getLocationDirective()}`;
+        } else if (hasAudio) {
+            multimodalDirective = "PANDUAN VOICE NOTE: User mengirim rekaman suara ke kamu! Pahami maksud dan suasananya, lalu balas secara hangat dan akrab.";
+        }
+
         const masterPrompt = `Kamu adalah teman ngobrol / asisten WhatsApp pribadi yang sangat asik, cerdas, santai, dan seru.
 
+${personaLock}
+${contactDirectives}
+${tempEval.directive}
+${repairDirective}
+${visualContinuity}
+${responseBudget.directive}
+${timeCtx.directive}
 ${styleDirectives}
+${socialDynamics.directive}
+${multimodalDirective}
+
+${linkContext}
+${proactiveContext}
+${lifeContext}
 
 ${convState.directive}
 ${emotionalCalibration.directive}
@@ -174,14 +381,13 @@ ${humorDecision.directive ? `${humorDecision.directive}` : ''}
 ${continuityDirectives}
 ${topicDirectives}
 ${storyContext}
-${socialContext}
 ${memoryPromptStr}
 
 Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         const cleanPrompt = SecretVault.sanitizePrompt(masterPrompt);
 
-        // 11. MULTI-TURN PAYLOAD
+        // 24. MULTI-TURN PAYLOAD
         const contents = [];
         for (const item of budgetedHistory) {
             if (item.role === 'user') {
@@ -190,12 +396,17 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
                 contents.push({ role: 'model', parts: [{ text: item.text }] });
             }
         }
-        contents.push({ role: 'user', parts: [{ text: message }] });
+        contents.push({ role: 'user', parts: [{ text: inputSnippet }] });
 
-        // 12. OBSERVABLE AI GATEWAY EXECUTION
+        // 25. OBSERVABLE AI GATEWAY EXECUTION
         let rawDraft = "";
-        await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GATEWAY_ATTEMPT', { model: 'gemini-flash-lite' });
-        const gatewayRes = await this.gateway.generate(cleanPrompt, contents, corrId);
+        await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GATEWAY_ATTEMPT', { 
+            model: 'gemini-flash-lite', 
+            imageCount: images.length, 
+            hasAudio 
+        });
+
+        const gatewayRes = await this.gateway.generate(cleanPrompt, contents, corrId, images, quotedContext);
 
         if (gatewayRes.success) {
             rawDraft = gatewayRes.text;
@@ -203,24 +414,24 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GENERATED', { model: gatewayRes.modelUsed, latencyMs: gatewayRes.latencyMs });
             ProductionTelemetry72h.increment('aiGateway', 'geminiSuccess').catch(() => {});
         } else {
-            // ENGAGE EXPANDED EMERGENCY BRAIN (Zero error leakage, organic contextual reply)
             console.warn(`[PersonalAIOS] AI Gateway fallback engaged (${gatewayRes.error}).`);
-            rawDraft = EmergencyBrainExpanded.generateReply(message);
+            rawDraft = EmergencyBrainExpanded.generateReply(inputSnippet);
             trace.modelUsed = 'EMERGENCY_BRAIN_EXPANDED';
             await MessageLifecycleTracker.logPhase(lifecycleId, 'EMERGENCY_BRAIN_ENGAGED', { reason: gatewayRes.error });
             ProductionTelemetry72h.increment('conversation', 'emergencyBrainUsage').catch(() => {});
         }
 
-        // 13. CONVERSATION QUALITY GATE (Pre-Send Validation & Hallucination Guard)
+        // 26. CONVERSATION QUALITY GATE & BUDGET ENFORCEMENT
         const qualityVerdict = ConversationQualityGate.validateDraft(rawDraft, {
-            verifiedFacts: allFacts,
-            maxWords: turnTaking.maxWords
+            verifiedFacts: isolatedFacts,
+            maxWords: Math.min(turnTaking.maxWords, responseBudget.maxWords)
         });
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
+        sanitizedOutput = HumanUXEngine.contextualizeEmojis(sanitizedOutput, socialDynamics.energy);
         await MessageLifecycleTracker.logPhase(lifecycleId, 'QUALITY_CHECKED', { score: qualityVerdict.qualityScore });
 
-        // 14. ANTI-REPETITION & DUPLICATE RESPONSE GUARD
+        // 27. ANTI-REPETITION & DUPLICATE RESPONSE GUARD
         const recentResponses = await AntiRepetitionEngine.getRecentResponses(chatId);
         if (AntiRepetitionEngine.isRepetitive(sanitizedOutput, recentResponses)) {
             sanitizedOutput = AntiRepetitionEngine.applyControlledVariance(sanitizedOutput);
@@ -228,7 +439,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         const allowSend = DuplicateResponseGuard.shouldSend(chatId, sanitizedOutput);
         if (!allowSend) {
-            sanitizedOutput = EmergencyBrainExpanded.generateReply(message);
+            sanitizedOutput = EmergencyBrainExpanded.generateReply(inputSnippet);
             DuplicateResponseGuard.record(chatId, sanitizedOutput);
             ProductionTelemetry72h.increment('resilience', 'duplicateBlocked').catch(() => {});
             await MessageLifecycleTracker.logPhase(lifecycleId, 'DUPLICATE_BLOCK_VARIED', { text: sanitizedOutput });
@@ -241,26 +452,33 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: trace.modelUsed, outputText: sanitizedOutput });
         ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
 
-        // 15. RECORD TELEMETRY & REPLAY STUDIO
-        ReplayStudio.recordTrace(corrId, trace).catch(() => {});
-        AntiRepetitionEngine.recordResponse(chatId, sanitizedOutput).catch(() => {});
+        // 28. RECORD VISUAL OBSERVATION FOR CONVERSATION CONTINUITY
+        if (hasImages) {
+            VisualConversationContinuity.recordVisualObservation(chatId, inputSnippet);
+        }
 
-        // 16. PERSIST CLEAN WORKING MEMORY & EVENTS
+        // 29. PERSIST CLEAN WORKING MEMORY (ISOLATED)
         if (!sanitizedOutput.includes('nge-lag') && !sanitizedOutput.includes('offline')) {
-            memData.working_memory.push({ role: 'user', text: message, timestamp: Date.now() });
+            memData.working_memory.push({ role: 'user', text: inputSnippet, timestamp: Date.now() });
             memData.working_memory.push({ role: 'assistant', text: sanitizedOutput, timestamp: Date.now() });
             if (memData.working_memory.length > 20) {
                 memData.working_memory = memData.working_memory.slice(-20);
             }
             await saveMemory(chatId, memData);
 
-            this.memoryManager.extractAndStore(chatId, `${message}\n${sanitizedOutput}`).catch(() => {});
+            this.memoryManager.extractAndStore(chatId, `${inputSnippet}\n${sanitizedOutput}`).catch(() => {});
 
-            if (message.length > 50 || message.match(/(tadi kan|jadi gini|kemarin tuh)/i)) {
-                StoryThreadTracker.recordStory(chatId, message, topicGraph.currentTopic).catch(() => {});
+            if (inputSnippet.length > 50 || inputSnippet.match(/(tadi kan|jadi gini|kemarin tuh)/i)) {
+                StoryThreadTracker.recordStory(chatId, inputSnippet, topicGraph.currentTopic).catch(() => {});
             }
         }
 
-        return sanitizedOutput;
+        // 30. APPLY HUMAN INTERACTION POLICY
+        const deliveryPlan = HumanInteractionPolicy.decideDelivery(inputSnippet, sanitizedOutput, { hasMedia: hasImages || hasAudio });
+
+        return {
+            ...deliveryPlan,
+            text: sanitizedOutput
+        };
     }
 }

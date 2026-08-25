@@ -1,0 +1,16 @@
+{
+  "defaultGroupPolicy": "SILENT",
+  "whitelistedGroupNames": [
+    {
+      "namePattern": "semarang climbers",
+      "policy": "MENTION_ONLY",
+      "description": "Grup Climbing / Panjat Tebing Semarang"
+    },
+    {
+      "namePattern": "peletbento semarang",
+      "policy": "MENTION_ONLY",
+      "description": "Grup Komunitas Peletbento Semarang"
+    }
+  ],
+  "groups": {}
+}

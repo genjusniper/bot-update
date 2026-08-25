@@ -1,0 +1,19 @@
+{
+  "defaultPrivatePolicy": "SILENT",
+  "contacts": {
+    "6281325554282@s.whatsapp.net": { "name": "VIP Contact 1", "policy": "AUTO" },
+    "6281935596653@s.whatsapp.net": { "name": "VIP Contact 2", "policy": "AUTO" },
+    "6285602612832@s.whatsapp.net": { "name": "VIP Contact 3", "policy": "AUTO" },
+    "6285600961769@s.whatsapp.net": { "name": "VIP Contact 4", "policy": "AUTO" },
+    "6285134755110@s.whatsapp.net": { "name": "VIP Contact 5", "policy": "AUTO" },
+    "628989820481@s.whatsapp.net":  { "name": "VIP Contact 6", "policy": "AUTO" },
+    "6285799205356@s.whatsapp.net": { "name": "VIP Contact 7", "policy": "AUTO" },
+    "6285865977271@s.whatsapp.net": { "name": "VIP Contact 8", "policy": "AUTO" },
+    "6281574446756@s.whatsapp.net": { "name": "VIP Contact 9", "policy": "AUTO" },
+    "6285877764091@s.whatsapp.net": { "name": "VIP Contact 10", "policy": "AUTO" },
+    "6282134990540@s.whatsapp.net": { "name": "VIP Contact 11", "policy": "AUTO" },
+    "6288239215734@s.whatsapp.net": { "name": "VIP Contact 12", "policy": "AUTO" },
+    "628558932876@s.whatsapp.net":  { "name": "VIP Contact 13", "policy": "AUTO" },
+    "6285180980302@s.whatsapp.net": { "name": "VIP Contact 14", "policy": "AUTO" }
+  }
+}

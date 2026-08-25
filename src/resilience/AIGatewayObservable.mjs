@@ -1,5 +1,4 @@
-// src/resilience/AIGatewayObservable.mjs
-// Observable AI Gateway with Dynamic Fleet Refresh & Payload Protection
+// src/resilience/AIGatewayObservable.mjs — MULTI-IMAGE ALBUM & QUOTE READY
 
 import { KeyFleetManager } from '../fleet/KeyFleetManager.mjs';
 import { ErrorTaxonomy } from '../fleet/ErrorTaxonomy.mjs';
@@ -23,34 +22,36 @@ export class AIGatewayObservable {
         this.fleet = new KeyFleetManager(rawKeys);
     }
 
-    async generate(systemPrompt, rawContents, correlationId = 'req_gen') {
+    async generate(systemPrompt, rawContents, correlationId = 'req_gen', images = [], quotedContext = null) {
         const startTime = Date.now();
+        const hasImages = Array.isArray(images) && images.length > 0;
         const telemetry = {
             correlationId,
             provider: 'google_gemini',
             attempts: 0,
+            imageCount: images ? images.length : 0,
+            hasQuote: Boolean(quotedContext),
             traces: []
         };
 
-        // Ensure fleet is populated even if env was loaded after module import
         if (!this.fleet || this.fleet.fleet.length === 0) {
             this.initFleet();
         }
 
-        // 1. Strict Payload Sanitization
-        const cleanContents = PayloadSanitizer.sanitizeContents(rawContents);
+        // 1. Strict Sanitization with Multi-Image Album and Quote Context
+        const cleanContents = PayloadSanitizer.sanitizeContents(rawContents, images, quotedContext);
         const cleanSystemInstruction = PayloadSanitizer.sanitizeSystemInstruction(systemPrompt);
 
         const payload = JSON.stringify({
             system_instruction: cleanSystemInstruction,
             contents: cleanContents,
-            generationConfig: { temperature: 0.8, maxOutputTokens: 800 }
+            generationConfig: { temperature: 0.8, maxOutputTokens: 900 }
         });
 
         let modelAttempts = 0;
         const maxModelAttempts = 3;
 
-        while (modelAttempts < maxModelAttempts && (Date.now() - startTime) < 12000) {
+        while (modelAttempts < maxModelAttempts && (Date.now() - startTime) < 15000) {
             const currentModel = this.models[this.modelIndex % this.models.length];
             const keyItem = this.fleet.getHealthyKey();
 
@@ -68,7 +69,7 @@ export class AIGatewayObservable {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: payload,
-                    signal: AbortSignal.timeout(6000)
+                    signal: AbortSignal.timeout(8000)
                 });
 
                 const latency = Date.now() - reqStart;

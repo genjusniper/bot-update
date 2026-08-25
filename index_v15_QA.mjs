@@ -1,20 +1,23 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// index_v15_QA.mjs — PRODUCTION BOOTLOADER WITH UNIVERSAL PERSONAL AI OS V8.1
+// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V13.3 PUSHNAME & CONTACT RECOGNITION)
 process.on("unhandledRejection", (reason, promise) => { console.error("[FATAL] Unhandled Rejection:", reason); });
 process.on("uncaughtException", (error) => { console.error("[FATAL] Uncaught Exception:", error); });
 
+import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import { WhatsAppGateway } from './src/gateway/WhatsAppGateway.mjs';
 import { EventBus } from './src/event/EventBus.mjs';
 import { QueueWorker } from './src/queue/QueueWorker.mjs';
 import { JobQueue } from './src/queue/JobQueue.mjs';
 import { ConversationFSM, FSMEventBus } from './src/conversation/ConversationFSM.mjs';
+import { ChatBurstAggregator } from './src/queue/ChatBurstAggregator.mjs';
 import { PersonalAIOS } from './src/agent/PersonalAIOS.mjs';
 import { WebCockpit } from './src/server/WebCockpit.mjs';
+import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
 
 console.log('=============================================');
-console.log('🤖 UNIVERSAL PERSONAL AI OS V8.1 — ONLINE');
+console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V13.3)');
 console.log('=============================================');
 
 const personalAI = new PersonalAIOS();
@@ -24,7 +27,29 @@ if (!EventBus.publish) {
     EventBus.publish = (event, payload) => EventBus.emit(event, payload);
 }
 
-function shouldQuoteMessage(text, chatId) {
+// 1. Initialize Chat Burst Aggregator (2.5s window)
+const burstAggregator = new ChatBurstAggregator(2500, (aggregatedJob) => {
+    const eventId = `evt_${Date.now()}`;
+    const correlationId = `burst_${aggregatedJob.chatId}_${Date.now()}`;
+    
+    console.log(`[BurstAggregator] 📦 Flushed ${aggregatedJob.burstCount} items for ${aggregatedJob.chatId} (${aggregatedJob.pushName || 'User'}): "${aggregatedJob.text.slice(0, 40)}" (Images: ${aggregatedJob.images.length})`);
+    
+    JobQueue.enqueue(eventId, correlationId, aggregatedJob.chatId, {
+        text: aggregatedJob.text,
+        images: aggregatedJob.images,
+        audio: aggregatedJob.audio,
+        quotedContext: aggregatedJob.quotedContext,
+        rawKey: aggregatedJob.rawKey,
+        rawMessage: aggregatedJob.rawMessage,
+        fromMe: aggregatedJob.fromMe || false,
+        pushName: aggregatedJob.pushName || '',
+        ownerJid: waGateway.socket?.user?.id || null
+    });
+    FSMEventBus.emit('message.queued', {});
+});
+
+function shouldQuoteMessage(text, chatId, hasAttachment = false) {
+    if (hasAttachment) return true;
     if (!text) return false;
     if (chatId.endsWith('@g.us')) return true;
 
@@ -46,14 +71,86 @@ async function start() {
     
     WebCockpit.start(3000);
     
-    EventBus.subscribe('whatsapp.message.received', (event) => {
+    EventBus.subscribe('whatsapp.message.received', async (event) => {
         const data = event.payload || event;
-        const { unifiedMsg, rawKey, rawMessage, correlationId, eventId } = data;
+        const { unifiedMsg, rawKey, rawMessage } = data;
+
+        const fromMe = Boolean(rawKey?.fromMe);
+        const pushName = rawMessage?.pushName || unifiedMsg?.pushName || '';
+
+        // If the owner typed the message manually on his phone -> Record Human Takeover immediately
+        if (fromMe && unifiedMsg?.chatId) {
+            OwnerPresenceEngine.recordOwnerMessage(unifiedMsg.chatId);
+            console.log(`[OwnerPresence] 👤 Owner active on ${unifiedMsg.chatId}. AI standing down.`);
+            return;
+        }
+
+        let imageBase64 = null;
+        let audioBase64 = null;
+        let mimeType = 'text/plain';
+        let quotedContext = null;
+
+        // 1. Extract Quoted Message Context
+        const contextInfo = rawMessage?.extendedTextMessage?.contextInfo || rawMessage?.imageMessage?.contextInfo;
+        if (contextInfo && contextInfo.quotedMessage) {
+            const qMsg = contextInfo.quotedMessage;
+            const qText = qMsg.conversation || qMsg.extendedTextMessage?.text || qMsg.imageMessage?.caption || '[Media/Pesan Lain]';
+            quotedContext = {
+                text: qText,
+                sender: contextInfo.participant || contextInfo.remoteJid || 'User'
+            };
+        }
+
+        // 2. Download Image Media if present
+        try {
+            const isImage = Boolean(rawMessage?.imageMessage || rawMessage?.viewOnceMessage?.message?.imageMessage || rawMessage?.viewOnceMessageV2?.message?.imageMessage);
+            if (isImage && waGateway.socket) {
+                const buffer = await downloadMediaMessage(
+                    { key: rawKey, message: rawMessage },
+                    'buffer',
+                    {},
+                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.socket.updateMediaMessage }
+                );
+                if (buffer) {
+                    imageBase64 = buffer.toString('base64');
+                    mimeType = rawMessage?.imageMessage?.mimetype || 'image/jpeg';
+                }
+            }
+        } catch (e) {
+            console.warn('[WA Vision] ⚠️ Could not download image:', e.message);
+        }
+
+        // 3. Download Audio / Voice Note Media if present
+        try {
+            const isAudio = Boolean(rawMessage?.audioMessage);
+            if (isAudio && waGateway.socket) {
+                const buffer = await downloadMediaMessage(
+                    { key: rawKey, message: rawMessage },
+                    'buffer',
+                    {},
+                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.socket.updateMediaMessage }
+                );
+                if (buffer) {
+                    audioBase64 = buffer.toString('base64');
+                    mimeType = rawMessage?.audioMessage?.mimetype || 'audio/ogg; codecs=opus';
+                }
+            }
+        } catch (e) {
+            console.warn('[WA Audio] ⚠️ Could not download audio:', e.message);
+        }
         
-        JobQueue.enqueue(eventId, correlationId, unifiedMsg.chatId, {
-            unifiedMsg, rawKey, rawMessage
+        // Push to Chat Burst Aggregator
+        burstAggregator.push(unifiedMsg.chatId, {
+            text: unifiedMsg?.text,
+            rawKey,
+            rawMessage,
+            fromMe,
+            pushName,
+            imageBase64,
+            audioBase64,
+            mimeType,
+            quotedContext
         });
-        FSMEventBus.emit('message.queued', {});
     });
 
     QueueWorker.start(async (job) => {
@@ -70,19 +167,82 @@ async function start() {
             const currentState = ConversationFSM.getState(chatId);
             if (currentState.version !== version) return;
             
-            try { await waGateway.sendPresenceUpdate('composing', chatId); } catch(e){}
-            
-            const responseText = await personalAI.process(chatId, payload.unifiedMsg.text, `wa_${jobId}`);
-            
-            if (responseText && ConversationFSM.transition(chatId, 'RESPONDING', {}, version)) {
-                console.log(`[WA Send] ${chatId}: ${responseText.substring(0, 50)}...`);
-                
-                const isQuoted = shouldQuoteMessage(payload.unifiedMsg.text, chatId);
-                const sendOptions = isQuoted ? { quoted: { key: payload.rawKey, message: payload.rawMessage } } : {};
+            // Resolve Group Subject Name if it's a group
+            let groupSubject = '';
+            if (chatId.endsWith('@g.us') && waGateway.socket) {
+                try {
+                    const meta = await waGateway.socket.groupMetadata(chatId);
+                    groupSubject = meta?.subject || '';
+                } catch (e) {
+                    // silent fallback
+                }
+            }
 
-                await waGateway.sendMessage(chatId, responseText, sendOptions);
+            const mediaOptions = {
+                images: payload.images || [],
+                audio: payload.audio || null,
+                quotedContext: payload.quotedContext || null,
+                fromMe: payload.fromMe || false,
+                pushName: payload.pushName || '',
+                groupSubject,
+                rawMessage: payload.rawMessage || null,
+                ownerJid: payload.ownerJid || waGateway.socket?.user?.id || null
+            };
+
+            const deliveryPlan = await personalAI.process(
+                chatId, 
+                payload.text, 
+                `wa_${jobId}`, 
+                null, 
+                mediaOptions
+            );
+            
+            if (deliveryPlan && ConversationFSM.transition(chatId, 'RESPONDING', {}, version)) {
+                // 1. Send WhatsApp Reaction if planned
+                if (deliveryPlan.reactionEmoji && waGateway.socket && payload.rawKey) {
+                    try {
+                        await waGateway.socket.sendMessage(chatId, {
+                            react: { text: deliveryPlan.reactionEmoji, key: payload.rawKey }
+                        });
+                        console.log(`[HIPE Reaction] Sent ${deliveryPlan.reactionEmoji} to ${chatId}`);
+                    } catch (e) {
+                        console.warn('[HIPE Reaction] ⚠️ Reaction failed:', e.message);
+                    }
+                }
+
+                // 2. If REACT_ONLY, complete job immediately
+                if (deliveryPlan.action === 'REACT_ONLY') {
+                    if (jobId && claimToken) {
+                        JobQueue.complete(jobId, claimToken);
+                        console.log(`[JobQueue] ✅ Job ${jobId} (REACT_ONLY) marked COMPLETED.`);
+                    }
+                    ConversationFSM.transition(chatId, 'IDLE');
+                    return;
+                }
+
+                // 3. Dispatch Bubbles with Adaptive Typing Delays
+                const bubbles = deliveryPlan.bubbles || (deliveryPlan.text ? [deliveryPlan.text] : []);
+                const delays = deliveryPlan.typingDelays || [300];
+
+                for (let bIndex = 0; bIndex < bubbles.length; bIndex++) {
+                    const bubble = bubbles[bIndex];
+                    const delayMs = delays[bIndex] || 300;
+
+                    try { await waGateway.sendPresenceUpdate('composing', chatId); } catch(e){}
+                    if (delayMs > 0) {
+                        await new Promise(r => setTimeout(r, Math.min(1200, delayMs)));
+                    }
+
+                    console.log(`[WA Send Bubble ${bIndex + 1}/${bubbles.length}] ${chatId}: ${bubble.substring(0, 45)}...`);
+                    
+                    const isFirstBubble = bIndex === 0;
+                    const hasAttachment = Boolean((payload.images && payload.images.length > 0) || payload.audio);
+                    const isQuoted = isFirstBubble && shouldQuoteMessage(payload.text, chatId, hasAttachment);
+                    const sendOptions = isQuoted ? { quoted: { key: payload.rawKey, message: payload.rawMessage } } : {};
+
+                    await waGateway.sendMessage(chatId, bubble, sendOptions);
+                }
                 
-                // CRITICAL: Complete job immediately!
                 if (jobId && claimToken) {
                     JobQueue.complete(jobId, claimToken);
                     console.log(`[JobQueue] ✅ Job ${jobId} marked COMPLETED.`);
@@ -105,11 +265,11 @@ async function start() {
     });
 
     await waGateway.connect();
-    console.log('✅ [V16 Bootloader] Systems Nominal. Engine & WA Online.');
+    console.log('✅ [V13.3 Bootloader] Contact Name Recognition & Dynamic Group Subject Online.');
 }
 
 process.on('SIGINT', () => {
-    console.log('\n[V16 Bootloader] Received SIGINT. Shutting down...');
+    console.log('\n[V13.3 Bootloader] Received SIGINT. Shutting down...');
     QueueWorker.stop();
     waGateway.shutdown();
     setTimeout(() => process.exit(0), 1000);
