@@ -14,18 +14,6 @@ export class HumanInteractionPolicy {
             return { action: 'REACT_ONLY', reactionEmoji: '👍', bubbles: [], typingDelays: [0], text: '' };
         }
 
-        // 1. Conversation ending
-        if (ConversationEndingDetector.isEnding(text)) {
-            const signOff = ConversationEndingDetector.getSignOff(text);
-            return {
-                action: 'REPLY_SINGLE',
-                reactionEmoji: signOff.reactionEmoji,
-                bubbles: [signOff.reply],
-                typingDelays: [HumanUXEngine.calculateTypingDelay(signOff.reply, false)],
-                text: signOff.reply
-            };
-        }
-
         let action = 'REPLY_SINGLE';
         let reactionEmoji = null;
         let bubbles = [responseText];

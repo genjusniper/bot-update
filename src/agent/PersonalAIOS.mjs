@@ -125,127 +125,14 @@ export class PersonalAIOS {
             return null;
         }
 
-        // 2. DON'T OVERHELP ENGINE (V12: Listen -> Validate before offering unwanted advice)
-        if (DontOverhelpEngine.isVentingWithoutAdviceRequest(inputSnippet)) {
-            const validationReply = DontOverhelpEngine.getEmpatheticValidation(inputSnippet);
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'DONT_OVERHELP_VALIDATION', text: validationReply });
-            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-            DuplicateResponseGuard.record(chatId, validationReply);
-            return { action: 'REPLY_SINGLE', bubbles: [validationReply], text: validationReply, reactionEmoji: '🫂' };
-        }
-
         // 3. MULTI-PERSON PROFILE STORE & NAME RECOGNITION (V13.6)
         const contactProfile = await ContactProfileStore.updateFromMessage(effectiveSender, inputSnippet, pushName);
         const contactDirectives = ContactProfileStore.formatDirectives(contactProfile);
 
-        // 4. CONVERSATION ENDING DETECTOR
-        if (ConversationEndingDetector.isEnding(inputSnippet)) {
-            const signOff = ConversationEndingDetector.getSignOff(inputSnippet);
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'CONVERSATION_ENDING', text: signOff.reply });
-            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-            DuplicateResponseGuard.record(chatId, signOff.reply);
-            return { action: 'REPLY_SINGLE', bubbles: [signOff.reply], text: signOff.reply, reactionEmoji: signOff.reactionEmoji };
-        }
-
-        // 5. CONVERSATION DEBUGGER / TRACE EXPLAINER (<1ms)
-        if (ConversationDebugger.isDebugQuery(inputSnippet)) {
-            const explainText = ConversationDebugger.explainLatestTrace(chatId);
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'DEBUGGER_EXPLAIN', text: explainText });
-            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-            DuplicateResponseGuard.record(chatId, explainText);
-            return { action: 'REPLY_SINGLE', bubbles: [explainText], text: explainText, reactionEmoji: null };
-        }
-
-        // 6. LOCAL CALCULATOR & UTILITY ENGINE (<1ms, 0 Token)
-        if (LocalCalculatorEngine.isMathQuery(inputSnippet)) {
-            const mathRes = LocalCalculatorEngine.calculate(inputSnippet);
-            if (mathRes.handled) {
-                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'LOCAL_CALCULATOR', text: mathRes.result });
-                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-                DuplicateResponseGuard.record(chatId, mathRes.result);
-                return { action: 'REPLY_SINGLE', bubbles: [mathRes.result], text: mathRes.result, reactionEmoji: '🧮' };
-            }
-        }
-
-        // 7. PROACTIVE IDEA GENERATOR
-        const ideaRes = await LifeCompanionEngine.generateProactiveIdea(chatId, inputSnippet);
-        if (ideaRes.handled) {
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'PROACTIVE_IDEA', text: ideaRes.response });
-            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-            DuplicateResponseGuard.record(chatId, ideaRes.response);
-            return { action: 'REPLY_SINGLE', bubbles: [ideaRes.response], text: ideaRes.response, reactionEmoji: '💡' };
-        }
-
-        // 8. PERSONAL SEARCH ENGINE & MEMORY CONTROL (Instant Local)
-        if (PersonalSearchEngine.isSearchOrControl(inputSnippet)) {
-            const searchReport = await PersonalSearchEngine.handleSearch(chatId, inputSnippet);
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'PERSONAL_SEARCH', text: searchReport });
-            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-            DuplicateResponseGuard.record(chatId, searchReport);
-            return { action: 'REPLY_SINGLE', bubbles: [searchReport], text: searchReport, reactionEmoji: null };
-        }
-
-        // 9. DEVICE / SERVER TELEMETRY INQUIRY (Instant Local)
-        if (DeviceServerMonitor.isMonitorQuery(inputSnippet)) {
-            const monitorReport = await DeviceServerMonitor.handleQuery(inputSnippet, this.gateway.fleet);
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'DEVICE_MONITOR', text: monitorReport });
-            ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-            DuplicateResponseGuard.record(chatId, monitorReport);
-            return { action: 'REPLY_SINGLE', bubbles: [monitorReport], text: monitorReport, reactionEmoji: null };
-        }
-
-        // 10. TASK & PROMISE TRACKER (Instant Local)
-        const taskAction = TaskPromiseTracker.detectAndExtractTask(inputSnippet);
-        if (taskAction.isTask) {
-            const taskResult = await TaskPromiseTracker.handleTaskAction(chatId, taskAction);
-            if (taskResult?.handled) {
-                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'TASK_TRACKER', text: taskResult.response });
-                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-                DuplicateResponseGuard.record(chatId, taskResult.response);
-                return { action: 'REPLY_SINGLE', bubbles: [taskResult.response], text: taskResult.response, reactionEmoji: '📌' };
-            }
-        }
-
-        // 11. DEEP INTENT ROUTER (Local Fast Path & Semantic Cache in 1-5ms)
+        // 11. DEEP INTENT ROUTER (Direct to Gemini AI)
         const intentRoute = DeepIntentRouter.classify(inputSnippet, { hasImage: hasImages, imageCount: images.length, hasAudio });
         trace.intent = intentRoute.intent;
         await MessageLifecycleTracker.logPhase(lifecycleId, 'INTENT_ROUTED', { intent: intentRoute.intent, targetRoute: intentRoute.targetRoute });
-
-        if (intentRoute.targetRoute === 'LOCAL_FAST_PATH') {
-            const lightResult = LightweightRouter.route(inputSnippet);
-            if (lightResult.handled) {
-                trace.modelUsed = 'LOCAL_FAST_PATH';
-                trace.finalMessage = lightResult.response;
-                trace.latencyMs = Date.now() - startTime;
-
-                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'LOCAL_FAST_PATH', text: lightResult.response });
-                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-                ReplayStudio.recordTrace(corrId, trace).catch(() => {});
-                ConversationDebugger.recordTrace(chatId, trace);
-                DuplicateResponseGuard.record(chatId, lightResult.response);
-                
-                const delivery = HumanInteractionPolicy.decideDelivery(inputSnippet, lightResult.response, { hasMedia: false });
-                return { ...delivery, text: lightResult.response };
-            }
-        }
-
-        if (intentRoute.targetRoute === 'SEMANTIC_CACHE_PATH') {
-            const cacheResult = SemanticCache.match(inputSnippet);
-            if (cacheResult.hit) {
-                trace.modelUsed = 'SEMANTIC_CACHE';
-                trace.finalMessage = cacheResult.response;
-                trace.latencyMs = Date.now() - startTime;
-
-                await MessageLifecycleTracker.logPhase(lifecycleId, 'COMPLETED', { outcome: 'SEMANTIC_CACHE', text: cacheResult.response });
-                ProductionTelemetry72h.increment('messages', 'generated').catch(() => {});
-                ReplayStudio.recordTrace(corrId, trace).catch(() => {});
-                ConversationDebugger.recordTrace(chatId, trace);
-                DuplicateResponseGuard.record(chatId, cacheResult.response);
-                
-                const delivery = HumanInteractionPolicy.decideDelivery(inputSnippet, cacheResult.response, { hasMedia: false });
-                return { ...delivery, text: cacheResult.response };
-            }
-        }
 
         // 12. CONVERSATION TEMPERATURE & REPAIR DIRECTIVES (V12)
         const tempEval = ConversationTemperatureEngine.evaluateTemperature(inputSnippet);
