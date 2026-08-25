@@ -267,7 +267,8 @@ export class PersonalAIOS {
 - ATURAN FORMAT WHATSAPP:
   1. SUPER SINGKAT & PADAT (3 - 10 kata per kalimat). JANGAN menulis panjang lebar!
   2. DILARANG KERAS menggunakan tanda seru (!). Orang santai di WhatsApp tidak memakai tanda seru.
-  3. BALAS BERUNTUN: Jika ada reaksi + jawaban, pisahkan dengan 1 baris baru (\\n) agar terkirim sebagai 2 bubble chat beruntun.`;
+  3. BALAS BERUNTUN: Jika ada reaksi + jawaban, pisahkan dengan 1 baris baru (\\n) agar terkirim sebagai 2 bubble chat beruntun.
+  4. BERSIH & NO TOXIC: DILARANG KERAS menggunakan kata-kata kasar/kotor/toxic (seperti cok, cuk, asu, matamu, ndasmu, anjing, goblok, pantek). Selalu berbicara santai, bersih, dan beradab.`;
 
         const outcomeData = await ConversationOutcomeTracker.loadOutcome(chatId);
         const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
@@ -353,6 +354,8 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
         sanitizedOutput = sanitizedOutput.replace(/!+/g, ''); // 100% strip exclamation marks for casual WhatsApp style
+        sanitizedOutput = sanitizedOutput.replace(/\b(cok|cuk|asu|matamu|ndasmu|pantek|anjing|bangsat|goblok|babi|kontol|memek|jembut)\b/gi, ''); // 100% strip toxic/profanities
+        sanitizedOutput = sanitizedOutput.replace(/\s{2,}/g, ' ').trim();
         sanitizedOutput = HumanUXEngine.contextualizeEmojis(sanitizedOutput, socialDynamics.energy);
         await MessageLifecycleTracker.logPhase(lifecycleId, 'QUALITY_CHECKED', { score: qualityVerdict.qualityScore });
 

@@ -19,8 +19,9 @@ export class NaturalConversationEnhancer {
   ⚠️ ATURAN MUTLAK: JANGAN SEKALI-KALI membalas dengan bahasa Jawa (seperti "kowe", "piye", "ngopo", "lha") karena lawan bicara bukan orang Jawa!
   👉 BALAS DENGAN: Bahasa Indonesia santai / gaul wajar (contoh: "aman bro", "siap", "lu gimana?", "wkwk santai aja").`;
         } else if (isKasartongkrongan) {
-            mirroringDirective = `- DETEKSI LAWAN BICARA: TEMAN TONGKRONGAN SANGAT AKRAB (guyonan lepas).
-  👉 BALAS DENGAN: Santai, akrab, boleh sedikit guyon/roasting timbal balik khas anak muda.`;
+            mirroringDirective = `- DETEKSI LAWAN BICARA: TEMAN TONGKRONGAN (meskipun lawan bicara memakai kata kasar/slang).
+  ⚠️ ATURAN MUTLAK: KAMU DILARANG KERAS menggunakan kata-kata kasar/toxic/kotor (seperti cok, cuk, asu, matamu, ndasmu, anjing, goblok, pantek).
+  👉 BALAS DENGAN: Bersih, santai, akrab, dan sopan tanpa kata kasar (contoh: "wkwk santai bro", "lha piye to", "iyo tenan").`;
         } else if (isJawaSantai) {
             mirroringDirective = `- DETEKSI LAWAN BICARA: TEMAN JAWA AKRAB (seperti Hanif / kawan panjat tebing).
   👉 BALAS DENGAN: Bahasa Jawa Semarangan yang luwes, akrab, dan santai (contoh: "iyo", "wae", "piye", "ki", "tenan", "gas").`;
