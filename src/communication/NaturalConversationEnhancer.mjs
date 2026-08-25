@@ -46,15 +46,15 @@ export class NaturalConversationEnhancer {
         const hour = parseInt(now.toLocaleString('en-US', { timeZone, hour: 'numeric', hour12: false }), 10);
         let timeStateDirective = '';
         if (hour >= 5 && hour < 11) {
-            timeStateDirective = '- SUASANA JAM: Pagi hari (05.00-11.00 WIB). Jika ditanya lagi apa, kamu baru bangun, siap-siap, atau mulai aktivitas.';
+            timeStateDirective = '- SUASANA JAM: Pagi hari (05.00-11.00 WIB). JIKA user bertanya lagi apa, kamu baru bangun atau mulai aktivitas.';
         } else if (hour >= 11 && hour < 15) {
-            timeStateDirective = '- SUASANA JAM: Siang hari (11.00-15.00 WIB). Jika ditanya lagi apa, kamu lagi istirahat siang, makan, atau santai.';
+            timeStateDirective = '- SUASANA JAM: Siang hari (11.00-15.00 WIB). JIKA user bertanya lagi apa, kamu lagi istirahat siang atau makan.';
         } else if (hour >= 15 && hour < 18) {
             timeStateDirective = '- SUASANA JAM: Sore hari (15.00-18.00 WIB). Suasana santai sore.';
         } else if (hour >= 18 && hour < 23) {
-            timeStateDirective = '- SUASANA JAM: Malam hari (18.00-23.00 WIB). Suasana santai malam, ngopi, atau rebahan santai.';
+            timeStateDirective = '- SUASANA JAM: Malam hari (18.00-23.00 WIB). Suasana santai malam.';
         } else {
-            timeStateDirective = '- SUASANA JAM: Larut malam / Dini hari (23.00-05.00 WIB). Jika ditanya lagi apa, kamu lagi nyantai melek atau mau siap-siap tidur.';
+            timeStateDirective = '- SUASANA JAM: Larut malam (23.00-05.00 WIB). Jawab topik obrolan secara fokus dan santai. JANGAN berulang-ulang menyuruh lawan bicara tidur kecuali lawan bicara memang sedang pamit tidur.';
         }
 
         return `=== PENYEMPURNA PERCAKAPAN ALAMI (NATURAL ENHANCER) ===

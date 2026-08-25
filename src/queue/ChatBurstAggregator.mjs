@@ -79,6 +79,10 @@ export class ChatBurstAggregator {
         const entry = this.buffers.get(chatId);
         if (!entry) return;
 
+        // Clear buffer entry immediately so next burst starts 100% fresh!
+        this.buffers.delete(chatId);
+        if (entry.timer) clearTimeout(entry.timer);
+
         const aggregatedText = entry.texts.join(' ').trim();
         const burstCount = entry.texts.length + entry.images.length + (entry.audio ? 1 : 0);
         const burstDurationMs = Date.now() - entry.firstTimestamp;
