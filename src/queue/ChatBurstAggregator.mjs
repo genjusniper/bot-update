@@ -1,14 +1,16 @@
 // src/queue/ChatBurstAggregator.mjs
-// Aggregates rapid chat bursts and multiple photos/media within a 2.5s window
+// Aggregates rapid chat bursts and multiple photos/media within a debounce window
+// V13.7 — Bug Fix: pushName, fromMe properly stored; auto-flush on large bursts; flushAll on shutdown
 
 export class ChatBurstAggregator {
     constructor(debounceMs = 2500, onFlushCallback) {
         this.debounceMs = debounceMs;
         this.onFlush = onFlushCallback;
-        this.buffers = new Map(); // chatId -> { timer, messages: [], images: [], audio: null, quotedContext: null, rawKey, rawMessage }
+        this.buffers = new Map();
+        this.MAX_BURST_ITEMS = 6; // Auto-flush immediately if burst > 6 items
     }
 
-    push(chatId, { text, rawKey, rawMessage, imageBase64, audioBase64, mimeType, quotedContext }) {
+    push(chatId, { text, rawKey, rawMessage, fromMe, pushName, imageBase64, audioBase64, mimeType, quotedContext }) {
         let entry = this.buffers.get(chatId);
 
         if (!entry) {
@@ -20,24 +22,38 @@ export class ChatBurstAggregator {
                 quotedContext: null,
                 rawKey,
                 rawMessage,
-                firstTimestamp: Date.now()
+                fromMe: fromMe || false,
+                pushName: pushName || '',
+                firstTimestamp: Date.now(),
+                itemCount: 0
             };
             this.buffers.set(chatId, entry);
         }
 
+        // Always update rawKey + rawMessage to latest in burst (for quoting)
+        entry.rawKey = rawKey;
+        entry.rawMessage = rawMessage;
+
+        // Update pushName & fromMe if available
+        if (pushName) entry.pushName = pushName;
+        if (typeof fromMe === 'boolean') entry.fromMe = fromMe;
+
         // Add text if present
         if (text && text.trim().length > 0) {
             entry.texts.push(text.trim());
+            entry.itemCount++;
         }
 
-        // Add image if present
+        // Accumulate ALL images from all burst messages (FIXED: was losing photos)
         if (imageBase64) {
             entry.images.push({ base64: imageBase64, mimeType: mimeType || 'image/jpeg' });
+            entry.itemCount++;
         }
 
-        // Add audio if present
+        // Add audio (last audio wins)
         if (audioBase64) {
-            entry.audio = { base64: audioBase64, mimeType: mimeType || 'audio/ogg' };
+            entry.audio = { base64: audioBase64, mimeType: mimeType || 'audio/ogg; codecs=opus' };
+            entry.itemCount++;
         }
 
         // Save quoted context if present
@@ -45,18 +61,16 @@ export class ChatBurstAggregator {
             entry.quotedContext = quotedContext;
         }
 
-        // Keep latest rawKey & rawMessage for quote sending
-        entry.rawKey = rawKey;
-        entry.rawMessage = rawMessage;
-
-        // Reset debounce timer
-        if (entry.timer) {
-            clearTimeout(entry.timer);
+        // Auto-flush immediately if burst exceeds max items (prevent queue overload)
+        if (entry.itemCount >= this.MAX_BURST_ITEMS) {
+            if (entry.timer) clearTimeout(entry.timer);
+            this.flush(chatId);
+            return;
         }
 
-        entry.timer = setTimeout(() => {
-            this.flush(chatId);
-        }, this.debounceMs);
+        // Reset debounce timer
+        if (entry.timer) clearTimeout(entry.timer);
+        entry.timer = setTimeout(() => this.flush(chatId), this.debounceMs);
     }
 
     flush(chatId) {
@@ -65,7 +79,10 @@ export class ChatBurstAggregator {
 
         this.buffers.delete(chatId);
 
-        const aggregatedText = entry.texts.join(' ');
+        const aggregatedText = entry.texts.join(' ').trim();
+        const burstCount = entry.texts.length + entry.images.length + (entry.audio ? 1 : 0);
+        const burstDurationMs = Date.now() - entry.firstTimestamp;
+
         const aggregatedJob = {
             chatId: entry.chatId,
             text: aggregatedText,
@@ -74,11 +91,21 @@ export class ChatBurstAggregator {
             quotedContext: entry.quotedContext,
             rawKey: entry.rawKey,
             rawMessage: entry.rawMessage,
-            burstCount: entry.texts.length + entry.images.length + (entry.audio ? 1 : 0)
+            fromMe: entry.fromMe,
+            pushName: entry.pushName,
+            burstCount,
+            burstDurationMs
         };
 
         if (this.onFlush) {
             this.onFlush(aggregatedJob);
+        }
+    }
+
+    // Force flush all pending buffers (called on SIGINT/shutdown)
+    flushAll() {
+        for (const chatId of this.buffers.keys()) {
+            this.flush(chatId);
         }
     }
 }
