@@ -1,10 +1,9 @@
 // src/security/copilot/PersonalCoPilotGuard.mjs
 // Master Gatekeeper for Personal WhatsApp Number Co-Pilot
-// V14.1 — Fixed: isSelfChat strictly locked to Owner ID (never misidentifies other @lid contacts)
+// V14.2 — Strict Logic: AI answers incoming messages from whitelisted contacts immediately; AI never replies to Owner's outgoing messages to others.
 
 import { ContactPolicyEngine } from './ContactPolicyEngine.mjs';
 import { GroupSafetyPolicy } from './GroupSafetyPolicy.mjs';
-import { OwnerPresenceEngine } from './OwnerPresenceEngine.mjs';
 
 const OWNER_LID = '236322690191595@lid';
 
@@ -12,32 +11,22 @@ export class PersonalCoPilotGuard {
     static async evaluateGatekeeper({ chatId, groupSubject = '', text, fromMe, isGroup, rawMessage, ownerJid }) {
         const ownerPhone = ownerJid ? ownerJid.split(':')[0].split('@')[0] : '';
         
-        // STRICT SELF-CHAT: Only true if chatting with Owner's exact LID or Owner's phone
+        // Strict Self-Chat: only true if chatting with Owner's exact LID or phone
         const isSelfChat = Boolean(
             chatId === OWNER_LID || 
             (ownerPhone && chatId.replace(/\D/g, '').includes(ownerPhone))
         );
 
-        // 1. If message was typed manually by Owner to ANOTHER person -> Record takeover & STAND DOWN
+        // 1. If message was sent by Owner to ANOTHER person -> AI NEVER replies to owner's own outgoing message
         if (fromMe && !isSelfChat) {
-            OwnerPresenceEngine.recordOwnerMessage(chatId);
             return {
                 allowAI: false,
-                reason: 'OWNER_SELF_MESSAGE_TO_OTHER',
+                reason: 'OWNER_OUTGOING_MESSAGE_IGNORE',
                 action: 'STAND_DOWN'
             };
         }
 
-        // 2. If Human Takeover is actively running on this chat -> Yield control to Owner
-        if (!isSelfChat && OwnerPresenceEngine.isTakeoverActive(chatId)) {
-            return {
-                allowAI: false,
-                reason: 'HUMAN_TAKEOVER_ACTIVE',
-                action: 'SILENT_HUMAN_IN_CONTROL'
-            };
-        }
-
-        // 3. If Self-Chat (Owner chatting to own bot/number) -> Always Allow
+        // 2. If Self-Chat (Owner chatting to own bot/number) -> Always Allow & Reply
         if (isSelfChat) {
             return {
                 allowAI: true,
@@ -46,7 +35,7 @@ export class PersonalCoPilotGuard {
             };
         }
 
-        // 4. If Group Chat -> Evaluate Strict Group Safety
+        // 3. If Group Chat -> Evaluate Strict Group Safety
         if (isGroup) {
             const groupVerdict = await GroupSafetyPolicy.evaluateGroupSafety({
                 groupId: chatId,
@@ -70,7 +59,7 @@ export class PersonalCoPilotGuard {
             };
         }
 
-        // 5. If Private 1-on-1 Chat from other people -> Evaluate Contact Policy (VIP/AUTO vs SILENT)
+        // 4. If Private 1-on-1 Chat from other people (incoming message) -> Evaluate Contact Policy (VIP/AUTO vs SILENT)
         const contactVerdict = await ContactPolicyEngine.getPolicyForContact(chatId);
 
         if (contactVerdict.policy === 'MANUAL' || contactVerdict.policy === 'SILENT') {
@@ -81,6 +70,7 @@ export class PersonalCoPilotGuard {
             };
         }
 
+        // AUTO / VIP -> AI answers the incoming message from the registered contact!
         return {
             allowAI: true,
             reason: `CONTACT_POLICY_${contactVerdict.policy}`,
