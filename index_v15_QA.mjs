@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V13.4 SELF-CHAT & CO-PILOT PRODUCTION)
+// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V13.5 VISION & MAPS MULTIMODAL PRODUCTION)
 process.on("unhandledRejection", (reason, promise) => { console.error("[FATAL] Unhandled Rejection:", reason); });
 process.on("uncaughtException", (error) => { console.error("[FATAL] Uncaught Exception:", error); });
 
@@ -17,7 +17,7 @@ import { WebCockpit } from './src/server/WebCockpit.mjs';
 import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
 
 console.log('=============================================');
-console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V13.4)');
+console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V13.5)');
 console.log('=============================================');
 
 const personalAI = new PersonalAIOS();
@@ -79,6 +79,17 @@ async function start() {
         const pushName = rawMessage?.pushName || unifiedMsg?.pushName || '';
         const chatId = unifiedMsg?.chatId || rawKey?.remoteJid || '';
 
+        // Extract full incoming text including image/video captions
+        const incomingText = (
+            unifiedMsg?.text || 
+            rawMessage?.conversation || 
+            rawMessage?.extendedTextMessage?.text || 
+            rawMessage?.imageMessage?.caption || 
+            rawMessage?.videoMessage?.caption || 
+            rawMessage?.documentMessage?.caption || 
+            ''
+        ).trim();
+
         const ownerId = waGateway.socket?.user?.id || '';
         const ownerPhone = ownerId ? ownerId.split(':')[0].split('@')[0] : '';
         const isSelfChat = Boolean(chatId.endsWith('@lid') || (ownerPhone && chatId.includes(ownerPhone)));
@@ -119,6 +130,7 @@ async function start() {
                 if (buffer) {
                     imageBase64 = buffer.toString('base64');
                     mimeType = rawMessage?.imageMessage?.mimetype || 'image/jpeg';
+                    console.log(`[WA Vision] 📸 Successfully downloaded image (${(buffer.length/1024).toFixed(1)} KB)`);
                 }
             }
         } catch (e) {
@@ -146,7 +158,7 @@ async function start() {
         
         // Push to Chat Burst Aggregator
         burstAggregator.push(chatId, {
-            text: unifiedMsg?.text,
+            text: incomingText,
             rawKey,
             rawMessage,
             fromMe,
@@ -270,11 +282,11 @@ async function start() {
     });
 
     await waGateway.connect();
-    console.log('✅ [V13.4 Bootloader] Self-Chat, LID & Contact Recognition Online.');
+    console.log('✅ [V13.5 Bootloader] Vision & Maps Multimodal Online.');
 }
 
 process.on('SIGINT', () => {
-    console.log('\n[V13.4 Bootloader] Received SIGINT. Shutting down...');
+    console.log('\n[V13.5 Bootloader] Received SIGINT. Shutting down...');
     QueueWorker.stop();
     waGateway.shutdown();
     setTimeout(() => process.exit(0), 1000);

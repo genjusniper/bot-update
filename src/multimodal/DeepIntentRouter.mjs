@@ -1,5 +1,5 @@
 // src/multimodal/DeepIntentRouter.mjs
-// Lightweight Rule & Regex Intent Classifier (1-5ms, Zero API cost)
+// Lightweight Rule & Regex Intent Classifier with Link & Vision Precision
 
 export class DeepIntentRouter {
     static classify(message, attachments = {}) {
@@ -16,22 +16,21 @@ export class DeepIntentRouter {
         }
 
         // 2. Photo / Image Intake
-        if (attachments.hasImage) {
-            // Check if it's a troubleshoot / error photo
+        if (attachments.hasImage || attachments.imageCount > 0) {
             if (text.match(/(error|rusak|kenapa ini|bisa gak|mati|hang|layar|kabel)/i)) {
                 return { intent: 'TROUBLESHOOT_VISION', requiresAI: true, targetRoute: 'VISION_MULTIMODAL' };
             }
-            if (text.match(/(dimana|tempat|lokasi|daerah|pemandangan)/i)) {
+            if (text.match(/(dimana|tempat|lokasi|daerah|pemandangan|ini dimana)/i)) {
                 return { intent: 'PLACE_VISION', requiresAI: true, targetRoute: 'VISION_MULTIMODAL' };
             }
-            if (text.match(/(bagus gak|rekomendasi|beli|harga|worth)/i)) {
+            if (text.match(/(bagus gak|rekomendasi|beli|harga|worth|cocok)/i)) {
                 return { intent: 'PRODUCT_VISION', requiresAI: true, targetRoute: 'VISION_MULTIMODAL' };
             }
             return { intent: 'PHOTO_VISION', requiresAI: true, targetRoute: 'VISION_MULTIMODAL' };
         }
 
-        // 3. Link / URL Intake
-        const urlMatch = message && message.match(/https?:\/\/[^\s]+/i);
+        // 3. Link / URL Intake (Google Maps, Web, Social, Marketplace)
+        const urlMatch = message && message.match(/(https?:\/\/[^\s]+|maps\.app\.goo\.gl\/[^\s]+|goo\.gl\/maps\/[^\s]+)/i);
         if (urlMatch) {
             return {
                 intent: 'LINK_ANALYSIS',
