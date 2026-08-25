@@ -1,5 +1,4 @@
-// src/fleet/AIResourceManager.mjs — HIGH AVAILABILITY FLEET
-import https from 'https';
+// src/fleet/AIResourceManager.mjs — SUB-SECOND LIGHTNING FLEET
 import { KeyFleetManager } from './KeyFleetManager.mjs';
 import { ErrorClassifier } from './ErrorClassifier.mjs';
 import { CircuitBreaker } from './CircuitBreaker.mjs';
@@ -9,14 +8,14 @@ export class AIResourceManager {
     constructor() {
         const rawKeys = process.env.GEMINI_API_KEY || '';
         this.fleet = new KeyFleetManager(rawKeys);
-        this.circuitBreaker = new CircuitBreaker(12, 10000); // 12 threshold, 10s reset
+        this.circuitBreaker = new CircuitBreaker(15, 10000);
         
-        // Multi-Model Verified Pool
+        // ULTRA-FAST Verified Models (Sub-second latency on free tier)
         this.models = [
-            'gemini-3.5-flash',
-            'gemini-flash-latest',
-            'gemini-3.7-flash',
-            'gemini-3.5-flash-lite'
+            'gemini-flash-lite-latest',
+            'gemini-3.1-flash-lite',
+            'gemini-3.5-flash-lite',
+            'gemini-3-flash-preview'
         ];
         this.modelIndex = 0;
     }
@@ -50,97 +49,65 @@ export class AIResourceManager {
         const payload = JSON.stringify({
             system_instruction: { parts: [{ text: systemPrompt }] },
             contents: contents,
-            generationConfig: { temperature: 0.75, maxOutputTokens: 1000 }
+            generationConfig: { temperature: 0.8, maxOutputTokens: 800 }
         });
 
         const startTime = Date.now();
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${keyItem.key}`;
 
-        return new Promise((resolve) => {
-            const req = https.request(url, {
+        try {
+            const res = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(payload)
-                },
-                timeout: 10000
-            }, (res) => {
-                let data = '';
-                res.on('data', chunk => data += chunk);
-                res.on('end', () => {
-                    const latency = Date.now() - startTime;
-                    try {
-                        const json = JSON.parse(data);
-                        
-                        if (json.error) {
-                            const errClassification = ErrorClassifier.classify(json.error.code || res.statusCode, json.error);
-                            
-                            this.fleet.recordError(keyItem.id, errClassification);
-                            QuotaTelemetry.recordRequest(false, latency, 0, errClassification.type === 'RATE_LIMITED');
-
-                            if (errClassification.action === 'STOP') {
-                                resolve(this.offlineFallback());
-                                return;
-                            }
-
-                            if (errClassification.action === 'ROTATE_MODEL') {
-                                this.rotateModel();
-                            }
-
-                            if (attempt < 8) {
-                                resolve(this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1));
-                            } else {
-                                this.circuitBreaker.recordFailure();
-                                resolve(this.offlineFallback());
-                            }
-                        } else if (json.candidates && json.candidates.length > 0 && json.candidates[0].content?.parts?.length > 0) {
-                            this.fleet.recordSuccess(keyItem.id, latency);
-                            this.circuitBreaker.recordSuccess();
-                            QuotaTelemetry.recordRequest(true, latency, 150);
-                            resolve(json.candidates[0].content.parts[0].text);
-                        } else {
-                            if (attempt < 4) {
-                                resolve(this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1));
-                            } else {
-                                resolve(this.offlineFallback());
-                            }
-                        }
-                    } catch(e) {
-                        if (attempt < 3) {
-                            resolve(this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1));
-                        } else {
-                            resolve(this.offlineFallback());
-                        }
-                    }
-                });
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                signal: AbortSignal.timeout(8000) // 8s fast timeout
             });
 
-            req.on('error', (e) => {
-                const errClassification = ErrorClassifier.classify(500, e);
+            const latency = Date.now() - startTime;
+            const json = await res.json();
+
+            if (json.error) {
+                const errClassification = ErrorClassifier.classify(json.error.code || res.status, json.error);
+                console.warn(`[AIResourceManager] Error on Key #${keyItem.id} (${errClassification.type}):`, json.error.message?.slice(0, 70));
+
                 this.fleet.recordError(keyItem.id, errClassification);
-                if (attempt < 4) {
-                    resolve(this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1));
-                } else {
-                    resolve(this.offlineFallback());
-                }
-            });
+                QuotaTelemetry.recordRequest(false, latency, 0, errClassification.type === 'RATE_LIMITED');
 
-            req.on('timeout', () => {
-                req.destroy();
-                this.rotateModel();
-                if (attempt < 3) {
-                    resolve(this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1));
-                } else {
-                    resolve(this.offlineFallback());
+                if (errClassification.action === 'ROTATE_MODEL' || res.status === 503) {
+                    this.rotateModel();
                 }
-            });
 
-            req.write(payload);
-            req.end();
-        });
+                if (attempt < 8) {
+                    return await this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1);
+                } else {
+                    this.circuitBreaker.recordFailure();
+                    return this.offlineFallback();
+                }
+            }
+
+            if (json.candidates && json.candidates.length > 0 && json.candidates[0].content?.parts?.length > 0) {
+                this.fleet.recordSuccess(keyItem.id, latency);
+                this.circuitBreaker.recordSuccess();
+                QuotaTelemetry.recordRequest(true, latency, 150);
+                return json.candidates[0].content.parts[0].text;
+            }
+
+            if (attempt < 5) {
+                return await this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1);
+            }
+            return this.offlineFallback();
+        } catch(e) {
+            const latency = Date.now() - startTime;
+            console.warn(`[AIResourceManager] Fetch catch (${e.name}):`, e.message);
+            this.rotateModel();
+            if (attempt < 5) {
+                return await this.generateText(systemPrompt, inputPayload, fallbackToOffline, attempt + 1);
+            }
+            return this.offlineFallback();
+        }
     }
 
     offlineFallback() {
-        return "Bentar, agak nge-lag tadi jaringannya. Coba ulangi lagi ya!";
+        return "Lagi agak lemot jaringannya barusan, bro. Coba kirim ulang ya!";
     }
 }
