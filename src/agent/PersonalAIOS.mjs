@@ -1,8 +1,9 @@
-// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V7.1 FAILURE-PROOF RESILIENT RUNTIME)
+// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V8 PRODUCTION HARDENED RUNTIME)
 
 import { AIGatewayObservable } from '../resilience/AIGatewayObservable.mjs';
-import { FailureContainment } from '../resilience/FailureContainment.mjs';
-import { EmergencyConversationBrain } from '../resilience/EmergencyConversationBrain.mjs';
+import { CircuitBreakerHardened } from '../resilience/CircuitBreakerHardened.mjs';
+import { KeyHealthRegistry } from '../resilience/KeyHealthRegistry.mjs';
+import { EmergencyBrainExpanded } from '../resilience/EmergencyBrainExpanded.mjs';
 import { DuplicateResponseGuard } from '../resilience/DuplicateResponseGuard.mjs';
 
 import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
@@ -12,6 +13,8 @@ import { StyleDNA } from '../communication/StyleDNA.mjs';
 import { StyleLearningEngine } from '../communication/StyleLearningEngine.mjs';
 
 import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
+import { ConversationContinuityLock } from '../conversation/ConversationContinuityLock.mjs';
+import { HumanRhythmEngine } from '../conversation/HumanRhythmEngine.mjs';
 import { TurnTakingEngine } from '../conversation/TurnTakingEngine.mjs';
 import { StoryThreadTracker } from '../conversation/StoryThreadTracker.mjs';
 
@@ -84,15 +87,23 @@ export class PersonalAIOS {
             MemoryConsolidationPipeline.consolidateWorkingMemory(chatId, memData.working_memory).catch(() => {});
         }
 
-        // 4. MULTI-DIMENSIONAL CONVERSATION STATE & TURN TAKING
+        // 4. CONVERSATION STATE, CONTINUITY LOCK & HUMAN RHYTHM
         const convState = ConversationStateEngine.evaluateState(message);
         const emotionalCalibration = EmotionalCalibrationEngine.calibrate(message);
         const turnTaking = TurnTakingEngine.evaluateTurn(message, memData.working_memory, 1);
+        const rhythm = HumanRhythmEngine.determineRhythm(message, convState);
         const curhatMode = CurhatEngine.detectMode(message);
+
+        const continuityLock = await ConversationContinuityLock.updateLock(chatId, {
+            currentTopic: convState.phase === 'CURHAT_VENTING' ? 'curhat' : undefined,
+            emotionalTone: emotionalCalibration.tone
+        });
+        const continuityDirectives = ConversationContinuityLock.formatDirectives(continuityLock);
 
         trace.phase = convState.phase;
         trace.mode = curhatMode.mode;
         trace.emotionalTone = emotionalCalibration.tone;
+        trace.rhythm = rhythm.behavior;
 
         // 5. TOPIC GRAPH & STORY THREADS
         const topicGraph = await TopicGraphEngine.updateGraph(chatId, message);
@@ -145,9 +156,11 @@ ${styleDirectives}
 ${convState.directive}
 ${emotionalCalibration.directive}
 ${turnTaking.directive}
+${rhythm.directive}
 ${humorTiming.directive}
 ${humorDecision.directive ? `${humorDecision.directive}` : ''}
 
+${continuityDirectives}
 ${topicDirectives}
 ${storyContext}
 ${socialContext}
@@ -168,19 +181,18 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         }
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        // 12. OBSERVABLE AI GATEWAY EXECUTION
+        // 12. OBSERVABLE AI GATEWAY EXECUTION WITH EMERGENCY BRAIN FALLBACK
         let rawDraft = "";
         const gatewayRes = await this.gateway.generate(cleanPrompt, contents, corrId);
 
         if (gatewayRes.success) {
             rawDraft = gatewayRes.text;
             trace.modelUsed = gatewayRes.modelUsed;
-            FailureContainment.recordSuccess(chatId);
         } else {
-            // FAILURE CONTAINMENT -> EMERGENCY CONVERSATION BRAIN (Zero fallback spam!)
-            console.warn(`[PersonalAIOS] External AI Gateway failed (${gatewayRes.error}). Engaging Emergency Conversation Brain.`);
-            rawDraft = FailureContainment.handleFailure(chatId, message);
-            trace.modelUsed = 'EMERGENCY_CONVERSATION_BRAIN';
+            // ENGAGE EXPANDED EMERGENCY BRAIN (Zero error leakage, organic contextual reply)
+            console.warn(`[PersonalAIOS] External AI Gateway unavailable (${gatewayRes.error}). Engaging Emergency Conversation Brain.`);
+            rawDraft = EmergencyBrainExpanded.generateReply(message);
+            trace.modelUsed = 'EMERGENCY_BRAIN_EXPANDED';
         }
 
         // 13. CONVERSATION QUALITY GATE (Pre-Send Validation & Hallucination Guard)
@@ -200,8 +212,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         // Check 60-second duplicate response window
         const allowSend = DuplicateResponseGuard.shouldSend(chatId, sanitizedOutput);
         if (!allowSend) {
-            // Pick an emergency varied sentence if duplicate detected
-            sanitizedOutput = EmergencyConversationBrain.generateEmergencyReply(message);
+            sanitizedOutput = EmergencyBrainExpanded.generateReply(message);
             DuplicateResponseGuard.record(chatId, sanitizedOutput);
         }
 
