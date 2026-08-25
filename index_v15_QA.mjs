@@ -15,12 +15,16 @@ import { ChatBurstAggregator } from './src/queue/ChatBurstAggregator.mjs';
 import { PersonalAIOS } from './src/agent/PersonalAIOS.mjs';
 import { WebCockpit } from './src/server/WebCockpit.mjs';
 import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
+import { StorageAutoPruner } from './src/maintenance/StorageAutoPruner.mjs';
 
 const OWNER_LID = '236322690191595@lid';
 
 console.log('=============================================');
 console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V14.1)');
 console.log('=============================================');
+
+// Start automated storage & log pruning (every 6h)
+StorageAutoPruner.startCron(6);
 
 const personalAI = new PersonalAIOS();
 const waGateway = new WhatsAppGateway('auth-v5-test');

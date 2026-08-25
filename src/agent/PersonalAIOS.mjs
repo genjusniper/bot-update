@@ -99,7 +99,13 @@ export class PersonalAIOS {
 
         const hasImages = images.length > 0;
         const hasAudio = Boolean(audio);
-        const inputSnippet = (message || '').trim() || (hasImages ? `[${images.length} FOTO / SLIDE]` : (hasAudio ? '[VOICE NOTE]' : 'Halo'));
+        const rawText = (message || '').trim();
+
+        if (!rawText && !hasImages && !hasAudio) {
+            return null; // SILENT: Drop empty protocol/sticker packets with no content
+        }
+
+        const inputSnippet = rawText || (hasImages ? `[${images.length} FOTO / SLIDE]` : '[VOICE NOTE]');
 
         const lifecycleId = await MessageLifecycleTracker.createLifecycle(chatId, inputSnippet);
         const trace = { correlationId: corrId, lifecycleId, chatId, senderId: effectiveSender, pushName, groupSubject, message: inputSnippet, imageCount: images.length, hasAudio };

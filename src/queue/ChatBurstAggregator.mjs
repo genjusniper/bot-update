@@ -79,11 +79,15 @@ export class ChatBurstAggregator {
         const entry = this.buffers.get(chatId);
         if (!entry) return;
 
-        this.buffers.delete(chatId);
-
         const aggregatedText = entry.texts.join(' ').trim();
         const burstCount = entry.texts.length + entry.images.length + (entry.audio ? 1 : 0);
         const burstDurationMs = Date.now() - entry.firstTimestamp;
+
+        // Discard empty bursts (stickers, reactions, protocol packets with no content)
+        if (!aggregatedText && entry.images.length === 0 && !entry.audio) {
+            console.log(`[BurstAggregator] 🛑 Dropped empty/zero-item burst for ${chatId}`);
+            return;
+        }
 
         // Standard Unified Payload Schema V1
         const unifiedJob = {
