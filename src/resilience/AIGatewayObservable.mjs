@@ -1,4 +1,4 @@
-// src/resilience/AIGatewayObservable.mjs — MULTI-IMAGE ALBUM & QUOTE READY
+// src/resilience/AIGatewayObservable.mjs — PRODUCTION MULTI-KEY ROTATION & REPAIR
 
 import { KeyFleetManager } from '../fleet/KeyFleetManager.mjs';
 import { ErrorTaxonomy } from '../fleet/ErrorTaxonomy.mjs';
@@ -10,9 +10,8 @@ export class AIGatewayObservable {
         this.fleet = null;
         this.models = [
             'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-flash',
-            'gemini-2.0-flash-lite'
+            'gemini-flash-latest',
+            'gemini-flash-lite-latest'
         ];
         this.modelIndex = 0;
         this.initFleet();
@@ -49,10 +48,10 @@ export class AIGatewayObservable {
             generationConfig: { temperature: 0.8, maxOutputTokens: 900 }
         });
 
-        let modelAttempts = 0;
-        const maxModelAttempts = 3;
+        let attempts = 0;
+        const maxAttempts = Math.min(10, this.fleet.fleet.length);
 
-        while (modelAttempts < maxModelAttempts && (Date.now() - startTime) < 15000) {
+        while (attempts < maxAttempts && (Date.now() - startTime) < 20000) {
             const currentModel = this.models[this.modelIndex % this.models.length];
             const keyItem = this.fleet.getHealthyKey();
 
@@ -70,7 +69,7 @@ export class AIGatewayObservable {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: payload,
-                    signal: AbortSignal.timeout(10000)
+                    signal: AbortSignal.timeout(9000)
                 });
 
                 const latency = Date.now() - reqStart;
@@ -82,20 +81,16 @@ export class AIGatewayObservable {
                         model: currentModel,
                         keyId: keyItem.id,
                         status: res.status,
-                        error: err.category,
+                        error: json.error.message || err.category,
                         latencyMs: latency
                     });
 
                     this.fleet.recordError(keyItem.id, err);
                     ProviderHealthMatrix.recordMetric(currentModel, false, latency);
 
-                    if (err.action === 'ABORT_NO_ROTATION') {
-                        console.error('[AIGatewayObservable] 🛑 400 Bad Request aborted without rotation.');
-                        return { success: false, telemetry, error: 'BAD_REQUEST_ABORT' };
-                    }
-
-                    modelAttempts++;
+                    // Switch model or rotate key on error
                     this.modelIndex++;
+                    attempts++;
                     continue;
                 }
 
@@ -125,7 +120,7 @@ export class AIGatewayObservable {
                 telemetry.traces.push({ model: currentModel, keyId: keyItem.id, error: e.message, latencyMs: latency });
                 ProviderHealthMatrix.recordMetric(currentModel, false, latency);
                 this.modelIndex++;
-                modelAttempts++;
+                attempts++;
             }
         }
 
