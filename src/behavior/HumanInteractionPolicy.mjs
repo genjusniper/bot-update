@@ -25,15 +25,15 @@ export class HumanInteractionPolicy {
             }
         }
 
-        // 2. Multi-bubble only for distinct paragraph breaks with substantial content
-        if (responseText.length > 120 && responseText.includes('\n\n')) {
+        // 2. Multi-bubble splitting: split if text has newlines (\n or \n\n) for active listening + main response
+        if (responseText.includes('\n')) {
             const seqBubbles = BubbleSequencer.sequence(responseText, 2);
             if (seqBubbles.length > 1) {
                 action = 'REPLY_MULTI_BUBBLE';
                 bubbles = seqBubbles;
                 typingDelays = bubbles.map((b, i) => {
                     const delay = HumanUXEngine.calculateTypingDelay(b);
-                    return i === 0 ? delay : Math.max(2500, delay); // follow-up bubble takes 2.5s - 4.5s
+                    return i === 0 ? delay : Math.min(3500, Math.max(2000, delay));
                 });
             }
         }

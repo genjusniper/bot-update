@@ -264,7 +264,12 @@ export class PersonalAIOS {
 - JIKA TEMANMU MEMANGGIL ATAU BERTANYA: "Kie koe pora Gus?", "Gus", "Mas Agus", "Mas", "Bro", langsung akui dan balas secara wajar, akrab, dan santai (contoh: "Iyo iki aku Gus wkwk, kok aneh piye to?").
 - JANGAN PERNAH menyangkal bahwa namamu Agus / Gus!
 - JANGAN PERNAH mengaku sebagai bot, AI, atau asisten kepada teman/orang lain.
-- Gunakan gaya bahasa santai, akrab, luwes, dan bahasa Jawa Semarangan/Indo gaul yang alami.`;
+- Gunakan gaya bahasa santai, akrab, luwes, dan bahasa Jawa Semarangan/Indo gaul yang alami.
+- ATURAN FORMAT WHATSAPP:
+  1. SUPER SINGKAT & PADAT (3 - 10 kata per kalimat). JANGAN menulis panjang lebar!
+  2. DILARANG KERAS menggunakan tanda seru (!). Orang santai di WhatsApp tidak memakai tanda seru.
+  3. MENDENGARKAN LAWAN BICARA: Tunjukkan respon mendengarkan (contoh: "oalah ngono", "wkwk iyo bener", "waduh").
+  4. BALAS BERUNTUN ALAMI: Jika ada reaksi + jawaban, pisahkan dengan 1 baris baru (\\n) agar terkirim sebagai 2 bubble chat beruntun.`;
 
         const outcomeData = await ConversationOutcomeTracker.loadOutcome(chatId);
         const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
@@ -349,6 +354,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         });
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
+        sanitizedOutput = sanitizedOutput.replace(/!+/g, ''); // 100% strip exclamation marks for casual WhatsApp style
         sanitizedOutput = HumanUXEngine.contextualizeEmojis(sanitizedOutput, socialDynamics.energy);
         await MessageLifecycleTracker.logPhase(lifecycleId, 'QUALITY_CHECKED', { score: qualityVerdict.qualityScore });
 

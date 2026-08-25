@@ -72,18 +72,11 @@ const burstAggregator = new ChatBurstAggregator(2500, (aggregatedJob) => {
 });
 
 function shouldQuoteMessage(text, chatId, hasAttachment = false) {
+    // 1. Only quote if media attachment requires context
     if (hasAttachment) return true;
-    if (!text) return false;
+    // 2. In groups, quote to make it clear who is being replied to
     if (chatId.endsWith('@g.us')) return true;
-
-    const trimmed = text.trim();
-    if (trimmed.length < 8) return false;
-    if (/^(oi|halo|hai|p|lah|tes|wkwk|oke|sip|yo|iya|gak|nggak|ok|thx|thanks)$/i.test(trimmed)) return false;
-
-    const isQuestion = trimmed.includes('?') || /^(apa|kenapa|gimana|siapa|kapan|dimana|kok|bisa|tau gak|menurutmu|menurut kowe|coba)/i.test(trimmed);
-    if (isQuestion) return true;
-    if (trimmed.length > 40) return true;
-
+    // 3. In 1-on-1 private chat, NEVER quote/slide (send clean natural chat bubbles like a human)
     return false;
 }
 
