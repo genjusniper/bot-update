@@ -1,4 +1,4 @@
-// src/queue/JobQueue.mjs — WITH BURST AGGREGATION & ZERO NOISE
+// src/queue/JobQueue.mjs — UNIFIED SCHEMA V1, IDEMPOTENCY & NON-BLOCKING RETRY
 import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import crypto from 'crypto';
@@ -17,7 +17,9 @@ export class JobQueue {
     
     this.db.exec("PRAGMA busy_timeout = 10000;");
     this.db.exec("PRAGMA journal_mode = WAL;");
+    this.db.exec("PRAGMA synchronous = NORMAL;");
     
+    // 1. Jobs Table
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,16 +38,58 @@ export class JobQueue {
       );
     `);
 
+    // 2. Idempotency Table (Deduplicate Reconnect / Replay Events)
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS processed_messages (
+        message_id TEXT PRIMARY KEY,
+        chat_id TEXT NOT NULL,
+        processed_at INTEGER NOT NULL
+      );
+    `);
+
     this.db.exec(`CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);`);
     this.db.exec(`CREATE INDEX IF NOT EXISTS idx_jobs_chatid_status ON jobs(chatId, status);`);
+    this.db.exec(`CREATE INDEX IF NOT EXISTS idx_proc_msg_time ON processed_messages(processed_at);`);
     
     this.purgeJunkJobs();
+    this.pruneOldProcessedMessages();
   }
 
   static purgeJunkJobs() {
     try {
-      this.db.exec("DELETE FROM jobs WHERE chatId = 'status@broadcast' OR chatId LIKE '%@g.us' OR chatId LIKE '%@newsletter';");
+      // ONLY purge newsletters and status broadcast. NEVER PURGE GROUPS (@g.us)!
+      this.db.exec("DELETE FROM jobs WHERE chatId = 'status@broadcast' OR chatId LIKE '%@newsletter';");
     } catch(e) {}
+  }
+
+  static pruneOldProcessedMessages(maxAgeHours = 24) {
+    try {
+      const cutoff = Date.now() - (maxAgeHours * 60 * 60 * 1000);
+      this.db.prepare("DELETE FROM processed_messages WHERE processed_at < ?").run(cutoff);
+    } catch(e) {}
+  }
+
+  static isMessageProcessed(messageId) {
+    if (!messageId) return false;
+    if (!this.db) this.init();
+    try {
+      const row = this.db.prepare("SELECT 1 FROM processed_messages WHERE message_id = ?").get(messageId);
+      return Boolean(row);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  static markMessageProcessed(messageId, chatId) {
+    if (!messageId || !chatId) return false;
+    if (!this.db) this.init();
+    try {
+      this.db.prepare("INSERT OR IGNORE INTO processed_messages (message_id, chat_id, processed_at) VALUES (?, ?, ?)")
+        .run(messageId, chatId, Date.now());
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   static close() {
@@ -65,9 +109,8 @@ export class JobQueue {
         if (e.message.includes('database is locked') || e.code === 'ERR_SQLITE_ERROR') {
           attempts++;
           if (attempts >= maxRetries) throw e;
-          const jitter = Math.floor(Math.random() * 150) + 50;
-          const start = Date.now();
-          while (Date.now() - start < jitter) {}
+          // SQLite PRAGMA busy_timeout=10000 already waits internally.
+          // Do NOT busy-spin the CPU with while loop!
         } else {
           throw e;
         }
@@ -89,7 +132,8 @@ export class JobQueue {
   }
 
   static enqueue(eventId, correlationId, chatId, payloadObj) {
-    if (!chatId || chatId === 'status@broadcast' || chatId.endsWith('@g.us') || chatId.endsWith('@newsletter')) {
+    // Only reject status broadcasts and newsletters. GROUPS (@g.us) ARE ALLOWED!
+    if (!chatId || chatId === 'status@broadcast' || chatId.endsWith('@newsletter')) {
         return false;
     }
 
@@ -107,7 +151,7 @@ export class JobQueue {
     }
   }
 
-  // Claim with Burst Aggregation: bundles multiple messages from same user into 1 turn!
+  // Claim with Burst Aggregation (Schema V1 Compliant)
   static claim(leaseMs = 90000) {
     if (!this.db) this.init();
     try {
@@ -118,7 +162,7 @@ export class JobQueue {
           const primaryJob = this.db.prepare(`
             SELECT * FROM jobs 
             WHERE status = 'QUEUED' AND attempts < 3
-            AND chatId != 'status@broadcast' AND chatId NOT LIKE '%@g.us' AND chatId NOT LIKE '%@newsletter'
+            AND chatId != 'status@broadcast' AND chatId NOT LIKE '%@newsletter'
             AND chatId NOT IN (SELECT chatId FROM jobs WHERE status = 'PROCESSING' AND leaseUntil > ?)
             ORDER BY id ASC LIMIT 1
           `).get(now);
@@ -127,7 +171,7 @@ export class JobQueue {
             const claimToken = crypto.randomUUID();
             const lease = now + leaseMs;
             
-            // Find burst messages from the same chatId in queue to aggregate
+            // Find burst follow-up messages from the same chatId in queue
             const burstJobs = this.db.prepare(`
               SELECT * FROM jobs 
               WHERE chatId = ? AND status = 'QUEUED' AND id > ?
@@ -140,19 +184,43 @@ export class JobQueue {
             primaryJob.claimToken = claimToken;
             primaryJob.payload = JSON.parse(primaryJob.payload);
 
-            // If there are burst follow-ups, merge text and complete them
+            // Safe text extraction across Schema V1 and Legacy
+            const extractText = (p) => {
+              if (!p) return '';
+              if (p.message?.text) return p.message.text;
+              if (p.text) return p.text;
+              if (p.unifiedMsg?.text) return p.unifiedMsg.text;
+              return '';
+            };
+
+            const primaryText = extractText(primaryJob.payload);
+
+            // If there are burst follow-ups, merge texts safely and complete the extra jobs
             if (burstJobs && burstJobs.length > 0) {
-              const combinedTexts = [primaryJob.payload.unifiedMsg.text];
+              const combinedTexts = primaryText ? [primaryText] : [];
               for (const bJob of burstJobs) {
                 const bPayload = JSON.parse(bJob.payload);
-                if (bPayload.unifiedMsg?.text) {
-                  combinedTexts.push(bPayload.unifiedMsg.text);
+                const bText = extractText(bPayload);
+                if (bText) combinedTexts.push(bText);
+
+                // If burst job has images, merge them into primary job
+                const bImages = bPayload.media?.images || bPayload.images || [];
+                if (bImages.length > 0) {
+                  if (!primaryJob.payload.media) primaryJob.payload.media = { images: [], audio: null };
+                  if (!primaryJob.payload.media.images) primaryJob.payload.media.images = [];
+                  primaryJob.payload.media.images.push(...bImages);
                 }
+
                 // Mark burst job completed
                 this.db.prepare("UPDATE jobs SET status = 'COMPLETED', updatedAt = ? WHERE id = ?").run(now, bJob.id);
               }
-              primaryJob.payload.unifiedMsg.text = combinedTexts.join('\n');
-              console.log(`[JobQueue] ⚡ Aggregated ${burstJobs.length + 1} burst messages for ${primaryJob.chatId}: "${primaryJob.payload.unifiedMsg.text}"`);
+
+              const merged = combinedTexts.join('\n');
+              if (primaryJob.payload.message) {
+                primaryJob.payload.message.text = merged;
+              }
+              primaryJob.payload.text = merged;
+              console.log(`[JobQueue] ⚡ Aggregated ${burstJobs.length + 1} burst messages for ${primaryJob.chatId}: "${merged.slice(0, 50)}"`);
             }
 
             this.db.exec("COMMIT");

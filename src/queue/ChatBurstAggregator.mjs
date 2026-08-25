@@ -1,6 +1,5 @@
-// src/queue/ChatBurstAggregator.mjs
+// src/queue/ChatBurstAggregator.mjs — UNIFIED PAYLOAD SCHEMA V1 COMPLIANT
 // Aggregates rapid chat bursts and multiple photos/media within a debounce window
-// V13.7 — Bug Fix: pushName, fromMe properly stored; auto-flush on large bursts; flushAll on shutdown
 
 export class ChatBurstAggregator {
     constructor(debounceMs = 2500, onFlushCallback) {
@@ -10,12 +9,13 @@ export class ChatBurstAggregator {
         this.MAX_BURST_ITEMS = 6; // Auto-flush immediately if burst > 6 items
     }
 
-    push(chatId, { text, rawKey, rawMessage, fromMe, pushName, imageBase64, audioBase64, mimeType, quotedContext }) {
+    push(chatId, { eventId, text, rawKey, rawMessage, fromMe, pushName, imageBase64, audioBase64, mimeType, quotedContext, ownerJid }) {
         let entry = this.buffers.get(chatId);
 
         if (!entry) {
             entry = {
                 chatId,
+                lastEventId: eventId || `evt_${Date.now()}`,
                 texts: [],
                 images: [],
                 audio: null,
@@ -24,19 +24,21 @@ export class ChatBurstAggregator {
                 rawMessage,
                 fromMe: fromMe || false,
                 pushName: pushName || '',
+                ownerJid: ownerJid || null,
                 firstTimestamp: Date.now(),
                 itemCount: 0
             };
             this.buffers.set(chatId, entry);
         }
 
-        // Always update rawKey + rawMessage to latest in burst (for quoting)
+        // Always update to latest message details in burst
+        if (eventId) entry.lastEventId = eventId;
         entry.rawKey = rawKey;
         entry.rawMessage = rawMessage;
 
-        // Update pushName & fromMe if available
         if (pushName) entry.pushName = pushName;
         if (typeof fromMe === 'boolean') entry.fromMe = fromMe;
+        if (ownerJid) entry.ownerJid = ownerJid;
 
         // Add text if present
         if (text && text.trim().length > 0) {
@@ -44,7 +46,7 @@ export class ChatBurstAggregator {
             entry.itemCount++;
         }
 
-        // Accumulate ALL images from all burst messages (FIXED: was losing photos)
+        // Accumulate ALL images from all burst messages
         if (imageBase64) {
             entry.images.push({ base64: imageBase64, mimeType: mimeType || 'image/jpeg' });
             entry.itemCount++;
@@ -61,7 +63,7 @@ export class ChatBurstAggregator {
             entry.quotedContext = quotedContext;
         }
 
-        // Auto-flush immediately if burst exceeds max items (prevent queue overload)
+        // Auto-flush immediately if burst exceeds max items
         if (entry.itemCount >= this.MAX_BURST_ITEMS) {
             if (entry.timer) clearTimeout(entry.timer);
             this.flush(chatId);
@@ -83,7 +85,30 @@ export class ChatBurstAggregator {
         const burstCount = entry.texts.length + entry.images.length + (entry.audio ? 1 : 0);
         const burstDurationMs = Date.now() - entry.firstTimestamp;
 
-        const aggregatedJob = {
+        // Standard Unified Payload Schema V1
+        const unifiedJob = {
+            version: 1,
+            message: {
+                id: entry.lastEventId,
+                chatId: entry.chatId,
+                senderId: entry.rawKey?.participant || entry.chatId,
+                timestamp: entry.firstTimestamp,
+                text: aggregatedText,
+                rawKey: entry.rawKey,
+                rawMessage: entry.rawMessage,
+                quotedContext: entry.quotedContext
+            },
+            media: {
+                images: entry.images,
+                audio: entry.audio
+            },
+            context: {
+                fromMe: entry.fromMe,
+                pushName: entry.pushName,
+                isGroup: entry.chatId.endsWith('@g.us'),
+                ownerJid: entry.ownerJid
+            },
+            // Flat backward-compatibility properties
             chatId: entry.chatId,
             text: aggregatedText,
             images: entry.images,
@@ -98,11 +123,10 @@ export class ChatBurstAggregator {
         };
 
         if (this.onFlush) {
-            this.onFlush(aggregatedJob);
+            this.onFlush(unifiedJob);
         }
     }
 
-    // Force flush all pending buffers (called on SIGINT/shutdown)
     flushAll() {
         for (const chatId of this.buffers.keys()) {
             this.flush(chatId);

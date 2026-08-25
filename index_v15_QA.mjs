@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V13.7 MASTER — UNIVERSAL CO-PILOT)
+// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V14.0 PLUMBING ENHANCED — MASTER UNIVERSAL CO-PILOT)
 process.on("unhandledRejection", (reason) => { console.error("[FATAL] Unhandled Rejection:", reason); });
 process.on("uncaughtException", (error) => { console.error("[FATAL] Uncaught Exception:", error); });
 
@@ -17,7 +17,7 @@ import { WebCockpit } from './src/server/WebCockpit.mjs';
 import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
 
 console.log('=============================================');
-console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V13.7)');
+console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V14.0 PLUMBING)');
 console.log('=============================================');
 
 const personalAI = new PersonalAIOS();
@@ -37,7 +37,7 @@ async function getGroupSubject(chatId) {
         return cached.subject;
     }
     try {
-        const meta = await waGateway.socket.groupMetadata(chatId);
+        const meta = await waGateway.sock?.groupMetadata(chatId);
         const subject = meta?.subject || '';
         groupMetaCache.set(chatId, { subject, cachedAt: Date.now() });
         return subject;
@@ -46,28 +46,20 @@ async function getGroupSubject(chatId) {
     }
 }
 
-// 1. Initialize Chat Burst Aggregator (2.5s window)
+// 1. Initialize Chat Burst Aggregator (2.5s window) -> Feeds into Schema V1 JobQueue
 const burstAggregator = new ChatBurstAggregator(2500, (aggregatedJob) => {
-    const eventId = `evt_${Date.now()}`;
+    const eventId = aggregatedJob.message?.id || `evt_${Date.now()}`;
     const correlationId = `burst_${aggregatedJob.chatId}_${Date.now()}`;
 
-    const name = aggregatedJob.pushName || 'User';
-    const textPreview = aggregatedJob.text?.slice(0, 40) || '[Media]';
-    const imgCount = aggregatedJob.images?.length || 0;
-    const audioTag = aggregatedJob.audio ? '🎵' : '';
+    const name = aggregatedJob.context?.pushName || aggregatedJob.pushName || 'User';
+    const textPreview = (aggregatedJob.message?.text || aggregatedJob.text || '').slice(0, 40) || '[Media]';
+    const imgCount = (aggregatedJob.media?.images || aggregatedJob.images || []).length;
+    const audioTag = (aggregatedJob.media?.audio || aggregatedJob.audio) ? '🎵' : '';
     console.log(`[BurstAggregator] 📦 Flushed ${aggregatedJob.burstCount} items for ${aggregatedJob.chatId} (${name}): "${textPreview}" [Foto:${imgCount}${audioTag}] (${aggregatedJob.burstDurationMs}ms)`);
 
-    JobQueue.enqueue(eventId, correlationId, aggregatedJob.chatId, {
-        text: aggregatedJob.text,
-        images: aggregatedJob.images,
-        audio: aggregatedJob.audio,
-        quotedContext: aggregatedJob.quotedContext,
-        rawKey: aggregatedJob.rawKey,
-        rawMessage: aggregatedJob.rawMessage,
-        fromMe: aggregatedJob.fromMe || false,
-        pushName: aggregatedJob.pushName || '',
-        ownerJid: waGateway.socket?.user?.id || null
-    });
+    // Enqueue standard Schema V1 payload
+    JobQueue.enqueue(eventId, correlationId, aggregatedJob.chatId, aggregatedJob);
+    JobQueue.markMessageProcessed(eventId, aggregatedJob.chatId);
     FSMEventBus.emit('message.queued', {});
 });
 
@@ -95,7 +87,7 @@ async function start() {
 
     EventBus.subscribe('whatsapp.message.received', async (event) => {
         const data = event.payload || event;
-        const { unifiedMsg, rawKey, rawMessage } = data;
+        const { unifiedMsg, rawKey, rawMessage, eventId } = data;
 
         const fromMe = Boolean(rawKey?.fromMe);
         const pushName = rawMessage?.pushName || unifiedMsg?.pushName || '';
@@ -112,7 +104,7 @@ async function start() {
             ''
         ).trim();
 
-        const ownerId = waGateway.socket?.user?.id || '';
+        const ownerId = waGateway.sock?.user?.id || '';
         const ownerPhone = ownerId ? ownerId.split(':')[0].split('@')[0] : '';
         const isSelfChat = Boolean(chatId.endsWith('@lid') || (ownerPhone && chatId.includes(ownerPhone)));
 
@@ -154,11 +146,11 @@ async function start() {
                 rawMessage?.viewOnceMessageV2?.message?.imageMessage ||
                 rawMessage?.viewOnceMessageV2Extension?.message?.imageMessage
             );
-            if (isImage && waGateway.socket) {
+            if (isImage && waGateway.sock) {
                 const buffer = await downloadMediaMessage(
                     { key: rawKey, message: rawMessage },
                     'buffer', {},
-                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.socket.updateMediaMessage }
+                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.sock.updateMediaMessage }
                 );
                 if (buffer) {
                     imageBase64 = buffer.toString('base64');
@@ -173,11 +165,11 @@ async function start() {
         // 3. Download Audio / Voice Note
         try {
             const isAudio = Boolean(rawMessage?.audioMessage);
-            if (isAudio && waGateway.socket) {
+            if (isAudio && waGateway.sock) {
                 const buffer = await downloadMediaMessage(
                     { key: rawKey, message: rawMessage },
                     'buffer', {},
-                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.socket.updateMediaMessage }
+                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.sock.updateMediaMessage }
                 );
                 if (buffer) {
                     audioBase64 = buffer.toString('base64');
@@ -191,6 +183,7 @@ async function start() {
 
         // Push to Chat Burst Aggregator
         burstAggregator.push(chatId, {
+            eventId,
             text: incomingText,
             rawKey,
             rawMessage,
@@ -199,7 +192,8 @@ async function start() {
             imageBase64,
             audioBase64,
             mimeType,
-            quotedContext
+            quotedContext,
+            ownerJid: waGateway.sock?.user?.id || null
         });
     });
 
@@ -219,24 +213,39 @@ async function start() {
 
             // Resolve Group Subject (cached)
             let groupSubject = '';
-            if (chatId.endsWith('@g.us') && waGateway.socket) {
+            if (chatId.endsWith('@g.us') && waGateway.sock) {
                 groupSubject = await getGroupSubject(chatId);
             }
 
+            // Standardized extraction from Schema V1 (with fallback for flat payloads)
+            const msg = payload.message || payload;
+            const media = payload.media || {};
+            const ctx = payload.context || {};
+
+            const incomingText = msg.text || payload.text || '';
+            const images = media.images || payload.images || [];
+            const audio = media.audio || payload.audio || null;
+            const quotedContext = msg.quotedContext || payload.quotedContext || null;
+            const fromMe = ctx.fromMe ?? payload.fromMe ?? false;
+            const pushName = ctx.pushName || payload.pushName || '';
+            const rawKey = msg.rawKey || payload.rawKey;
+            const rawMessage = msg.rawMessage || payload.rawMessage;
+            const ownerJid = ctx.ownerJid || payload.ownerJid || waGateway.sock?.user?.id || null;
+
             const mediaOptions = {
-                images: payload.images || [],
-                audio: payload.audio || null,
-                quotedContext: payload.quotedContext || null,
-                fromMe: payload.fromMe || false,
-                pushName: payload.pushName || '',
+                images,
+                audio,
+                quotedContext,
+                fromMe,
+                pushName,
                 groupSubject,
-                rawMessage: payload.rawMessage || null,
-                ownerJid: payload.ownerJid || waGateway.socket?.user?.id || null
+                rawMessage,
+                ownerJid
             };
 
             const deliveryPlan = await personalAI.process(
                 chatId,
-                payload.text,
+                incomingText,
                 `wa_${jobId}`,
                 null,
                 mediaOptions
@@ -244,10 +253,10 @@ async function start() {
 
             if (deliveryPlan && ConversationFSM.transition(chatId, 'RESPONDING', {}, version)) {
                 // 1. Send WhatsApp Reaction if planned
-                if (deliveryPlan.reactionEmoji && waGateway.socket && payload.rawKey) {
+                if (deliveryPlan.reactionEmoji && waGateway.sock && rawKey) {
                     try {
-                        await waGateway.socket.sendMessage(chatId, {
-                            react: { text: deliveryPlan.reactionEmoji, key: payload.rawKey }
+                        await waGateway.sock.sendMessage(chatId, {
+                            react: { text: deliveryPlan.reactionEmoji, key: rawKey }
                         });
                         console.log(`[HIPE Reaction] ${deliveryPlan.reactionEmoji} → ${chatId}`);
                     } catch (e) {
@@ -278,10 +287,10 @@ async function start() {
                         await new Promise(r => setTimeout(r, Math.min(1200, delayMs)));
                     }
 
-                    const hasAttachment = Boolean((payload.images?.length > 0) || payload.audio);
+                    const hasAttachment = Boolean(images.length > 0 || audio);
                     const isFirstBubble = bIndex === 0;
-                    const isQuoted = isFirstBubble && shouldQuoteMessage(payload.text, chatId, hasAttachment);
-                    const sendOptions = isQuoted ? { quoted: { key: payload.rawKey, message: payload.rawMessage } } : {};
+                    const isQuoted = isFirstBubble && shouldQuoteMessage(incomingText, chatId, hasAttachment);
+                    const sendOptions = isQuoted && rawKey ? { quoted: { key: rawKey, message: rawMessage } } : {};
 
                     console.log(`[WA Bubble ${bIndex + 1}/${bubbles.length}] → ${chatId}: ${bubble.substring(0, 50)}...`);
                     await waGateway.sendMessage(chatId, bubble, sendOptions);
@@ -305,12 +314,12 @@ async function start() {
     });
 
     await waGateway.connect();
-    console.log('✅ [V13.7 Bootloader] Master Universal Co-Pilot Online.');
+    console.log('✅ [V14.0 Bootloader] Master Universal Co-Pilot (Plumbing Stabilized) Online.');
 }
 
 process.on('SIGINT', () => {
-    console.log('\n[V13.7 Bootloader] Received SIGINT. Flushing & Shutting down...');
-    burstAggregator.flushAll(); // Flush pending messages before shutdown
+    console.log('\n[V14.0 Bootloader] Received SIGINT. Flushing & Shutting down...');
+    burstAggregator.flushAll();
     QueueWorker.stop();
     waGateway.shutdown();
     setTimeout(() => process.exit(0), 1000);

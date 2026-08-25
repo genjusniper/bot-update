@@ -1,23 +1,56 @@
-// src/gateway/WhatsAppGateway.mjs — UNIVERSAL MULTIMODAL & CO-PILOT GATEWAY
+// src/gateway/WhatsAppGateway.mjs — MULTIMODAL & CO-PILOT GATEWAY WITH CLEAN SOCKET LIFECYCLE
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import { Normalizer } from './Normalizer.mjs';
 import { EventBus } from '../event/EventBus.mjs';
+import { JobQueue } from '../queue/JobQueue.mjs';
 
 export class WhatsAppGateway {
   constructor(sessionDir = 'auth-v5-test') {
     this.sessionDir = sessionDir;
     this.sock = null;
     this.isShuttingDown = false;
+    this.connectionGeneration = 0;
+    this.reconnectTimer = null;
+  }
+
+  cleanupCurrentSocket() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.sock) {
+      try {
+        if (this.sock.ev && typeof this.sock.ev.removeAllListeners === 'function') {
+          this.sock.ev.removeAllListeners();
+        }
+        if (this.sock.ws && typeof this.sock.ws.close === 'function') {
+          this.sock.ws.close();
+        }
+        if (typeof this.sock.end === 'function') {
+          this.sock.end(new Error('Socket Replaced'));
+        }
+      } catch (e) {
+        console.warn('[WA Gateway] Socket cleanup warning:', e.message);
+      }
+      this.sock = null;
+    }
   }
 
   async connect() {
+    this.connectionGeneration++;
+    const currentGen = this.connectionGeneration;
+    console.log(`📡 [WA Gateway] Initializing Connection (Gen #${currentGen})...`);
+
+    // Clean up any existing socket & listeners to prevent duplicate handler multiplication
+    this.cleanupCurrentSocket();
+
     const { version } = await fetchLatestBaileysVersion();
     console.log(`📡 [WA Gateway] Web Version: ${version.join('.')}`);
     
     const { state, saveCreds } = await useMultiFileAuthState(this.sessionDir);
     
-    this.sock = makeWASocket({
+    const socket = makeWASocket({
       auth: state,
       version,
       logger: pino({ level: 'silent' }),
@@ -26,24 +59,34 @@ export class WhatsAppGateway {
       syncFullHistory: false
     });
 
-    this.sock.ev.on('creds.update', saveCreds);
+    this.sock = socket;
 
-    this.sock.ev.on('connection.update', (update) => {
+    socket.ev.on('creds.update', saveCreds);
+
+    socket.ev.on('connection.update', (update) => {
+      if (this.connectionGeneration !== currentGen) return; // Stale socket
+
       const { connection, lastDisconnect } = update;
       if (connection === 'close') {
-        const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
-        console.log('❌ [WA Gateway] Connection closed. Reconnecting:', shouldReconnect);
+        const statusCode = lastDisconnect?.error?.output?.statusCode;
+        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+        console.log(`❌ [WA Gateway Gen #${currentGen}] Connection closed (Status: ${statusCode || 'unknown'}). Reconnecting: ${shouldReconnect}`);
+        
         if (shouldReconnect && !this.isShuttingDown) {
-           setTimeout(() => this.connect(), 3000); 
+          this.reconnectTimer = setTimeout(() => {
+            this.connect();
+          }, 3000);
         }
       } else if (connection === 'open') {
-        console.log('✅ [WA Gateway] WhatsApp Web Socket Connected');
+        console.log(`✅ [WA Gateway Gen #${currentGen}] WhatsApp Web Socket Connected`);
         EventBus.publish('whatsapp.connected', {});
       }
     });
 
-    this.sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    socket.ev.on('messages.upsert', async ({ messages, type }) => {
+      if (this.connectionGeneration !== currentGen) return; // Stale socket
       if (type !== 'notify') return;
+
       for (const mek of messages) {
         if (!mek.message) continue;
         
@@ -53,6 +96,14 @@ export class WhatsAppGateway {
         if (!jid || jid.endsWith('@newsletter') || jid === 'status@broadcast') { 
             continue; 
         } 
+
+        const eventId = mek.key.id;
+
+        // Idempotency check: drop if message has already been processed (e.g. from reconnect replay)
+        if (eventId && JobQueue.isMessageProcessed(eventId)) {
+            console.log(`[WA Gateway] ⏭️ Dropped duplicate event ${eventId} from ${jid}`);
+            continue;
+        }
 
         try {
           let unifiedMsg = Normalizer.normalize(mek);
@@ -66,9 +117,8 @@ export class WhatsAppGateway {
           }
           
           const textPreview = unifiedMsg.text ? unifiedMsg.text.substring(0, 30) : '[Media/Foto/VN]';
-          console.log('<<< MESSAGE ACCEPTED & QUEUED:', jid, '| text:', textPreview);
+          console.log(`<<< [Gen #${currentGen}] MESSAGE ACCEPTED: ${jid} | ID: ${eventId} | text: "${textPreview}"`);
           
-          const eventId = mek.key.id;
           const correlationId = `conv_${jid}_${Date.now()}`;
           
           EventBus.publish('whatsapp.message.received', {
@@ -97,8 +147,6 @@ export class WhatsAppGateway {
 
   shutdown() {
     this.isShuttingDown = true;
-    if (this.sock) {
-      this.sock.end(new Error('Graceful Shutdown'));
-    }
+    this.cleanupCurrentSocket();
   }
 }
