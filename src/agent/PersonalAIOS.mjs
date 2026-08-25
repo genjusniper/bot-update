@@ -38,6 +38,7 @@ import { ContactProfileStore } from '../social/multiperson/ContactProfileStore.m
 import { HumanInteractionPolicy } from '../behavior/HumanInteractionPolicy.mjs';
 import { TimeAwarenessPersona } from '../behavior/TimeAwarenessPersona.mjs';
 import { ResponseBudgetEngine } from '../behavior/ResponseBudgetEngine.mjs';
+import { MoodEnergyMatcher } from '../behavior/MoodEnergyMatcher.mjs';
 import { ConversationEndingDetector } from '../behavior/ConversationEndingDetector.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
@@ -269,6 +270,7 @@ export class PersonalAIOS {
         const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
         const naturalEnhancement = NaturalConversationEnhancer.evaluate({ text: inputSnippet, chatId, pushName });
         const contextualIntelligence = ContextualConversationIntelligence.evaluate({ text: inputSnippet, hasAudio, hasImages, quotedContext, chatId });
+        const moodEvaluation = MoodEnergyMatcher.evaluate(inputSnippet);
 
         const masterPrompt = `${roleIdentity}
 
@@ -277,6 +279,7 @@ ${contactDirectives}
 ${outcomeDirectives}
 ${naturalEnhancement}
 ${contextualIntelligence}
+${moodEvaluation.directive}
 ${tempEval.directive}
 ${repairDirective}
 ${visualContinuity}

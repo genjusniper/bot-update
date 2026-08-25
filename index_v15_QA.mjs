@@ -16,6 +16,7 @@ import { PersonalAIOS } from './src/agent/PersonalAIOS.mjs';
 import { WebCockpit } from './src/server/WebCockpit.mjs';
 import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
 import { OwnerMentionResolver } from './src/security/copilot/OwnerMentionResolver.mjs';
+import { NaturalTypoEditor } from './src/behavior/NaturalTypoEditor.mjs';
 import { StorageAutoPruner } from './src/maintenance/StorageAutoPruner.mjs';
 
 const OWNER_LID = '236322690191595@lid';
@@ -311,7 +312,23 @@ async function start() {
                     const sendOptions = isQuoted && rawKey ? { quoted: { key: rawKey, message: rawMessage } } : {};
 
                     console.log(`[WA Bubble ${bIndex + 1}/${bubbles.length}] → ${chatId}: ${bubble.substring(0, 50)}...`);
-                    await waGateway.sendMessage(chatId, bubble, sendOptions);
+
+                    if (NaturalTypoEditor.shouldIntroduceTypo(bubble) && waGateway.sock) {
+                        const { typoText, cleanText, isTypo } = NaturalTypoEditor.generateTypo(bubble);
+                        if (isTypo) {
+                            console.log(`[NaturalTypo] ✏️ Sending typo first: "${typoText.slice(0, 40)}..."`);
+                            const sentMsg = await waGateway.sendMessage(chatId, typoText, sendOptions);
+                            if (sentMsg?.key) {
+                                await new Promise(r => setTimeout(r, 1400 + Math.random() * 800));
+                                await waGateway.sock.sendMessage(chatId, { text: cleanText, edit: sentMsg.key });
+                                console.log(`[NaturalTypo] ✅ Auto-edited message on WhatsApp to clean text!`);
+                            }
+                        } else {
+                            await waGateway.sendMessage(chatId, bubble, sendOptions);
+                        }
+                    } else {
+                        await waGateway.sendMessage(chatId, bubble, sendOptions);
+                    }
                 }
 
                 if (jobId && claimToken) {
