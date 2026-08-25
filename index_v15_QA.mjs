@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V13.3 PUSHNAME & CONTACT RECOGNITION)
+// index_v15_QA.mjs — PRODUCTION BOOTLOADER (V13.4 SELF-CHAT & CO-PILOT PRODUCTION)
 process.on("unhandledRejection", (reason, promise) => { console.error("[FATAL] Unhandled Rejection:", reason); });
 process.on("uncaughtException", (error) => { console.error("[FATAL] Uncaught Exception:", error); });
 
@@ -17,7 +17,7 @@ import { WebCockpit } from './src/server/WebCockpit.mjs';
 import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
 
 console.log('=============================================');
-console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V13.3)');
+console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V13.4)');
 console.log('=============================================');
 
 const personalAI = new PersonalAIOS();
@@ -77,11 +77,16 @@ async function start() {
 
         const fromMe = Boolean(rawKey?.fromMe);
         const pushName = rawMessage?.pushName || unifiedMsg?.pushName || '';
+        const chatId = unifiedMsg?.chatId || rawKey?.remoteJid || '';
 
-        // If the owner typed the message manually on his phone -> Record Human Takeover immediately
-        if (fromMe && unifiedMsg?.chatId) {
-            OwnerPresenceEngine.recordOwnerMessage(unifiedMsg.chatId);
-            console.log(`[OwnerPresence] 👤 Owner active on ${unifiedMsg.chatId}. AI standing down.`);
+        const ownerId = waGateway.socket?.user?.id || '';
+        const ownerPhone = ownerId ? ownerId.split(':')[0].split('@')[0] : '';
+        const isSelfChat = Boolean(chatId.endsWith('@lid') || (ownerPhone && chatId.includes(ownerPhone)));
+
+        // If the owner typed the message manually to ANOTHER person -> Record Human Takeover immediately
+        if (fromMe && chatId && !isSelfChat) {
+            OwnerPresenceEngine.recordOwnerMessage(chatId);
+            console.log(`[OwnerPresence] 👤 Owner active on ${chatId}. AI standing down.`);
             return;
         }
 
@@ -140,7 +145,7 @@ async function start() {
         }
         
         // Push to Chat Burst Aggregator
-        burstAggregator.push(unifiedMsg.chatId, {
+        burstAggregator.push(chatId, {
             text: unifiedMsg?.text,
             rawKey,
             rawMessage,
@@ -265,11 +270,11 @@ async function start() {
     });
 
     await waGateway.connect();
-    console.log('✅ [V13.3 Bootloader] Contact Name Recognition & Dynamic Group Subject Online.');
+    console.log('✅ [V13.4 Bootloader] Self-Chat, LID & Contact Recognition Online.');
 }
 
 process.on('SIGINT', () => {
-    console.log('\n[V13.3 Bootloader] Received SIGINT. Shutting down...');
+    console.log('\n[V13.4 Bootloader] Received SIGINT. Shutting down...');
     QueueWorker.stop();
     waGateway.shutdown();
     setTimeout(() => process.exit(0), 1000);

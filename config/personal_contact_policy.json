@@ -1,6 +1,7 @@
 {
   "defaultPrivatePolicy": "SILENT",
   "contacts": {
+    "236322690191595@lid": { "name": "Owner / Primary Test Device", "policy": "AUTO" },
     "6281325554282@s.whatsapp.net": { "name": "VIP Contact 1", "policy": "AUTO" },
     "6281935596653@s.whatsapp.net": { "name": "VIP Contact 2", "policy": "AUTO" },
     "6285602612832@s.whatsapp.net": { "name": "VIP Contact 3", "policy": "AUTO" },

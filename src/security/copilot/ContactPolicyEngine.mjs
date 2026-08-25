@@ -11,8 +11,11 @@ export class ContactPolicyEngine {
 
     static normalizeJid(jid) {
         if (!jid) return '';
-        // Extract raw digits
-        const digits = jid.replace(/\D/g, '');
+        if (jid.endsWith('@lid')) {
+            return jid.split(':')[0].split('@')[0] + '@lid';
+        }
+        // Extract raw digits for standard WhatsApp numbers
+        const digits = jid.split('@')[0].replace(/\D/g, '');
         return `${digits}@s.whatsapp.net`;
     }
 
@@ -23,7 +26,7 @@ export class ContactPolicyEngine {
             return JSON.parse(data);
         } catch {
             const defaultPolicy = {
-                defaultPrivatePolicy: 'SILENT', // HARD DEFAULT: SILENT for all unauthorized contacts
+                defaultPrivatePolicy: 'SILENT',
                 contacts: {}
             };
             await this.savePolicy(defaultPolicy);
