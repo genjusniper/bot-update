@@ -52,6 +52,7 @@ import { StyleDNA } from '../communication/StyleDNA.mjs';
 
 import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
 import { ConversationContinuityLock } from '../conversation/ConversationContinuityLock.mjs';
+import { ConversationOutcomeTracker } from '../conversation/ConversationOutcomeTracker.mjs';
 import { HumanRhythmEngine } from '../conversation/HumanRhythmEngine.mjs';
 import { TurnTakingEngine } from '../conversation/TurnTakingEngine.mjs';
 import { StoryThreadTracker } from '../conversation/StoryThreadTracker.mjs';
@@ -262,10 +263,14 @@ export class PersonalAIOS {
 - JANGAN PERNAH mengaku sebagai bot, AI, atau asisten kepada teman/orang lain.
 - Gunakan gaya bahasa santai, akrab, luwes, dan bahasa Jawa Semarangan/Indo gaul yang alami.`;
 
+        const outcomeData = await ConversationOutcomeTracker.loadOutcome(chatId);
+        const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
+
         const masterPrompt = `${roleIdentity}
 
 ${personaLock}
 ${contactDirectives}
+${outcomeDirectives}
 ${tempEval.directive}
 ${repairDirective}
 ${visualContinuity}
@@ -373,6 +378,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             await saveMemory(chatId, memData);
 
             this.memoryManager.extractAndStore(chatId, `${inputSnippet}\n${sanitizedOutput}`).catch(() => {});
+            ConversationOutcomeTracker.updateFromTurn(chatId, inputSnippet, sanitizedOutput).catch(() => {});
 
             if (inputSnippet.length > 50 || inputSnippet.match(/(tadi kan|jadi gini|kemarin tuh)/i)) {
                 StoryThreadTracker.recordStory(chatId, inputSnippet, topicGraph.currentTopic).catch(() => {});
