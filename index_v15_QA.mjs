@@ -15,6 +15,7 @@ import { ChatBurstAggregator } from './src/queue/ChatBurstAggregator.mjs';
 import { PersonalAIOS } from './src/agent/PersonalAIOS.mjs';
 import { WebCockpit } from './src/server/WebCockpit.mjs';
 import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.mjs';
+import { OwnerMentionResolver } from './src/security/copilot/OwnerMentionResolver.mjs';
 import { StorageAutoPruner } from './src/maintenance/StorageAutoPruner.mjs';
 
 const OWNER_LID = '236322690191595@lid';
@@ -132,10 +133,7 @@ async function start() {
         let quotedContext = null;
 
         // 1. Extract Quoted Message Context (text + image captions)
-        const contextInfo = rawMessage?.extendedTextMessage?.contextInfo ||
-                            rawMessage?.imageMessage?.contextInfo ||
-                            rawMessage?.videoMessage?.contextInfo ||
-                            rawMessage?.audioMessage?.contextInfo;
+        const contextInfo = OwnerMentionResolver.extractContextInfo(rawMessage);
         if (contextInfo?.quotedMessage) {
             const qMsg = contextInfo.quotedMessage;
             const qText = qMsg.conversation ||
