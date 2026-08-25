@@ -1,5 +1,5 @@
 {
-  "defaultGroupPolicy": "SILENT",
+  "defaultGroupPolicy": "MENTION_ONLY",
   "whitelistedGroupNames": [
     {
       "namePattern": "semarang climbers",
