@@ -1,4 +1,4 @@
-// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL AI OS (V6.3 ADVANCED CONVERSATION INTELLIGENCE)
+// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL COMMUNICATION & AGENT RUNTIME (V7.0)
 
 import { AIResourceManager2 } from '../fleet/AIResourceManager2.mjs';
 import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
@@ -7,25 +7,28 @@ import { ProviderHealthMatrix } from '../fleet/ProviderHealthMatrix.mjs';
 
 import { ContextBudgetManager } from '../context/ContextBudgetManager.mjs';
 import { StyleDNA } from '../communication/StyleDNA.mjs';
+import { StyleLearningEngine } from '../communication/StyleLearningEngine.mjs';
+
 import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
+import { TurnTakingEngine } from '../conversation/TurnTakingEngine.mjs';
+import { StoryThreadTracker } from '../conversation/StoryThreadTracker.mjs';
+
 import { TopicGraphEngine } from '../topics/TopicGraphEngine.mjs';
 import { AdvancedHumorEngine } from '../humor/AdvancedHumorEngine.mjs';
 import { CallbackRegistry } from '../humor/CallbackRegistry.mjs';
+import { HumorTimingDetector } from '../humor/HumorTimingDetector.mjs';
+
+import { SocialMemoryOS } from '../social/SocialMemoryOS.mjs';
+import { EmotionalCalibrationEngine } from '../social/EmotionalCalibrationEngine.mjs';
 import { CurhatEngine } from '../social/CurhatEngine.mjs';
 import { OpenLoopEngine } from '../communication/OpenLoopEngine.mjs';
-import { ConversationContinuation } from '../conversation/ConversationContinuation.mjs';
 import { ResponseLengthController } from '../communication/ResponseLengthController.mjs';
 import { AntiRepetitionEngine } from '../communication/AntiRepetitionEngine.mjs';
-import { BubbleComposer } from '../communication/BubbleComposer.mjs';
 
 import { MemoryOS } from '../memory/MemoryOS.mjs';
 import { RelevanceMemoryRetrieval } from '../memory/RelevanceMemoryRetrieval.mjs';
 import { SecretVault } from '../security/SecretVault.mjs';
-import { MemoryFirewall } from '../security/MemoryFirewall.mjs';
 import { ReplayStudio } from '../eval/ReplayStudio.mjs';
-
-import { ConversationRepair } from '../communication/ConversationRepair.mjs';
-import { RelationshipProfile } from '../communication/RelationshipProfile.mjs';
 
 import { loadMemory, saveMemory } from '../memory/MemoryStore.mjs';
 import { MemoryManager } from '../memory/MemoryManager.mjs';
@@ -57,64 +60,63 @@ export class PersonalAIOS {
             }
         }
 
-        // 2. MULTI-DIMENSIONAL CONVERSATION STATE & PHASE
-        const convState = ConversationStateEngine.evaluateState(message);
-        const curhatMode = CurhatEngine.detectMode(message);
-        const repairCheck = ConversationRepair.detectMisunderstanding(message);
+        // 2. WORKING MEMORY & CONTEXT ALLOCATION
+        let memData = await loadMemory(chatId);
+        if (!memData.working_memory) memData.working_memory = [];
+        memData.working_memory = memData.working_memory.filter(m => 
+            !m.text.includes('nge-lag') && !m.text.includes('offline')
+        );
 
-        trace.intent = convState.isQuestion ? 'question' : 'statement';
+        // 3. MULTI-DIMENSIONAL CONVERSATION STATE & TURN TAKING
+        const convState = ConversationStateEngine.evaluateState(message);
+        const emotionalCalibration = EmotionalCalibrationEngine.calibrate(message);
+        const turnTaking = TurnTakingEngine.evaluateTurn(message, memData.working_memory, 1);
+        const curhatMode = CurhatEngine.detectMode(message);
+
         trace.phase = convState.phase;
         trace.mode = curhatMode.mode;
+        trace.emotionalTone = emotionalCalibration.tone;
 
-        // 3. TOPIC GRAPH & ASSOCIATIVE CONTINUITY
+        // 4. TOPIC GRAPH & STORY THREADS
         const topicGraph = await TopicGraphEngine.updateGraph(chatId, message);
         const topicDirectives = TopicGraphEngine.formatDirectives(topicGraph);
-        const openLoops = await OpenLoopEngine.getLoops(chatId);
-        const maturedLoops = OpenLoopEngine.getMaturedLoops(openLoops);
-        const loopDirective = maturedLoops.length > 0 
-            ? `- Rencana/Janji Tertunda: "${maturedLoops[0].statement}". Singgung jika relevan.` 
+        const storyThreads = await StoryThreadTracker.getThreads(chatId);
+        const activeStories = StoryThreadTracker.getActiveThreads(storyThreads);
+        const storyContext = activeStories.length > 0
+            ? `- Benang Cerita Aktif: "${activeStories[0].summary}"`
             : '';
 
         trace.topic = topicGraph.currentTopic;
 
-        // 4. CONTEXTUAL CALLBACK HUMOR & HUMOR ENGINE
+        // 5. HUMOR TIMING & CALLBACK REGISTRY
+        const humorTiming = HumorTimingDetector.calculateIntensity(message, emotionalCalibration.tone);
         const callbackEvents = await CallbackRegistry.getEvents(chatId);
         const matchedCallback = CallbackRegistry.findMatchingCallback(message, callbackEvents);
         const humorDecision = AdvancedHumorEngine.evaluate(message, convState, matchedCallback);
 
         trace.humorMode = humorDecision.mode;
 
-        // 5. RELATIONSHIP & STYLE DNA (Authentic Jawa/Indonesian blend)
-        const relationship = await RelationshipProfile.updateProfile(chatId);
-        const dna = StyleDNA.getProfile(relationship.familiarity);
+        // 6. SOCIAL MEMORY & STYLE LEARNING
+        const socialProfile = await SocialMemoryOS.getProfile(chatId);
+        const socialContext = SocialMemoryOS.formatSocialContext(socialProfile);
+        const learnedStyle = await StyleLearningEngine.learnFromMessage(chatId, message);
+        const dna = StyleDNA.getProfile('CLOSE');
         const isJawa = Boolean(message.match(/(yo|ki|to|wae|lha|ngopo|piye|mangan|kue|kowe|opo|ora|ra|wis|wes|dadi)/i));
         const styleDirectives = StyleDNA.compileDirectives(dna, isJawa);
 
-        // 6. CONTINUATION & LENGTH CONTROL
-        const continuation = ConversationContinuation.evaluate(message, curhatMode.mode);
-        const lengthBudget = ResponseLengthController.getLengthBudget(message, curhatMode.mode);
-
-        // 7. MEMORY OS RETRIEVAL 2.0 (Scored relevance selection)
+        // 7. MEMORY RETRIEVAL 2.0 (Scored Top-K selection)
         let memOSData = await MemoryOS.getMemory(chatId);
         memOSData = MemoryOS.applyDecay(memOSData);
-
         const allFacts = [
             ...(memOSData.L2_semantic || []),
             ...(memOSData.L1_episodic || []).map(e => ({ predicate: 'kejadian', object: e.summary, importance: e.importance }))
         ];
         const relevantMemories = RelevanceMemoryRetrieval.retrieveTopMemories(allFacts, message, topicGraph.currentTopic, 3);
         const memoryPromptStr = relevantMemories.length > 0
-            ? "=== MEMORI RELEVAN (RELEVANCE 2.0) ===\n" + relevantMemories.map(m => `- ${m.predicate}: ${m.object}`).join('\n')
+            ? "=== MEMORI RELEVAN ===\n" + relevantMemories.map(m => `- ${m.predicate}: ${m.object}`).join('\n')
             : '';
 
-        // 8. WORKING MEMORY & CONTEXT BUDGET ALLOCATION (~2000 token limit)
-        let memData = await loadMemory(chatId);
-        if (!memData.working_memory) memData.working_memory = [];
-
-        memData.working_memory = memData.working_memory.filter(m => 
-            !m.text.includes('nge-lag') && !m.text.includes('offline')
-        );
-
+        // 8. CONTEXT BUDGET ALLOCATION
         const { history: budgetedHistory, estimatedTokens } = ContextBudgetManager.fitToBudget(memData.working_memory, 8);
         trace.tokensEstimated = estimatedTokens;
 
@@ -124,23 +126,21 @@ export class PersonalAIOS {
 ${styleDirectives}
 
 ${convState.directive}
-
-=== MODE: ${curhatMode.mode} ===
-${curhatMode.directive}
-${lengthBudget.directive}
-${continuation.suggestedBounce ? `[MOMENTUM]: ${continuation.suggestedBounce}` : ''}
-${repairCheck.directive ? `[KOREKSI]: ${repairCheck.directive}` : ''}
+${emotionalCalibration.directive}
+${turnTaking.directive}
+${humorTiming.directive}
 ${humorDecision.directive ? `${humorDecision.directive}` : ''}
 
 ${topicDirectives}
-${loopDirective}
+${storyContext}
+${socialContext}
 ${memoryPromptStr}
 
 Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         const cleanPrompt = SecretVault.sanitizePrompt(masterPrompt);
 
-        // 10. MULTI-TURN PAYLOAD
+        // 10. MULTI-TURN CONTENTS
         const contents = [];
         for (const item of budgetedHistory) {
             if (item.role === 'user') {
@@ -151,7 +151,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         }
         contents.push({ role: 'user', parts: [{ text: message }] });
 
-        // 11. HEALTH-AWARE FLEET GENERATION
+        // 11. MODEL GENERATION WITH HEALTH MATRIX
         const targetModel = ProviderHealthMatrix.getOptimalModel();
         let rawDraft = "";
         try {
@@ -176,11 +176,11 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         trace.finalMessage = refinedOutput;
         trace.latencyMs = Date.now() - startTime;
 
-        // 13. RECORD TELEMETRY & REPLAY TRACE
+        // 13. RECORD TELEMETRY & REPLAY STUDIO
         ReplayStudio.recordTrace(corrId, trace).catch(() => {});
         AntiRepetitionEngine.recordResponse(chatId, refinedOutput).catch(() => {});
 
-        // 14. PERSIST CLEAN WORKING MEMORY & EVENT REGISTRATION
+        // 14. WORKING MEMORY & STORY REGISTRATION
         if (!refinedOutput.includes('nge-lag') && !refinedOutput.includes('offline')) {
             memData.working_memory.push({ role: 'user', text: message, timestamp: Date.now() });
             memData.working_memory.push({ role: 'assistant', text: refinedOutput, timestamp: Date.now() });
@@ -191,19 +191,9 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
             this.memoryManager.extractAndStore(chatId, `${message}\n${refinedOutput}`).catch(() => {});
 
-            // Auto-register funny callback event if humor detected
-            if (message.match(/(diet|salah kirim|nabrak|apes|lucu)/i)) {
-                CallbackRegistry.registerFunnyEvent(chatId, {
-                    triggerKeyword: message.match(/(diet|salah kirim|nabrak|apes)/i)?.[0] || 'kejadian',
-                    description: message.slice(0, 80)
-                }).catch(() => {});
-            }
-
-            if (message.match(/(besok mau|nanti mau|rencananya mau|pengen nyoba)/i)) {
-                OpenLoopEngine.registerLoop(chatId, {
-                    topic: topicGraph.currentTopic,
-                    statement: message.slice(0, 100)
-                }).catch(() => {});
+            // Auto-track storytelling thread
+            if (message.length > 50 || message.match(/(tadi kan|jadi gini|kemarin tuh)/i)) {
+                StoryThreadTracker.recordStory(chatId, message, topicGraph.currentTopic).catch(() => {});
             }
         }
 
