@@ -9,9 +9,10 @@ export class AIGatewayObservable {
     constructor() {
         this.fleet = null;
         this.models = [
-            'gemini-flash-lite-latest',
-            'gemini-3.1-flash-lite',
-            'gemini-3.5-flash-lite'
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash',
+            'gemini-2.0-flash-lite'
         ];
         this.modelIndex = 0;
         this.initFleet();
@@ -69,7 +70,7 @@ export class AIGatewayObservable {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: payload,
-                    signal: AbortSignal.timeout(8000)
+                    signal: AbortSignal.timeout(10000)
                 });
 
                 const latency = Date.now() - reqStart;
