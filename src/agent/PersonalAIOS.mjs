@@ -49,6 +49,7 @@ import { ConversationDebugger } from '../subsystems/observability/ConversationDe
 import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
 import { ContextBudgetManager } from '../context/ContextBudgetManager.mjs';
 import { StyleDNA } from '../communication/StyleDNA.mjs';
+import { NaturalConversationEnhancer } from '../communication/NaturalConversationEnhancer.mjs';
 
 import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
 import { ConversationContinuityLock } from '../conversation/ConversationContinuityLock.mjs';
@@ -265,12 +266,14 @@ export class PersonalAIOS {
 
         const outcomeData = await ConversationOutcomeTracker.loadOutcome(chatId);
         const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
+        const naturalEnhancement = NaturalConversationEnhancer.evaluate({ text: inputSnippet, chatId, pushName });
 
         const masterPrompt = `${roleIdentity}
 
 ${personaLock}
 ${contactDirectives}
 ${outcomeDirectives}
+${naturalEnhancement}
 ${tempEval.directive}
 ${repairDirective}
 ${visualContinuity}
