@@ -50,6 +50,7 @@ import { LightweightRouter } from '../fleet/LightweightRouter.mjs';
 import { ContextBudgetManager } from '../context/ContextBudgetManager.mjs';
 import { StyleDNA } from '../communication/StyleDNA.mjs';
 import { NaturalConversationEnhancer } from '../communication/NaturalConversationEnhancer.mjs';
+import { ContextualConversationIntelligence } from '../communication/ContextualConversationIntelligence.mjs';
 
 import { ConversationStateEngine } from '../conversation/ConversationStateEngine.mjs';
 import { ConversationContinuityLock } from '../conversation/ConversationContinuityLock.mjs';
@@ -267,6 +268,7 @@ export class PersonalAIOS {
         const outcomeData = await ConversationOutcomeTracker.loadOutcome(chatId);
         const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
         const naturalEnhancement = NaturalConversationEnhancer.evaluate({ text: inputSnippet, chatId, pushName });
+        const contextualIntelligence = ContextualConversationIntelligence.evaluate({ text: inputSnippet, hasAudio, hasImages, quotedContext, chatId });
 
         const masterPrompt = `${roleIdentity}
 
@@ -274,6 +276,7 @@ ${personaLock}
 ${contactDirectives}
 ${outcomeDirectives}
 ${naturalEnhancement}
+${contextualIntelligence}
 ${tempEval.directive}
 ${repairDirective}
 ${visualContinuity}
