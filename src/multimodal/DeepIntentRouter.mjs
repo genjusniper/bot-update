@@ -1,5 +1,9 @@
 // src/multimodal/DeepIntentRouter.mjs
-// V13.7 — Expanded: share.google, youtu.be, shopee, tokopedia, broader LOCAL_FAST
+// V14.3 — 100% Full Gemini AI Routing (LOCAL_FAST_PATH & SEMANTIC_CACHE DISABLED)
+// Toggleable: set ENABLE_LOCAL_FAST_PATH = true if needed in the future
+
+const ENABLE_LOCAL_FAST_PATH = false;
+const ENABLE_SEMANTIC_CACHE = false;
 
 export class DeepIntentRouter {
     static classify(message, attachments = {}) {
@@ -37,17 +41,17 @@ export class DeepIntentRouter {
             };
         }
 
-        // 4. Local Ultra-Fast Path (0 Token, <1ms) — expanded Jawa/Indo casual responses
-        if (/^(p|oi|oy|halo|hai|wkwk|haha|ngakak|oke|sip|siap|gas|lah|anjir|yo|yoi|mantap|sipp|ok|otw|lol|wkwkwk|hehe|tos|gaskeun|nggih|monggo|yaudah|makasih|thanks|thx|noted|aman|siipp)$/i.test(text)) {
+        // 4. Local Ultra-Fast Path (Optional toggle, currently OFF for 100% natural Gemini replies)
+        if (ENABLE_LOCAL_FAST_PATH && /^(p|oi|oy|halo|hai|wkwk|haha|ngakak|oke|sip|siap|gas|lah|anjir|yo|yoi|mantap|sipp|ok|otw|lol|wkwkwk|hehe|tos|gaskeun|nggih|monggo|yaudah|makasih|thanks|thx|noted|aman|siipp)$/i.test(text)) {
             return { intent: 'LOCAL_FAST', requiresAI: false, targetRoute: 'LOCAL_FAST_PATH' };
         }
 
-        // 5. Semantic Cache Path (frequent casual questions)
-        if (/^(makan apa|laper nih|rekomendasi makan|enak makan apa|lagi males|mager banget|bosen nih|gabut|ngantuk|mau ngapain|ngapain sekarang)$/i.test(text)) {
+        // 5. Semantic Cache Path (Optional toggle, currently OFF)
+        if (ENABLE_SEMANTIC_CACHE && /^(makan apa|laper nih|rekomendasi makan|enak makan apa|lagi males|mager banget|bosen nih|gabut|ngantuk|mau ngapain|ngapain sekarang)$/i.test(text)) {
             return { intent: 'SEMANTIC_CACHE', requiresAI: false, targetRoute: 'SEMANTIC_CACHE_PATH' };
         }
 
-        // 6. Default: Full Gemini Conversation
+        // 6. Default: 100% Full Gemini Conversation with memory & context
         return { intent: 'GENERAL_CONVERSATION', requiresAI: true, targetRoute: 'AI_GATEWAY' };
     }
 }
