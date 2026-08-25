@@ -1,13 +1,12 @@
 // src/resilience/AIGatewayObservable.mjs
-// V13.7 — Multi-key & multi-model rotation with proper error handling
-// Models confirmed valid via live API test on Termux HP
+// V14.4 — Optimized Fast Rotation: 5s per-request timeout, 25s global budget, 12 attempts
 
 import { KeyFleetManager } from '../fleet/KeyFleetManager.mjs';
 import { ErrorTaxonomy } from '../fleet/ErrorTaxonomy.mjs';
 import { ProviderHealthMatrix } from '../fleet/ProviderHealthMatrix.mjs';
 import { PayloadSanitizer } from './PayloadSanitizer.mjs';
 
-// Confirmed valid Gemini models (from live API test on Termux 25 Aug 2026)
+// Confirmed fastest valid Gemini models on Termux
 const MODELS = [
     'gemini-2.5-flash',
     'gemini-flash-latest',
@@ -49,24 +48,23 @@ export class AIGatewayObservable {
             contents: cleanContents,
             generationConfig: {
                 temperature: 0.85,
-                maxOutputTokens: 800,
+                maxOutputTokens: 600,
                 topP: 0.95
             }
         });
 
-        // Try up to 8 attempts across models and keys
-        const maxAttempts = Math.min(8, this.fleet.fleet.length);
+        // Fast rotation: try up to 12 attempts across keys and models
+        const maxAttempts = Math.min(12, this.fleet.fleet.length);
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            if (Date.now() - startTime > 20000) break; // Hard 20s global timeout
+            if (Date.now() - startTime > 25000) break; // 25s max global budget
 
             const currentModel = MODELS[this.modelIndex % MODELS.length];
             const keyItem = this.fleet.getHealthyKey();
 
             if (!keyItem) {
                 telemetry.traces.push({ model: currentModel, error: 'NO_HEALTHY_KEYS', attempt });
-                // Wait briefly before giving up — keys might come off cooldown
-                await new Promise(r => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 250));
                 continue;
             }
 
@@ -79,7 +77,7 @@ export class AIGatewayObservable {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: payload,
-                    signal: AbortSignal.timeout(9000)
+                    signal: AbortSignal.timeout(5500) // Fast 5.5s timeout: if slow, rotate immediately!
                 });
 
                 const latency = Date.now() - reqStart;
@@ -95,7 +93,6 @@ export class AIGatewayObservable {
                         console.error('[AIGateway] 🛑 400 Bad Request — aborting.');
                         return { success: false, telemetry, error: 'BAD_REQUEST_ABORT' };
                     }
-                    // For SWITCH_MODEL, advance model index
                     if (err.action === 'SWITCH_MODEL' || err.action === 'SWITCH_MODEL_AND_BACKOFF') {
                         this.modelIndex++;
                     }
@@ -110,7 +107,6 @@ export class AIGatewayObservable {
                     return { success: true, text: outputText, modelUsed: currentModel, latencyMs: latency, telemetry };
                 }
 
-                // Empty candidates — try next
                 this.modelIndex++;
 
             } catch (e) {
