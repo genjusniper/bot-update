@@ -1,7 +1,6 @@
-// src/gateway/WhatsAppGateway.mjs — STRICT CHANNEL & BROADCAST FILTER
+// src/gateway/WhatsAppGateway.mjs — UNIVERSAL MULTIMODAL & CO-PILOT GATEWAY
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import pino from 'pino';
-import readline from 'readline';
 import { Normalizer } from './Normalizer.mjs';
 import { EventBus } from '../event/EventBus.mjs';
 
@@ -46,20 +45,28 @@ export class WhatsAppGateway {
     this.sock.ev.on('messages.upsert', async ({ messages, type }) => {
       if (type !== 'notify') return;
       for (const mek of messages) {
-        if (!mek.message || mek.key.fromMe) continue;
+        if (!mek.message) continue;
         
         const jid = mek.key.remoteJid;
         
-        // STRICT FILTER: Block group chats, broadcasts, and channels
-        if (!jid || jid.endsWith('@g.us') || jid.endsWith('@newsletter') || jid === 'status@broadcast') { 
+        // Filter out status broadcasts and newsletters
+        if (!jid || jid.endsWith('@newsletter') || jid === 'status@broadcast') { 
             continue; 
         } 
 
         try {
-          const unifiedMsg = Normalizer.normalize(mek);
-          if (!unifiedMsg || !unifiedMsg.text) continue;
+          let unifiedMsg = Normalizer.normalize(mek);
+          if (!unifiedMsg) {
+            unifiedMsg = {
+              chatId: jid,
+              senderId: mek.key.participant || jid,
+              text: mek.message?.conversation || mek.message?.extendedTextMessage?.text || mek.message?.imageMessage?.caption || '',
+              timestamp: mek.messageTimestamp || Date.now()
+            };
+          }
           
-          console.log('<<< MESSAGE ACCEPTED & QUEUED:', jid, '| text:', unifiedMsg.text?.substring(0, 30));
+          const textPreview = unifiedMsg.text ? unifiedMsg.text.substring(0, 30) : '[Media/Foto/VN]';
+          console.log('<<< MESSAGE ACCEPTED & QUEUED:', jid, '| text:', textPreview);
           
           const eventId = mek.key.id;
           const correlationId = `conv_${jid}_${Date.now()}`;
