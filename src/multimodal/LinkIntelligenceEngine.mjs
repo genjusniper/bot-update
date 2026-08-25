@@ -21,8 +21,8 @@ export class LinkIntelligenceEngine {
             const finalUrl = res.url || cleanUrl;
             const html = await res.text();
 
-            // 1. Specialized Google Maps Resolver
-            if (cleanUrl.includes('maps.app.goo.gl') || cleanUrl.includes('goo.gl/maps') || finalUrl.includes('google.com/maps')) {
+            // 1. Specialized Google Maps Resolver (maps.app.goo.gl, share.google, goo.gl/maps, google.com/maps)
+            if (cleanUrl.includes('maps.app.goo.gl') || cleanUrl.includes('goo.gl/maps') || cleanUrl.includes('share.google') || finalUrl.includes('google.com/maps')) {
                 let placeName = '';
                 
                 // Extract from final redirected URL (e.g. /maps/place/Nama+Tempat/@lat,lng)
@@ -51,7 +51,7 @@ export class LinkIntelligenceEngine {
                     title: resolvedName,
                     type: 'GOOGLE_MAPS_LOCATION',
                     description: `Lokasi / Tempat Google Maps: ${resolvedName} ${coordinates ? `(${coordinates})` : ''}`,
-                    snippet: `User membagikan link lokasi Google Maps untuk "${resolvedName}". Berikan respon informatif mengenai tempat ini (nama tempat, jenis layanan/rental/outdoor, dan lokasi area Semarang jika relevan).`,
+                    snippet: `User membagikan link lokasi Google Maps untuk "${resolvedName}". Berikan respon informatif mengenai tempat ini (nama tempat, jenis layanan/rental/outdoor/toko, dan lokasinya di Semarang jika relevan).`,
                     success: true
                 };
             }

@@ -1,4 +1,4 @@
-// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL ASSISTANT OS (V13.3 CONTACT NAME RECOGNITION)
+// src/agent/PersonalAIOS.mjs — UNIVERSAL PERSONAL ASSISTANT OS (V13.6 LINK & MAPS MASTER)
 
 import { AIGatewayObservable } from '../resilience/AIGatewayObservable.mjs';
 import { CircuitBreakerHardened } from '../resilience/CircuitBreakerHardened.mjs';
@@ -106,7 +106,7 @@ export class PersonalAIOS {
 
         ProductionTelemetry72h.increment('messages', 'received').catch(() => {});
 
-        // 1. MASTER PERSONAL NUMBER CO-PILOT GATEKEEPER (V13.3)
+        // 1. MASTER PERSONAL NUMBER CO-PILOT GATEKEEPER (V13.6)
         const copilotGate = await PersonalCoPilotGuard.evaluateGatekeeper({
             chatId,
             groupSubject,
@@ -134,7 +134,7 @@ export class PersonalAIOS {
             return { action: 'REPLY_SINGLE', bubbles: [validationReply], text: validationReply, reactionEmoji: '🫂' };
         }
 
-        // 3. MULTI-PERSON PROFILE STORE & NAME RECOGNITION (V13.3)
+        // 3. MULTI-PERSON PROFILE STORE & NAME RECOGNITION (V13.6)
         const contactProfile = await ContactProfileStore.updateFromMessage(effectiveSender, inputSnippet, pushName);
         const contactDirectives = ContactProfileStore.formatDirectives(contactProfile);
 
@@ -207,7 +207,7 @@ export class PersonalAIOS {
         }
 
         // 11. DEEP INTENT ROUTER (Local Fast Path & Semantic Cache in 1-5ms)
-        const intentRoute = DeepIntentRouter.classify(inputSnippet, { hasImage: hasImages, hasAudio });
+        const intentRoute = DeepIntentRouter.classify(inputSnippet, { hasImage: hasImages, imageCount: images.length, hasAudio });
         trace.intent = intentRoute.intent;
         await MessageLifecycleTracker.logPhase(lifecycleId, 'INTENT_ROUTED', { intent: intentRoute.intent, targetRoute: intentRoute.targetRoute });
 
@@ -255,12 +255,12 @@ export class PersonalAIOS {
 
         trace.temperature = tempEval.temperature;
 
-        // 13. LINK INTELLIGENCE RESOLVER
+        // 13. LINK INTELLIGENCE RESOLVER (Google Maps, Websites, Marketplaces)
         let linkContext = '';
-        if (intentRoute.intent === 'LINK_ANALYSIS') {
+        if (intentRoute.intent === 'LINK_ANALYSIS' && intentRoute.url) {
             const linkData = await LinkIntelligenceEngine.resolveUrl(intentRoute.url);
             linkContext = LinkIntelligenceEngine.formatLinkContext(linkData);
-            await MessageLifecycleTracker.logPhase(lifecycleId, 'LINK_RESOLVED', { url: intentRoute.url, title: linkData.title });
+            await MessageLifecycleTracker.logPhase(lifecycleId, 'LINK_RESOLVED', { url: intentRoute.url, title: linkData.title, type: linkData.type });
         }
 
         // 14. TIME AWARENESS & PERSONA DRIFT LOCK
