@@ -60,6 +60,7 @@ import { ConversationOutcomeTracker } from '../conversation/ConversationOutcomeT
 import { HumanRhythmEngine } from '../conversation/HumanRhythmEngine.mjs';
 import { TurnTakingEngine } from '../conversation/TurnTakingEngine.mjs';
 import { StoryThreadTracker } from '../conversation/StoryThreadTracker.mjs';
+import { ConversationalReactionEngine } from '../conversation/ConversationalReactionEngine.mjs';
 
 import { TopicGraphEngine } from '../topics/TopicGraphEngine.mjs';
 import { AdvancedHumorEngine } from '../humor/AdvancedHumorEngine.mjs';
@@ -277,6 +278,7 @@ export class PersonalAIOS {
         const contextualIntelligence = ContextualConversationIntelligence.evaluate({ text: inputSnippet, hasAudio, hasImages, quotedContext, chatId });
         const moodEvaluation = MoodEnergyMatcher.evaluate(inputSnippet);
         const conversationalLogic = ConversationalLogicEngine.evaluate({ text: inputSnippet, pushName, chatId });
+        const reactionEngineDirective = ConversationalReactionEngine.evaluate({ text: inputSnippet, chatId, pushName, history: memData.working_memory });
 
         const masterPrompt = `${roleIdentity}
 
@@ -287,6 +289,7 @@ ${naturalEnhancement}
 ${contextualIntelligence}
 ${moodEvaluation.directive}
 ${conversationalLogic}
+${reactionEngineDirective}
 ${tempEval.directive}
 ${repairDirective}
 ${visualContinuity}
