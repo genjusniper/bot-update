@@ -1,9 +1,8 @@
 // src/behavior/HumanInteractionPolicy.mjs
-// V13.7 — Improved bubble splitting, reactions, and delivery logic
+// Single Bubble Preferred, Realistic Human Timing
 
 import { BubbleSequencer } from './BubbleSequencer.mjs';
 import { HumanUXEngine } from '../subsystems/ux/HumanUXEngine.mjs';
-import { ConversationEndingDetector } from './ConversationEndingDetector.mjs';
 
 export class HumanInteractionPolicy {
     static decideDelivery(userMessage, rawResponse, options = {}) {
@@ -19,32 +18,22 @@ export class HumanInteractionPolicy {
         let bubbles = [responseText];
         let typingDelays = [HumanUXEngine.calculateTypingDelay(responseText, options.hasMedia)];
 
-        // 2. Reaction-only triggers (35% chance for very short casual inputs)
+        // 1. Reaction triggers
         if (text.match(/^(wkwk|wkwkwk|haha|ngakak|lucu banget)$/i)) {
-            if (Math.random() < 0.35 && !options.hasMedia) {
+            if (Math.random() < 0.20 && !options.hasMedia) {
                 return { action: 'REACT_ONLY', reactionEmoji: '😂', bubbles: [], typingDelays: [0], text: '' };
-            }
-            reactionEmoji = '😂';
-        } else if (text.match(/^(mantap|keren|makasih|suwun|tengkyu|jos|thanks|thx|sip|siap)$/i)) {
-            if (Math.random() < 0.40) {
-                return { action: 'REACT_ONLY', reactionEmoji: '👍', bubbles: [], typingDelays: [0], text: '' };
-            }
-        } else if (text.match(/^(nice|wow|gila|gilak|anjir|parah)$/i)) {
-            if (Math.random() < 0.30) {
-                return { action: 'REACT_ONLY', reactionEmoji: '🔥', bubbles: [], typingDelays: [0], text: '' };
             }
         }
 
-        // 3. Smart bubble splitting for longer responses
-        // Split into max 2 bubbles only for responses >80 chars with natural paragraph breaks
-        if (responseText.length > 80 && responseText.includes('\n')) {
+        // 2. Multi-bubble only for distinct paragraph breaks with substantial content
+        if (responseText.length > 120 && responseText.includes('\n\n')) {
             const seqBubbles = BubbleSequencer.sequence(responseText, 2);
             if (seqBubbles.length > 1) {
                 action = 'REPLY_MULTI_BUBBLE';
                 bubbles = seqBubbles;
                 typingDelays = bubbles.map((b, i) => {
                     const delay = HumanUXEngine.calculateTypingDelay(b);
-                    return i === 0 ? delay : Math.min(delay, 1000); // cap subsequent bubbles
+                    return i === 0 ? delay : Math.max(2500, delay); // follow-up bubble takes 2.5s - 4.5s
                 });
             }
         }

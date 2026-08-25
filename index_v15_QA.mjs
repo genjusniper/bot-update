@@ -300,11 +300,11 @@ async function start() {
                     const bubble = bubbles[bIndex];
                     if (!bubble || !bubble.trim()) continue;
                     
-                    const delayMs = delays[bIndex] || 300;
+                    const delayMs = delays[bIndex] || 1500;
 
                     try { await waGateway.sendPresenceUpdate('composing', chatId); } catch(e){}
                     if (delayMs > 0) {
-                        await new Promise(r => setTimeout(r, Math.min(1200, delayMs)));
+                        await new Promise(r => setTimeout(r, Math.min(5000, Math.max(1000, delayMs))));
                     }
 
                     const hasAttachment = Boolean(images.length > 0 || audio);

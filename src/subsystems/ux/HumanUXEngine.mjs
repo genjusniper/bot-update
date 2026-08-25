@@ -1,34 +1,29 @@
 // src/subsystems/ux/HumanUXEngine.mjs
-// Human UX Engine: Adaptive Typing Speed, Presence Management & Contextual Emojis
+// Realistic Human Typing Delays for WhatsApp (1.5s - 4.5s natural rhythm)
 
 export class HumanUXEngine {
     static calculateTypingDelay(responseText, hasMedia = false) {
-        if (!responseText) return 200;
+        if (!responseText) return 1000;
 
-        const len = responseText.length;
+        const charCount = responseText.length;
+        const wordCount = responseText.split(/\s+/).filter(Boolean).length;
 
-        // Instant for ultra-short slang
-        if (len < 10 && !hasMedia) {
-            return 200; // ~0.2s
+        // Ultra short (1-2 words): ~1.2s - 1.8s
+        if (wordCount <= 2) {
+            return 1200 + Math.floor(Math.random() * 600);
         }
 
-        if (hasMedia) {
-            return 1200; // ~1.2s for media processing
+        // Short chat (3-8 words): ~1.8s - 2.8s
+        if (wordCount <= 8) {
+            return 1800 + Math.floor(Math.random() * 1000);
         }
 
-        // Adaptive scaled typing delay: ~35ms per word, bounded between 300ms and 1800ms
-        const wordCount = responseText.split(/\s+/).length;
-        const calculated = Math.min(1800, Math.max(300, wordCount * 35));
+        // Medium chat (9-20 words): ~2.8s - 4.2s
+        const calculated = Math.min(4500, Math.max(2200, wordCount * 220 + charCount * 20));
         return calculated;
     }
 
     static contextualizeEmojis(responseText, energyLevel = 0.5) {
-        if (!responseText) return responseText;
-
-        if (energyLevel > 0.8 && responseText.includes('wkwk') && !responseText.match(/😂|🤣|😭/)) {
-            return responseText;
-        }
-
-        return responseText;
+        return responseText || '';
     }
 }
