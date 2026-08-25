@@ -1,0 +1,21 @@
+# Environment & Secrets
+.env
+.env.*
+auth-v*/
+*.sqlite*
+memory/
+
+# Test & Debug Scratchpad
+scratch/
+test_*.js
+test_*.mjs
+test_*.cjs
+probe_*.mjs
+temp_*
+*.tar.gz
+*.log
+
+# Dependencies & OS
+node_modules/
+.pm2/
+.DS_Store

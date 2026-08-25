@@ -1,0 +1,12 @@
+{
+  "features": {
+    "researcher": true,
+    "linkReader": true,
+    "vision": true,
+    "transcriber": true,
+    "moodSystem": true,
+    "dreamer": true
+  },
+  "adminNumber": "6285741318412",
+  "secretPrefix": "/bot"
+}

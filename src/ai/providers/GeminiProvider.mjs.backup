@@ -1,0 +1,99 @@
+// src/ai/providers/GeminiProvider.mjs
+import { GoogleGenAI } from '@google/genai';
+import { AIError } from '../errors/AIError.mjs';
+
+export class GeminiProvider {
+  constructor(apiKey, modelName = 'gemini-2.5-flash') {
+    if (!apiKey) {
+      throw new Error('GeminiProvider requires an API key');
+    }
+    this.name = 'gemini';
+    this.client = new GoogleGenAI({ apiKey });
+    this.modelName = modelName;
+  }
+
+  _normalizeError(err) {
+    const raw = String(err?.message || err?.error?.message || err || '').toLowerCase();
+    
+    const isQuota = raw.includes('429') || 
+                    raw.includes('resource_exhausted') || 
+                    raw.includes('resource exhausted') || 
+                    raw.includes('quota exceeded') ||
+                    raw.includes('generate_content_free_tier_requests') ||
+                    raw.includes('ratelimit') || 
+                    raw.includes('rate limit');
+                    
+    const isNetwork = raw.includes('timeout') || 
+                      raw.includes('timed out') || 
+                      raw.includes('network') || 
+                      raw.includes('fetch failed') ||
+                      raw.includes('econnreset') ||
+                      raw.includes('econnrefused') ||
+                      raw.includes('socket');
+                      
+    const isServerError = raw.includes('500') || 
+                          raw.includes('502') || 
+                          raw.includes('503') || 
+                          raw.includes('504') ||
+                          raw.includes('internal server error') ||
+                          raw.includes('service unavailable');
+
+    let retryDelayMs = 0;
+    const match = raw.match(/retry[- ]after\s*(\d+)/i);
+    if (match && match[1]) {
+       retryDelayMs = parseInt(match[1]) * 1000;
+    }
+
+    if (isQuota) {
+      return new AIError(err.message || 'Gemini Quota Exhausted', 'QUOTA', this.name, false, true, retryDelayMs);
+    }
+    
+    if (isNetwork || isServerError) {
+      return new AIError(err.message || 'Gemini Network/Server Error', 'NETWORK', this.name, true, false, retryDelayMs);
+    }
+
+    return new AIError(err.message || 'Unknown Gemini Error', 'UNKNOWN', this.name, false, false, 0);
+  }
+
+  async generate(prompt, options = {}) {
+    const startTime = Date.now();
+    try {
+      const response = await this.client.models.generateContent({
+        model: options.model || this.modelName,
+        contents: prompt,
+        config: {
+          temperature: options.temperature ?? 0.7,
+        }
+      });
+
+      const text = response.text || '';
+      const cleanText = text.replace(/\u0000/g, '').trim();
+
+      if (!cleanText || cleanText.match(/^(undefined|null|error|internal server error|object Object)$/i)) {
+         throw new Error('Unusable response from Gemini');
+      }
+
+      return {
+        ok: true,
+        response: cleanText,
+        provider: this.name,
+        latencyMs: Date.now() - startTime,
+        quotaExhausted: false,
+        error: null
+      };
+
+    } catch (err) {
+      const normalizedError = this._normalizeError(err);
+      return {
+        ok: false,
+        response: '',
+        provider: this.name,
+        latencyMs: Date.now() - startTime,
+        quotaExhausted: normalizedError.isQuotaError,
+        isRetryable: normalizedError.isRetryable,
+        retryDelayMs: normalizedError.retryDelayMs,
+        error: normalizedError.message
+      };
+    }
+  }
+}

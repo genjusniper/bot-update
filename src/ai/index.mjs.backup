@@ -1,0 +1,14 @@
+// src/ai/index.mjs
+
+import { GeminiProvider } from './providers/GeminiProvider.mjs';
+import { LocalFallbackProvider } from './providers/LocalFallbackProvider.mjs';
+import { AIGateway } from './gateway/AIGateway.mjs';
+
+export function createAIGateway(apiKey) {
+  const gemini = new GeminiProvider(apiKey);
+  const fallback = new LocalFallbackProvider();
+  
+  return new AIGateway(gemini, fallback);
+}
+
+export { AIGateway, GeminiProvider, LocalFallbackProvider };

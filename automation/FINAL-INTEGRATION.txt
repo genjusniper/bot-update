@@ -1,0 +1,22 @@
+V4 MODULE SIAP.
+
+index.js V3:
+- 1727 lines
+- socket: sekitar line 1335
+- connection.update: sekitar line 1363
+- messages.upsert: sekitar line 1478
+
+V4 module:
+
+./automation/integration.mjs
+
+Exports:
+
+processAutomationCommand(sock, jid, text)
+
+installAutomation(sock)
+
+JANGAN HAPUS:
+auth-v7
+memory
+index.js backup

@@ -1,0 +1,95 @@
+// src/ai/gateway/AIGateway.mjs
+
+const STATE_CLOSED = 'CLOSED';
+const STATE_OPEN = 'OPEN';
+const STATE_HALF_OPEN = 'HALF_OPEN';
+const DEFAULT_COOLDOWN_MS = 2 * 60 * 1000;
+
+export class AIGateway {
+  constructor(primaryProvider, fallbackProvider) {
+    this.primary = primaryProvider;
+    this.fallback = fallbackProvider;
+    
+    this.state = STATE_CLOSED;
+    this.resetAt = 0;
+    
+    this.stats = {
+      success: 0,
+      failures: 0,
+      quotaFailures: 0,
+      fallbackCount: 0
+    };
+  }
+
+  _checkCircuit() {
+    if (this.state === STATE_OPEN) {
+      if (Date.now() >= this.resetAt) {
+        this.state = STATE_HALF_OPEN;
+        console.log(`⏳ AIGateway: Circuit HALF_OPEN (Probe allowed)`);
+      }
+    }
+  }
+
+  async generate(prompt, options = {}) {
+    this._checkCircuit();
+
+    const purpose = options.purpose || 'chat';
+
+    // Fast-fail if OPEN
+    if (this.state === STATE_OPEN) {
+      console.warn(`🛑 AIGateway: Circuit OPEN. Fast-failing to fallback.`);
+      this.stats.fallbackCount++;
+      return await this.fallback.generate({ incomingText: options.incomingText, purpose });
+    }
+
+    const maxAttempts = options.maxAttempts || (this.state === STATE_HALF_OPEN ? 1 : 2);
+    let lastResult = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      lastResult = await this.primary.generate(prompt, options);
+
+      if (lastResult.ok) {
+        if (this.state === STATE_HALF_OPEN) {
+          console.log(`✅ AIGateway: Probe successful. Circuit CLOSED.`);
+          this.state = STATE_CLOSED;
+        }
+        this.stats.success++;
+        return lastResult;
+      }
+
+      // Handle Failure
+      this.stats.failures++;
+      
+      if (lastResult.quotaExhausted) {
+        console.error(`🛑 AIGateway: Quota Exhausted detected! Opening Circuit.`);
+        this.stats.quotaFailures++;
+        this.state = STATE_OPEN;
+        const delay = lastResult.retryDelayMs > 0 ? Math.max(DEFAULT_COOLDOWN_MS, lastResult.retryDelayMs) : DEFAULT_COOLDOWN_MS;
+        this.resetAt = Date.now() + delay;
+        break; // NO RETRY on Quota
+      }
+      
+      if (this.state === STATE_HALF_OPEN) {
+        console.error(`🛑 AIGateway: Probe failed! Circuit OPEN again.`);
+        this.state = STATE_OPEN;
+        this.resetAt = Date.now() + DEFAULT_COOLDOWN_MS;
+        break; // NO RETRY when probing
+      }
+
+      if (!lastResult.isRetryable) {
+        break; // NO RETRY for fatal errors
+      }
+
+      if (attempt < maxAttempts) {
+        const delay = 500 * attempt;
+        console.log(`⏳ AIGateway: Retryable error. Waiting ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+
+    // If we reached here, primary failed completely
+    console.warn(`⚠️ AIGateway: Primary failed completely. Returning fallback.`);
+    this.stats.fallbackCount++;
+    return await this.fallback.generate({ incomingText: options.incomingText, purpose });
+  }
+}

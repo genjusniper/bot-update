@@ -1,0 +1,6 @@
+{
+  "name": "Calculator",
+  "entrypoint": "index.mjs",
+  "capabilities": [],
+  "version": "1.0.0"
+}
