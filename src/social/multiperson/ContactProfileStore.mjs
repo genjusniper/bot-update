@@ -9,12 +9,12 @@ export class ContactProfileStore {
         const profile = await PerContactMemoryNamespace.loadContactMemory(contactId);
         const policyInfo = await ContactPolicyEngine.getPolicyForContact(contactId);
 
-        // Resolve best name: Policy Name > Saved Profile Name > WhatsApp PushName > Phone Number
+        // Resolve best name: Policy Name > WhatsApp PushName > Saved Profile Name > Phone Number
         if (policyInfo?.name && !policyInfo.name.startsWith('VIP Contact') && !policyInfo.name.startsWith('Unauthorized')) {
             profile.displayName = policyInfo.name;
-        } else if (pushName && !profile.displayName) {
+        } else if (pushName) {
             profile.displayName = pushName;
-        } else if (!profile.displayName) {
+        } else if (!profile.displayName || profile.displayName.startsWith('VIP Kontak')) {
             profile.displayName = contactId.split('@')[0];
         }
 
@@ -28,7 +28,7 @@ export class ContactProfileStore {
 
         profile.totalInteractions = (profile.totalInteractions || 0) + 1;
 
-        // Auto-learn Contact Display Name from WhatsApp pushName or Policy
+        // Auto-learn Contact Display Name from Policy or WhatsApp pushName
         if (policyInfo?.name && !policyInfo.name.startsWith('VIP Contact')) {
             profile.displayName = policyInfo.name;
         } else if (pushName) {
@@ -68,7 +68,9 @@ export class ContactProfileStore {
     static formatDirectives(profile) {
         if (!profile) return '';
 
-        const nameLine = profile.displayName ? `- Lawan Bicara: ${profile.displayName}` : '';
+        const nameLine = profile.displayName 
+            ? `- NAMA LAWAN BICARA: ${profile.displayName} (Kamu sedang mengobrol dengan temanmu yang bernama ${profile.displayName}). Panggil atau sapa dia dengan namanya secara wajar.`
+            : '';
 
         const styleGuide = profile.languageStyle === 'CASUAL_JAWA'
             ? '- Gaya Kontak: Sangat akrab dengan bahasa santai campuran Jawa luwes (contoh: "yo", "wae", "to", "piye", "ki", "tenan").'
