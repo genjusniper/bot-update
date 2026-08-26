@@ -1,22 +1,117 @@
 {
   "defaultPrivatePolicy": "SILENT",
   "contacts": {
-    "236322690191595@lid": { "name": "Agus (Owner Test)", "policy": "AUTO" },
-    "159068543008903@lid": { "name": "Cindy", "policy": "AUTO" },
-    "165145904984105@lid": { "name": "Hanif", "policy": "AUTO" },
-    "6281325554282@s.whatsapp.net": { "name": "VIP Contact 1", "policy": "AUTO" },
-    "6281935596653@s.whatsapp.net": { "name": "VIP Contact 2", "policy": "AUTO" },
-    "6285602612832@s.whatsapp.net": { "name": "VIP Contact 3", "policy": "AUTO" },
-    "6285600961769@s.whatsapp.net": { "name": "VIP Contact 4", "policy": "AUTO" },
-    "6285134755110@s.whatsapp.net": { "name": "VIP Contact 5", "policy": "AUTO" },
-    "628989820481@s.whatsapp.net":  { "name": "VIP Contact 6", "policy": "AUTO" },
-    "6285799205356@s.whatsapp.net": { "name": "VIP Contact 7", "policy": "AUTO" },
-    "6285865977271@s.whatsapp.net": { "name": "VIP Contact 8", "policy": "AUTO" },
-    "6281574446756@s.whatsapp.net": { "name": "VIP Contact 9", "policy": "AUTO" },
-    "6285877764091@s.whatsapp.net": { "name": "VIP Contact 10", "policy": "AUTO" },
-    "6282134990540@s.whatsapp.net": { "name": "VIP Contact 11", "policy": "AUTO" },
-    "6288239215734@s.whatsapp.net": { "name": "VIP Contact 12", "policy": "AUTO" },
-    "628558932876@s.whatsapp.net":  { "name": "VIP Contact 13", "policy": "AUTO" },
-    "6285180980302@s.whatsapp.net": { "name": "VIP Contact 14", "policy": "AUTO" }
+    "236322690191595@lid": {
+      "name": "Agus (Owner Test)",
+      "policy": "AUTO"
+    },
+    "159068543008903@lid": {
+      "name": "Cindy",
+      "policy": "AUTO"
+    },
+    "165145904984105@lid": {
+      "name": "Hanif",
+      "policy": "AUTO"
+    },
+    "6281325554282@s.whatsapp.net": {
+      "name": "VIP Contact 1",
+      "policy": "AUTO"
+    },
+    "6281935596653@s.whatsapp.net": {
+      "name": "VIP Contact 2",
+      "policy": "AUTO"
+    },
+    "6285602612832@s.whatsapp.net": {
+      "name": "VIP Contact 3",
+      "policy": "AUTO"
+    },
+    "6285600961769@s.whatsapp.net": {
+      "name": "VIP Contact 4",
+      "policy": "AUTO"
+    },
+    "6285134755110@s.whatsapp.net": {
+      "name": "VIP Contact 5",
+      "policy": "AUTO"
+    },
+    "628989820481@s.whatsapp.net": {
+      "name": "VIP Contact 6",
+      "policy": "AUTO"
+    },
+    "6285799205356@s.whatsapp.net": {
+      "name": "VIP Contact 7",
+      "policy": "AUTO"
+    },
+    "6285865977271@s.whatsapp.net": {
+      "name": "VIP Contact 8",
+      "policy": "AUTO"
+    },
+    "6281574446756@s.whatsapp.net": {
+      "name": "VIP Contact 9",
+      "policy": "AUTO"
+    },
+    "6285877764091@s.whatsapp.net": {
+      "name": "VIP Contact 10",
+      "policy": "AUTO"
+    },
+    "6282134990540@s.whatsapp.net": {
+      "name": "VIP Contact 11",
+      "policy": "AUTO"
+    },
+    "6288239215734@s.whatsapp.net": {
+      "name": "VIP Contact 12",
+      "policy": "AUTO"
+    },
+    "628558932876@s.whatsapp.net": {
+      "name": "VIP Contact 13",
+      "policy": "AUTO"
+    },
+    "6285180980302@s.whatsapp.net": {
+      "name": "VIP Contact 14",
+      "policy": "AUTO"
+    },
+    "ci_eval_lab_tester@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "regression_lab_tester@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "golden_dataset_tester@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "fault_test_user@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "lifecycle_tester@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "scenario_tester@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "test_sim_user@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "test_jawa_dialect@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "advanced_runtime_test@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "master_blueprint_tester@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    },
+    "verification_test_v6_2@s.whatsapp.net": {
+      "name": "Test Runner User",
+      "policy": "AUTO"
+    }
   }
 }
