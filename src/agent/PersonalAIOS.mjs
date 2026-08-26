@@ -45,6 +45,7 @@ import { ConversationDirector } from '../behavior/ConversationDirector.mjs';
 import { ConversationMomentumEngine } from '../behavior/ConversationMomentumEngine.mjs';
 import { QuestionPressureEngine } from '../behavior/QuestionPressureEngine.mjs';
 import { HumanUncertaintyEngine } from '../behavior/HumanUncertaintyEngine.mjs';
+import { RelationshipDynamicsEngine } from '../behavior/RelationshipDynamicsEngine.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -70,6 +71,7 @@ import { ConversationContinuityEngine } from '../conversation/ConversationContin
 import { StoryBrain } from '../conversation/StoryBrain.mjs';
 
 import { TopicGraphEngine } from '../topics/TopicGraphEngine.mjs';
+import { TopicTransitionEngine } from '../topics/TopicTransitionEngine.mjs';
 import { ConversationRepairEngine as ConversationRepairEngineNew } from '../conversation/ConversationRepairEngine.mjs';
 import { CallbackEngine } from '../conversation/CallbackEngine.mjs';
 import { SocialContextEngine } from '../subsystems/social/SocialContextEngine.mjs';
@@ -302,6 +304,9 @@ export class PersonalAIOS {
         const questionPressureRes = QuestionPressureEngine.evaluate({ text: inputSnippet, conversationState: convState.phase });
         const uncertaintyRes = HumanUncertaintyEngine.evaluate({ text: inputSnippet });
 
+        const dynamicsRes = RelationshipDynamicsEngine.evaluate({ chatId, pushName, history: memData.working_memory });
+        const transitionRes = TopicTransitionEngine.evaluate({ text: inputSnippet, topicGraph, outcomeData });
+
         const masterPrompt = `${roleIdentity}
 
 ${personaLock}
@@ -315,6 +320,8 @@ ${socialCtxRes}
 ${momentumRes.directive}
 ${questionPressureRes.directive}
 ${uncertaintyRes.directive}
+${dynamicsRes.directive}
+${transitionRes.directive}
 ${naturalEnhancement}
 ${contextualIntelligence}
 ${moodEvaluation.directive}
