@@ -67,7 +67,7 @@ import { ConversationContinuityEngine } from '../conversation/ConversationContin
 import { StoryBrain } from '../conversation/StoryBrain.mjs';
 
 import { TopicGraphEngine } from '../topics/TopicGraphEngine.mjs';
-import { ConversationRepairEngine } from '../conversation/ConversationRepairEngine.mjs';
+import { ConversationRepairEngine as ConversationRepairEngineNew } from '../conversation/ConversationRepairEngine.mjs';
 import { CallbackEngine } from '../conversation/CallbackEngine.mjs';
 import { SocialContextEngine } from '../subsystems/social/SocialContextEngine.mjs';
 import { AdvancedHumorEngine } from '../humor/AdvancedHumorEngine.mjs';
@@ -291,7 +291,7 @@ export class PersonalAIOS {
         const continuityEngineDirective = await ConversationContinuityEngine.evaluate({ text: inputSnippet, chatId, outcomeTrackerData: outcomeData });
         const storyBrainDirective = await StoryBrain.evaluate({ text: inputSnippet, chatId, pushName, history: memData.working_memory });
 
-        const repairRes = ConversationRepairEngine.evaluate({ text: inputSnippet, chatId });
+        const repairRes = ConversationRepairEngineNew.evaluate({ text: inputSnippet, chatId });
         const callbackRes = CallbackEngine.evaluate({ text: inputSnippet, chatId, outcomeData });
         const socialCtxRes = SocialContextEngine.evaluate({ text: inputSnippet, chatId, pushName });
 
