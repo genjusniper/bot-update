@@ -42,6 +42,9 @@ import { MoodEnergyMatcher } from '../behavior/MoodEnergyMatcher.mjs';
 import { ConversationEndingDetector } from '../behavior/ConversationEndingDetector.mjs';
 import { PersonalitySpectrumEngine } from '../behavior/PersonalitySpectrumEngine.mjs';
 import { ConversationDirector } from '../behavior/ConversationDirector.mjs';
+import { ConversationMomentumEngine } from '../behavior/ConversationMomentumEngine.mjs';
+import { QuestionPressureEngine } from '../behavior/QuestionPressureEngine.mjs';
+import { HumanUncertaintyEngine } from '../behavior/HumanUncertaintyEngine.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -295,6 +298,10 @@ export class PersonalAIOS {
         const callbackRes = CallbackEngine.evaluate({ text: inputSnippet, chatId, outcomeData });
         const socialCtxRes = SocialContextEngine.evaluate({ text: inputSnippet, chatId, pushName });
 
+        const momentumRes = ConversationMomentumEngine.evaluate({ text: inputSnippet, history: memData.working_memory });
+        const questionPressureRes = QuestionPressureEngine.evaluate({ text: inputSnippet, conversationState: convState.phase });
+        const uncertaintyRes = HumanUncertaintyEngine.evaluate({ text: inputSnippet });
+
         const masterPrompt = `${roleIdentity}
 
 ${personaLock}
@@ -305,6 +312,9 @@ ${storyBrainDirective}
 ${repairRes.directive}
 ${callbackRes.directive}
 ${socialCtxRes}
+${momentumRes.directive}
+${questionPressureRes.directive}
+${uncertaintyRes.directive}
 ${naturalEnhancement}
 ${contextualIntelligence}
 ${moodEvaluation.directive}
