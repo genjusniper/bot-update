@@ -1,4 +1,3 @@
-
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -67,7 +66,8 @@ const testChatId = 'ci_eval_lab_tester@s.whatsapp.net';
     // 7. Live Multi-Turn Dialect Simulation
     console.log("\n[Vector 7/7] Live End-to-End Generation (Dialect & Flow):");
     const liveReply = await os.process(testChatId, "makan apa yo enak e");
-    console.log(`  - AI Output: "${liveReply}"`);
+    const replyText = typeof liveReply === 'object' && liveReply ? (liveReply.text || '') : (liveReply || '');
+    console.log(`  - AI Output: "${replyText}"`);
     if (replyText && replyText.length > 5 && !replyText.includes('offline') && !replyText.includes('nge-lag')) {
         passCount++;
         console.log("  ✅ PASS: Live AI generation executed with high naturalness.");
