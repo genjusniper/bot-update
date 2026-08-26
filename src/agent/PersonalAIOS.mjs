@@ -40,6 +40,7 @@ import { TimeAwarenessPersona } from '../behavior/TimeAwarenessPersona.mjs';
 import { ResponseBudgetEngine } from '../behavior/ResponseBudgetEngine.mjs';
 import { MoodEnergyMatcher } from '../behavior/MoodEnergyMatcher.mjs';
 import { ConversationEndingDetector } from '../behavior/ConversationEndingDetector.mjs';
+import { PersonalitySpectrumEngine } from '../behavior/PersonalitySpectrumEngine.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -279,6 +280,7 @@ export class PersonalAIOS {
         const moodEvaluation = MoodEnergyMatcher.evaluate(inputSnippet);
         const conversationalLogic = ConversationalLogicEngine.evaluate({ text: inputSnippet, pushName, chatId });
         const reactionEngineDirective = ConversationalReactionEngine.evaluate({ text: inputSnippet, chatId, pushName, history: memData.working_memory });
+        const personalitySpectrum = PersonalitySpectrumEngine.evaluate({ text: inputSnippet, chatId, pushName, conversationState: convState.phase });
 
         const masterPrompt = `${roleIdentity}
 
@@ -290,6 +292,7 @@ ${contextualIntelligence}
 ${moodEvaluation.directive}
 ${conversationalLogic}
 ${reactionEngineDirective}
+${personalitySpectrum}
 ${tempEval.directive}
 ${repairDirective}
 ${visualContinuity}
