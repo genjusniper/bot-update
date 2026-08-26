@@ -280,7 +280,7 @@ export class PersonalAIOS {
         const moodEvaluation = MoodEnergyMatcher.evaluate(inputSnippet);
         const conversationalLogic = ConversationalLogicEngine.evaluate({ text: inputSnippet, pushName, chatId });
         const reactionEngineDirective = ConversationalReactionEngine.evaluate({ text: inputSnippet, chatId, pushName, history: memData.working_memory });
-        const personalitySpectrum = PersonalitySpectrumEngine.evaluate({ text: inputSnippet, chatId, pushName, conversationState: convState.phase });
+        const personalitySpectrum = PersonalitySpectrumEngine.evaluate({ text: inputSnippet, chatId, pushName, conversationState: convState.phase, history: memData.working_memory });
 
         const masterPrompt = `${roleIdentity}
 
