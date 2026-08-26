@@ -41,6 +41,7 @@ import { ResponseBudgetEngine } from '../behavior/ResponseBudgetEngine.mjs';
 import { MoodEnergyMatcher } from '../behavior/MoodEnergyMatcher.mjs';
 import { ConversationEndingDetector } from '../behavior/ConversationEndingDetector.mjs';
 import { PersonalitySpectrumEngine } from '../behavior/PersonalitySpectrumEngine.mjs';
+import { ConversationDirector } from '../behavior/ConversationDirector.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -430,12 +431,17 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             }
         }
 
-        // 30. APPLY HUMAN INTERACTION POLICY
-        const deliveryPlan = HumanInteractionPolicy.decideDelivery(inputSnippet, sanitizedOutput, { hasMedia: hasImages || hasAudio });
+        // 30. ORCHESTRATE FINAL PLAN VIA CONVERSATION DIRECTOR (REPLY/REACT/SILENT/PACING)
+        const deliveryPlan = ConversationDirector.orchestrate({
+            text: inputSnippet,
+            chatId,
+            pushName,
+            rawResponse: sanitizedOutput,
+            conversationState: convState.phase,
+            topicOutcome: outcomeData,
+            socialDynamics
+        });
 
-        return {
-            ...deliveryPlan,
-            text: sanitizedOutput
-        };
+        return deliveryPlan;
     }
 }
