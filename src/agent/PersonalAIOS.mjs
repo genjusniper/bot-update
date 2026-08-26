@@ -269,9 +269,10 @@ export class PersonalAIOS {
 - MENDENGARKAN: Tunjukkan kamu mendengarkan lawan bicara dengan wajar.
 - ATURAN FORMAT WHATSAPP:
   1. SUPER SINGKAT & PADAT (3 - 10 kata per kalimat). JANGAN menulis panjang lebar!
-  2. DILARANG KERAS menggunakan tanda seru (!). Orang santai di WhatsApp tidak memakai tanda seru.
+  2. DILARANG menggunakan tanda seru (!) atau tanda titik (.) di akhir pesan. Biarkan ujung kalimat menggantung tanpa tanda baca.
   3. BALAS BERUNTUN: Jika ada reaksi + jawaban, pisahkan dengan 1 baris baru (\\n) agar terkirim sebagai 2 bubble chat beruntun.
-  4. BERSIH & NO TOXIC: DILARANG KERAS menggunakan kata-kata kasar/kotor/toxic (seperti cok, cuk, asu, matamu, ndasmu, anjing, goblok, pantek). Selalu berbicara santai, bersih, dan beradab.`;
+  4. BERSIH & NO TOXIC: DILARANG KERAS menggunakan kata-kata kasar/kotor/toxic (seperti cok, cuk, asu, matamu, ndasmu, anjing, goblok, pantek). Selalu berbicara santai, bersih, dan beradab.
+  5. BATASI TAWA: Maksimal gunakan tawa (wkwk/haha) satu kali saja jika perlu. Jangan tertawa berlebihan dalam satu pesan!`;
 
         const outcomeData = await ConversationOutcomeTracker.loadOutcome(chatId);
         const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
@@ -364,7 +365,20 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
         sanitizedOutput = sanitizedOutput.replace(/!+/g, ''); // 100% strip exclamation marks for casual WhatsApp style
         sanitizedOutput = sanitizedOutput.replace(/\b(cok|cuk|asu|matamu|ndasmu|pantek|anjing|bangsat|goblok|babi|kontol|memek|jembut)\b/gi, ''); // 100% strip toxic/profanities
+        
+        // Anti-Laughter Overload (No duplicate wkwk/haha, max one)
+        if (sanitizedOutput.toLowerCase().includes('wkwk') && sanitizedOutput.toLowerCase().includes('haha')) {
+            sanitizedOutput = sanitizedOutput.replace(/\b(haha|hahaha)\b/gi, '');
+        }
+        const wkwkMatches = sanitizedOutput.match(/wkwk/gi);
+        if (wkwkMatches && wkwkMatches.length > 1) {
+            sanitizedOutput = sanitizedOutput.replace(/wkwk/gi, (match, offset, string) => {
+                return offset === string.toLowerCase().indexOf('wkwk') ? 'wkwk' : '';
+            });
+        }
+
         sanitizedOutput = sanitizedOutput.replace(/\s{2,}/g, ' ').trim();
+        sanitizedOutput = sanitizedOutput.replace(/\.+$/, ''); // 100% strip any trailing periods at the end of the message!
         sanitizedOutput = HumanUXEngine.contextualizeEmojis(sanitizedOutput, socialDynamics.energy);
         await MessageLifecycleTracker.logPhase(lifecycleId, 'QUALITY_CHECKED', { score: qualityVerdict.qualityScore });
 
