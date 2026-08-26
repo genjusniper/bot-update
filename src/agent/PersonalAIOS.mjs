@@ -47,6 +47,7 @@ import { QuestionPressureEngine } from '../behavior/QuestionPressureEngine.mjs';
 import { HumanUncertaintyEngine } from '../behavior/HumanUncertaintyEngine.mjs';
 import { RelationshipDynamicsEngine } from '../behavior/RelationshipDynamicsEngine.mjs';
 import { CoolSocialPersonaEngine } from '../behavior/CoolSocialPersonaEngine.mjs';
+import { SocialEnergyEngine } from '../behavior/SocialEnergyEngine.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -308,6 +309,7 @@ export class PersonalAIOS {
         const dynamicsRes = RelationshipDynamicsEngine.evaluate({ chatId, pushName, history: memData.working_memory });
         const transitionRes = TopicTransitionEngine.evaluate({ text: inputSnippet, topicGraph, outcomeData });
         const coolPersonaRes = CoolSocialPersonaEngine.evaluate({ text: inputSnippet, chatId, pushName, history: memData.working_memory, socialDynamics });
+        const socialEnergyRes = SocialEnergyEngine.evaluate({ text: inputSnippet, conversationState: convState.phase, history: memData.working_memory });
 
         const masterPrompt = `${roleIdentity}
 
@@ -325,6 +327,7 @@ ${uncertaintyRes.directive}
 ${dynamicsRes.directive}
 ${transitionRes.directive}
 ${coolPersonaRes.directive}
+${socialEnergyRes.directive}
 ${naturalEnhancement}
 ${contextualIntelligence}
 ${moodEvaluation.directive}

@@ -28,12 +28,20 @@ export class CoolSocialPersonaEngine {
             mode = 'REPLY_DEEP';
         }
 
-        // 3. Define Punchline & Typo settings
+        // 3. Define Punchline & Typo settings (Contextual Typo: 6% santai, 3% normal, 0% curhat/serius)
         let punchlineDensity = 'HIGH';
         let typoSetting = 'TYPO_NONE';
         const rand = Math.random();
-        if (rand < 0.15) {
-            typoSetting = 'TYPO_MINOR'; // 15% chance of minor typo
+        
+        let typoChance = 0.03; // Default 3%
+        if (gear === 'SUPPORTIVE') {
+            typoChance = 0.0; // 0% for serious/supportive
+        } else if (gear === 'COOL' || gear === 'EXCITED') {
+            typoChance = 0.06; // 6% for casual/cool/excited
+        }
+
+        if (rand < typoChance) {
+            typoSetting = 'TYPO_MINOR';
         }
 
         const directives = [];
