@@ -68,7 +68,7 @@ const testChatId = 'ci_eval_lab_tester@s.whatsapp.net';
     console.log("\n[Vector 7/7] Live End-to-End Generation (Dialect & Flow):");
     const liveReply = await os.process(testChatId, "makan apa yo enak e");
     console.log(`  - AI Output: "${liveReply}"`);
-    if (liveReply && liveReply.length > 5 && !liveReply.includes('offline') && !liveReply.includes('nge-lag')) {
+    if (replyText && replyText.length > 5 && !replyText.includes('offline') && !replyText.includes('nge-lag')) {
         passCount++;
         console.log("  ✅ PASS: Live AI generation executed with high naturalness.");
     }
