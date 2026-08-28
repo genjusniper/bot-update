@@ -17,15 +17,15 @@ export class AgentBrain {
         if (lower.match(/(carikan|cariin|rekomendasi|cek harga|info tentang)/i)) {
             intent = 'SEARCH';
             action = 'WEB_SEARCH';
-            query = text.replace(/(carikan|cariin|rekomendasi|tolong cari|coba cari|cek harga|info tentang)/gi, '').trim();
+            query = text.replace(/^(tolong|coba)?\s*(carikan|cariin|rekomendasi|tolong cari|coba cari|cek harga|info tentang)\s*/gi, '').trim();
         } else if (lower.match(/(ingetin|ingatkan|setel alarm|ingat)/i)) {
             intent = 'REMINDER';
             action = 'SET_ALERT';
-            query = text.replace(/(ingetin|ingatkan|tolong ingetin)/gi, '').trim();
+            query = text.replace(/^(tolong|coba)?\s*(ingetin|ingatkan|setel alarm|ingat)\s*/gi, '').trim();
         } else if (lower.match(/(bikinin|buatkan file|tulis)/i)) {
             intent = 'FILE';
             action = 'WRITE_FILE';
-            query = text.replace(/(bikinin|buatkan file|tolong buat)/gi, '').trim();
+            query = text.replace(/^(tolong|coba)?\s*(bikinin|buatkan file|tulis)\s*/gi, '').trim();
         } else if (lower.match(/(lanjutin|lanjut)/i)) {
             intent = 'RESUME_TASK';
             action = 'RESUME';
