@@ -48,6 +48,7 @@ import { HumanUncertaintyEngine } from '../behavior/HumanUncertaintyEngine.mjs';
 import { RelationshipDynamicsEngine } from '../behavior/RelationshipDynamicsEngine.mjs';
 import { CoolSocialPersonaEngine } from '../behavior/CoolSocialPersonaEngine.mjs';
 import { SocialEnergyEngine } from '../behavior/SocialEnergyEngine.mjs';
+import { BehaviorDecisionOS } from '../behavior/BehaviorDecisionOS.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -310,6 +311,7 @@ export class PersonalAIOS {
         const transitionRes = TopicTransitionEngine.evaluate({ text: inputSnippet, topicGraph, outcomeData });
         const coolPersonaRes = CoolSocialPersonaEngine.evaluate({ text: inputSnippet, chatId, pushName, history: memData.working_memory, socialDynamics });
         const socialEnergyRes = SocialEnergyEngine.evaluate({ text: inputSnippet, conversationState: convState.phase, history: memData.working_memory });
+        const behaviorOSRes = BehaviorDecisionOS.evaluate({ text: inputSnippet, chatId, history: memData.working_memory, currentMode: convState.phase });
 
         const masterPrompt = `${roleIdentity}
 
@@ -321,26 +323,12 @@ ${storyBrainDirective}
 ${repairRes.directive}
 ${callbackRes.directive}
 ${socialCtxRes}
-${momentumRes.directive}
-${questionPressureRes.directive}
-${uncertaintyRes.directive}
-${dynamicsRes.directive}
-${transitionRes.directive}
-${coolPersonaRes.directive}
-${socialEnergyRes.directive}
+${behaviorOSRes.directive}
 ${naturalEnhancement}
 ${contextualIntelligence}
-${moodEvaluation.directive}
-${conversationalLogic}
-${reactionEngineDirective}
-${personalitySpectrum}
-${tempEval.directive}
-${repairDirective}
 ${visualContinuity}
-${responseBudget.directive}
 ${timeCtx.directive}
 ${styleDirectives}
-${socialDynamics.directive}
 ${multimodalDirective}
 
 ${linkContext}

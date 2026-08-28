@@ -1,5 +1,5 @@
 // src/evaluation/HumanConversationEvaluator.mjs
-// HumanConversationEvaluator: Simulates 8 social scenarios and scores 10 vital conversational metrics
+// HumanConversationEvaluator: Simulates 8 social scenarios and scores 10 vital conversational health metrics
 
 export class HumanConversationEvaluator {
     static getScenarios() {
@@ -79,56 +79,62 @@ export class HumanConversationEvaluator {
 
     static evaluateLogs(sessionLogs) {
         let scores = {
-            verbosity: 100,
-            question_count: 100,
-            emoji_frequency: 100,
-            reaction_frequency: 100,
-            bubble_count: 100,
-            topic_switches: 100,
-            repetition: 100,
-            initiative: 100,
-            response_latency: 100,
-            context_accuracy: 100
+            reply_fatigue: 100,            // Penalty for walls of text or overly wordy answers
+            conversation_continuation: 100, // Balanced turn flow
+            bot_overtalking: 100,          // Penalty for taking over conversation
+            question_pressure: 100,        // Penalty for interrogating user
+            repetition: 100,               // Penalty for pattern matching/template responses
+            emotional_mismatch: 100,       // Penalty for inappropriate emotional transitions (e.g. laughing during curhat)
+            unwanted_topic_switching: 100, // Penalty for switching topics unnecessarily
+            unnecessary_replies: 100,      // Penalty for reply instead of reaction/silent
+            context_accuracy: 100,
+            naturalness: 100
         };
 
         let totalWords = 0;
         let totalQuestions = 0;
         let totalEmojis = 0;
-        let totalReactions = 0;
         let totalBubbles = 0;
         let seenTexts = new Set();
 
         sessionLogs.forEach(turn => {
-            if (!turn || !turn.agent) return;
-            const text = turn.agent;
-            
-            // 1. Verbosity Check (Target: < 15 words)
+            if (!turn) return;
+            const text = turn.agent || '';
+            const userText = turn.user || '';
+
+            // 1. Bot Overtalking & Reply Fatigue (Avg words check)
             const wordCount = text.split(/\s+/).length;
             totalWords += wordCount;
-            if (wordCount > 25) scores.verbosity -= 15;
-            if (wordCount > 40) scores.verbosity -= 30;
+            if (wordCount > 25) {
+                scores.bot_overtalking -= 20;
+                scores.reply_fatigue -= 10;
+            }
 
-            // 2. Question Count Check (Target: < 1 question per turn)
+            // 2. Question Pressure
             const qCount = (text.match(/\?/g) || []).length;
             totalQuestions += qCount;
-            if (qCount > 1) scores.question_count -= 25;
+            if (qCount > 1) {
+                scores.question_pressure -= 25;
+            }
 
-            // 3. Emoji Frequency (Target: max 1 emoji per turn)
-            const emojiMatches = text.match(/[\u{1F300}-\u{1F6FF}]/gu) || [];
-            totalEmojis += emojiMatches.length;
-            if (emojiMatches.length > 1) scores.emoji_frequency -= 20;
+            // 3. Emotional Mismatch (e.g. laughing wkwk when user curhats/vents)
+            const isUserVenting = Boolean(userText.match(/(pusing|lembur|pelit|resign|stress|mumet|capek)/i));
+            if (isUserVenting && text.toLowerCase().includes('wkwk')) {
+                scores.emotional_mismatch -= 30; // Roasting/laughing at venting user penalized!
+            }
 
-            // 4. Repetition Check
+            // 4. Unnecessary Replies
+            const isUserShort = Boolean(userText.match(/^(wkwk|oke|sip)$/i));
+            if (isUserShort && text.length > 0) {
+                scores.unnecessary_replies -= 20; // Should have been silent or reaction!
+            }
+
+            // 5. Repetition Check
             const normalized = text.toLowerCase().trim();
             if (seenTexts.has(normalized)) {
                 scores.repetition -= 30;
             }
             seenTexts.add(normalized);
-
-            // 5. Bubble Count (Target: max 2 bubbles)
-            const bubbles = turn.bubbles || [text];
-            totalBubbles += bubbles.length;
-            if (bubbles.length > 2) scores.bubble_count -= 25;
         });
 
         // Cap scores between 0 and 100
