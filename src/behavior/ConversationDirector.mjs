@@ -1,9 +1,7 @@
-// src/behavior/ConversationDirector.mjs
-// Unified Conversation Director: The final orchestrator coordinating Reply Necessity, Mood, Relationship & Pacing
-
 import { ReplyDecisionPolicy } from './ReplyDecisionPolicy.mjs';
 import { HumanInteractionPolicy } from './HumanInteractionPolicy.mjs';
 import { HumanUXEngine } from '../subsystems/ux/HumanUXEngine.mjs';
+import { ConversationUXGovernor } from './ConversationUXGovernor.mjs';
 
 export class ConversationDirector {
     static orchestrate({ text, chatId, pushName, rawResponse, conversationState, topicOutcome, socialDynamics = {} }) {
@@ -23,23 +21,32 @@ export class ConversationDirector {
             hasMedia: false
         });
 
-        // 3. Final Decision Logic (Orchestration)
-        let finalAction = necessity.decision === 'REPLY' ? delivery.action : necessity.decision;
-        let finalReaction = necessity.reactionEmoji || delivery.reactionEmoji;
-        let finalBubbles = necessity.decision === 'REPLY' ? delivery.bubbles : [];
-        let finalDelays = necessity.decision === 'REPLY' ? delivery.typingDelays : [0];
+        // 3. Apply Conversation UX Governor (Brake / Minimum Effective Response)
+        const gov = ConversationUXGovernor.govern({
+            text: incomingText,
+            chatId,
+            rawResponse: responseText,
+            history: socialDynamics.history || [],
+            socialEnergy: socialDynamics
+        });
 
-        // If the reply necessity says REACT_ONLY, override text bubbles
-        if (necessity.decision === 'REACT_ONLY') {
+        // Final Decision Logic (Orchestration)
+        let finalAction = necessity.decision === 'REPLY' ? gov.action : necessity.decision;
+        let finalReaction = necessity.reactionEmoji || gov.reactionEmoji || delivery.reactionEmoji;
+        let finalBubbles = necessity.decision === 'REPLY' && gov.action === 'REPLY' ? [gov.text] : [];
+        let finalDelays = [0];
+
+        // If the reply necessity says REACT_ONLY or governor says REACT_ONLY
+        if (necessity.decision === 'REACT_ONLY' || gov.action === 'REACT_ONLY') {
             finalAction = 'REACT_ONLY';
-            finalReaction = necessity.reactionEmoji;
+            finalReaction = necessity.reactionEmoji || gov.reactionEmoji || '😂';
             finalBubbles = [];
             finalDelays = [0];
         }
 
-        // If the reply necessity says READ_ONLY or IGNORE
-        if (necessity.decision === 'READ_ONLY' || necessity.decision === 'IGNORE') {
-            finalAction = necessity.decision;
+        // If the reply necessity says READ_ONLY or IGNORE or governor says SILENT
+        if (necessity.decision === 'READ_ONLY' || necessity.decision === 'IGNORE' || gov.action === 'READ_ONLY' || gov.action === 'SILENT') {
+            finalAction = 'READ_ONLY';
             finalBubbles = [];
             finalDelays = [0];
         }

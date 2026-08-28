@@ -472,7 +472,10 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             rawResponse: sanitizedOutput,
             conversationState: convState.phase,
             topicOutcome: outcomeData,
-            socialDynamics
+            socialDynamics: {
+                ...socialDynamics,
+                history: memData.working_memory
+            }
         });
 
         return deliveryPlan;
