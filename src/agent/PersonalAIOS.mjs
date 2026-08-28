@@ -53,6 +53,7 @@ import { ConversationStateSnapshot } from '../behavior/ConversationStateSnapshot
 import { ResponseRepetitionGuard } from '../behavior/ResponseRepetitionGuard.mjs';
 import { SearchIntentEngine } from '../behavior/SearchIntentEngine.mjs';
 import { WebSearchTool } from '../tools/web/WebSearchTool.mjs';
+import { RecommendationEngine } from '../behavior/RecommendationEngine.mjs';
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
 import { SocialBrain } from '../subsystems/social/SocialBrain.mjs';
@@ -320,6 +321,7 @@ export class PersonalAIOS {
 
         const snapshot = ConversationStateSnapshot.create({ text: inputSnippet, chatId, pushName, history: memData.working_memory, currentMode: convState.phase });
         const behaviorOSRes = BehaviorDecisionOS.evaluate({ text: inputSnippet, chatId, snapshot, history: memData.working_memory });
+        const recommendRes = RecommendationEngine.evaluate({ text: inputSnippet, chatId, searchContext, history: memData.working_memory });
 
         const masterPrompt = `${roleIdentity}
 
@@ -332,6 +334,7 @@ ${repairRes.directive}
 ${callbackRes.directive}
 ${socialCtxRes}
 ${behaviorOSRes.directive}
+${recommendRes.directive}
 ${naturalEnhancement}
 ${contextualIntelligence}
 ${visualContinuity}
