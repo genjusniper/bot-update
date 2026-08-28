@@ -51,7 +51,8 @@ import { SocialEnergyEngine } from '../behavior/SocialEnergyEngine.mjs';
 import { BehaviorDecisionOS } from '../behavior/BehaviorDecisionOS.mjs';
 import { ConversationStateSnapshot } from '../behavior/ConversationStateSnapshot.mjs';
 import { ResponseRepetitionGuard } from '../behavior/ResponseRepetitionGuard.mjs';
-
+import { SearchIntentEngine } from '../behavior/SearchIntentEngine.mjs';
+import { WebSearchTool } from '../tools/web/WebSearchTool.mjs';
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
 import { SocialBrain } from '../subsystems/social/SocialBrain.mjs';
@@ -177,6 +178,18 @@ export class PersonalAIOS {
             const linkData = await LinkIntelligenceEngine.resolveUrl(intentRoute.url);
             linkContext = LinkIntelligenceEngine.formatLinkContext(linkData);
             await MessageLifecycleTracker.logPhase(lifecycleId, 'LINK_RESOLVED', { url: intentRoute.url, title: linkData.title, type: linkData.type });
+        }
+
+        // 13.5. SEARCH INTENT DETECTION & WEB SEARCH PIPELINE
+        let searchContext = '';
+        const searchIntent = SearchIntentEngine.classify(inputSnippet);
+        if (searchIntent.isSearchRequired) {
+            console.log(`[SearchPipeline] 🌐 Search trigger detected: "${searchIntent.query}"`);
+            const searchRes = await WebSearchTool.execute({ query: searchIntent.query });
+            if (searchRes && searchRes.results && searchRes.results.length > 0) {
+                const snippets = searchRes.results.map((r, i) => `[Hasil #${i+1}] ${r.snippet}`).join('\n');
+                searchContext = `=== HASIL PENCARIAN DUCKDUCKGO (Fakta Pendukung) ===\n${snippets}\n=================================================\n\nPANDUAN REKOMENDASI/SEARCH:\n- Berikan jawaban dingin, cuek, singkat, tapi berbobot berdasarkan fakta pencarian di atas.\n- Gunakan panduan: "gue nemu beberapa, yang kedua paling masuk akal sih" atau "Ryzen 7 + GPU dedicated paling pas buat editing".\n- JANGAN menjiplak mentah-mentah teks Google. Gunakan bahasamu sendiri seolah kamu sudah tahu.`;
+            }
         }
 
         // 14. TIME AWARENESS & PERSONA DRIFT LOCK
@@ -327,6 +340,7 @@ ${styleDirectives}
 ${multimodalDirective}
 
 ${linkContext}
+${searchContext}
 ${proactiveContext}
 ${lifeContext}
 
