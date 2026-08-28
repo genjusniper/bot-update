@@ -1,5 +1,5 @@
 // src/behavior/BehaviorDecisionOS.mjs
-// BehaviorDecisionOS: Consolidated social behavior coordinator to reduce conflicts between social engines
+// BehaviorDecisionOS: Consolidated social behavior coordinator with ResponseShape, AntiExcitement and MemoryRestraint policies
 
 export class BehaviorDecisionOS {
     static evaluate({ text, chatId, history = [], currentMode = 'NORMAL' }) {
@@ -21,41 +21,54 @@ export class BehaviorDecisionOS {
             mode = 'COOL';
         }
 
-        // 2. Excitement Limiter (Do not raise energy alone)
-        let maxEmojis = 1;
-        let allowQuestions = false;
-        let maxLaughter = 1;
+        // 2. Response Shape Selector (Decide shape beforehand)
+        let targetShape = 'SINGLE';
+        if (lower.match(/^(wkwk|haha|😂|🤣|oke|ok|siap|sip|👍)$/i)) {
+            targetShape = 'REACTION_ONLY';
+        } else if (lower.length > 80) {
+            targetShape = 'MEDIUM';
+        }
 
-        // Question budget: check history for recent questions from Assistant
+        // 3. Question Budget
+        let allowQuestions = false;
         const recentAssistantTurns = history.filter(h => h.role === 'assistant').slice(-5);
         const questionCount = recentAssistantTurns.filter(t => t.text.includes('?')).length;
         if (questionCount < 1 && (mode === 'SERIOUS' || mode === 'NORMAL')) {
-            allowQuestions = true; // Only allow questions if we haven't asked recently
+            allowQuestions = true;
         }
 
-        // 3. Formulate unified directives
+        // 4. Formulate unified directives
         const directives = [];
         directives.push(`[STICKY CONVERSATION MODE: ${mode}]`);
-        
+        directives.push(`[TARGET RESPONSE SHAPE: ${targetShape}]`);
+
+        // AntiExcitement Engine
+        directives.push(`- ANTI-EXCITEMENT POLICY: DILARANG keras meningkatkan energi percakapan sendirian!`);
+        directives.push(`  * Jika user membalas cuek/pendek, kamu wajib membalas cuek/pendek.`);
+        directives.push(`  * DILARANG lebay, DILARANG memuji berlebihan, DILARANG bertanya balik tanpa henti.`);
+
+        // Memory Restraint Engine
+        directives.push(`- MEMORY RESTRAINT POLICY: "Aku ingat, tapi aku nggak harus mengucapkannya."`);
+        directives.push(`  * Hanya gunakan memori masa lalu jika ditanyakan langsung oleh user.`);
+        directives.push(`  * JANGAN tiba-tiba memunculkan fakta lama yang tidak relevan dengan obrolan detik ini.`);
+
         if (mode === 'CURHAT') {
             directives.push(`- MODE CURHAT: Fokus empati tenang. DILARANG menyela dengan humor/wkwk atau nasihat sok tau.`);
             directives.push(`- Jeda santai, katakan sesuatu yang menenangkan saja (contoh: "waduh, dinikmati pelan-pelan wae").`);
-            maxLaughter = 0;
-            maxEmojis = 1;
         } else if (mode === 'SERIOUS') {
             directives.push(`- MODE SERIUS: Jawab to-the-point, berwibawa, dan ringkas.`);
-            maxLaughter = 0;
         } else if (mode === 'BANTER') {
             directives.push(`- MODE BANTER: Ikuti candaan user secara santai. Gunakan maksimal 1 'wkwk' di akhir.`);
         } else {
             directives.push(`- MODE COOL: Singkat, padat, cuek tapi tetap nyambung.`);
         }
 
-        directives.push(`- LIMITER: Maksimal ${maxLaughter} tawa (wkwk/haha), maksimal ${maxEmojis} emoji, DILARANG menggunakan tanda seru (!).`);
+        directives.push(`- LIMITER: Maksimal 1 tawa (wkwk/haha), maksimal 1 emoji, DILARANG menggunakan tanda seru (!).`);
         directives.push(`- ALIRAN PERCAKAPAN: ${allowQuestions ? 'Boleh bertanya balik secukupnya.' : 'DILARANG bertanya balik untuk menghindari kesan interogasi.'}`);
 
         return {
             mode,
+            targetShape,
             directive: `=== BEHAVIOR DECISION OS DIRECTIVE ===\n${directives.join('\n')}\n=====================================`
         };
     }
