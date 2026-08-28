@@ -33,8 +33,8 @@ const testChatId = 'ci_eval_lab_tester@s.whatsapp.net';
                 latency
             });
             
-            // Short natural pause
-            await new Promise(r => setTimeout(r, 200));
+            // Short natural pause (prevent 429 rate limits)
+            await new Promise(r => setTimeout(r, 1500));
         }
     }
 

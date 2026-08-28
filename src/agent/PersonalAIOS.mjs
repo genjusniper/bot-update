@@ -49,6 +49,8 @@ import { RelationshipDynamicsEngine } from '../behavior/RelationshipDynamicsEngi
 import { CoolSocialPersonaEngine } from '../behavior/CoolSocialPersonaEngine.mjs';
 import { SocialEnergyEngine } from '../behavior/SocialEnergyEngine.mjs';
 import { BehaviorDecisionOS } from '../behavior/BehaviorDecisionOS.mjs';
+import { ConversationStateSnapshot } from '../behavior/ConversationStateSnapshot.mjs';
+import { ResponseRepetitionGuard } from '../behavior/ResponseRepetitionGuard.mjs';
 
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -303,15 +305,8 @@ export class PersonalAIOS {
         const callbackRes = CallbackEngine.evaluate({ text: inputSnippet, chatId, outcomeData });
         const socialCtxRes = SocialContextEngine.evaluate({ text: inputSnippet, chatId, pushName });
 
-        const momentumRes = ConversationMomentumEngine.evaluate({ text: inputSnippet, history: memData.working_memory });
-        const questionPressureRes = QuestionPressureEngine.evaluate({ text: inputSnippet, conversationState: convState.phase });
-        const uncertaintyRes = HumanUncertaintyEngine.evaluate({ text: inputSnippet });
-
-        const dynamicsRes = RelationshipDynamicsEngine.evaluate({ chatId, pushName, history: memData.working_memory });
-        const transitionRes = TopicTransitionEngine.evaluate({ text: inputSnippet, topicGraph, outcomeData });
-        const coolPersonaRes = CoolSocialPersonaEngine.evaluate({ text: inputSnippet, chatId, pushName, history: memData.working_memory, socialDynamics });
-        const socialEnergyRes = SocialEnergyEngine.evaluate({ text: inputSnippet, conversationState: convState.phase, history: memData.working_memory });
-        const behaviorOSRes = BehaviorDecisionOS.evaluate({ text: inputSnippet, chatId, history: memData.working_memory, currentMode: convState.phase });
+        const snapshot = ConversationStateSnapshot.create({ text: inputSnippet, chatId, pushName, history: memData.working_memory, currentMode: convState.phase });
+        const behaviorOSRes = BehaviorDecisionOS.evaluate({ text: inputSnippet, chatId, snapshot, history: memData.working_memory });
 
         const masterPrompt = `${roleIdentity}
 
@@ -415,6 +410,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         if (AntiRepetitionEngine.isRepetitive(sanitizedOutput, recentResponses)) {
             sanitizedOutput = AntiRepetitionEngine.applyControlledVariance(sanitizedOutput);
         }
+        sanitizedOutput = ResponseRepetitionGuard.checkAndDiversify(sanitizedOutput, memData.working_memory);
 
         const allowSend = DuplicateResponseGuard.shouldSend(chatId, sanitizedOutput);
         if (!allowSend) {
