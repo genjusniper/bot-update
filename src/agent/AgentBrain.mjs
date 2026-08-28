@@ -1,19 +1,38 @@
 // src/agent/AgentBrain.mjs
-// AgentBrain: The agentic execution subsystem (CommandInterpreter, ToolRouter, TaskStateMemory, ExecutionEngine)
+// AgentBrain: The agentic execution subsystem with ResponseModeEngine, AmbiguityResolver, and TaskResume
 
 import { WebSearchTool } from '../tools/web/WebSearchTool.mjs';
 
 export class AgentBrain {
     static taskMemory = new Map(); // chatId -> currentActiveTask
 
-    static interpret(text) {
+    static interpret(text, history = []) {
         const lower = (text || '').trim().toLowerCase();
         
         // Clean leading Indonesian fillers like "oi", "eh", "bro", "bos", "oy"
         let cleanText = text.replace(/^(oi|oy|eh|bro|bos|bang|nana|kak|gan|gaes|guys)\b\s*/gi, '').trim();
         const cleanLower = cleanText.toLowerCase();
 
-        // 1. Natural Command Interpreter
+        // 1. Response Mode Engine
+        let responseMode = 'NORMAL';
+        if (cleanLower.match(/(berapa|kapan|siapa|jam berapa|di mana|dimana|mana)/i)) {
+            responseMode = 'QUICK';
+        } else if (cleanLower.match(/(kenapa|mengapa|jelasin|jelaskan|gimana caranya|bagaimana)/i)) {
+            responseMode = 'DETAILED';
+        }
+
+        // 2. Ambiguity Resolver
+        let isAmbiguous = false;
+        let ambiguityClarification = '';
+        if (cleanLower.match(/^(yang itu|yang tadi|kirimin|bagi|kirim)/i)) {
+            const previousTask = this.taskMemory.get(history[0]?.chatId);
+            if (previousTask) {
+                isAmbiguous = true;
+                ambiguityClarification = `Apakah yang dimaksud adalah: "${previousTask.query}"?`;
+            }
+        }
+
+        // 3. Natural Command Interpreter
         let intent = 'NONE';
         let action = null;
         let query = null;
@@ -39,7 +58,10 @@ export class AgentBrain {
             intent,
             action,
             query,
-            originalText: text
+            originalText: text,
+            responseMode,
+            isAmbiguous,
+            ambiguityClarification
         };
     }
 

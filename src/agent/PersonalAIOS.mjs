@@ -156,6 +156,13 @@ export class PersonalAIOS {
             return null;
         }
 
+        // 16. LOAD & CONSOLIDATE MEMORY (HARD ISOLATED BY CHATID)
+        let memData = await loadMemory(chatId);
+        if (!memData.working_memory) memData.working_memory = [];
+        memData.working_memory = memData.working_memory.filter(m => 
+            !m.text.includes('nge-lag') && !m.text.includes('offline')
+        );
+
         // 3. MULTI-PERSON PROFILE STORE & NAME RECOGNITION (V13.6)
         const contactProfile = await ContactProfileStore.updateFromMessage(effectiveSender, inputSnippet, pushName);
         const contactDirectives = ContactProfileStore.formatDirectives(contactProfile);
@@ -183,7 +190,7 @@ export class PersonalAIOS {
 
         // 13.5. AGENT BRAIN PIPELINE (CommandInterpreter, ToolRouter & TaskStateMemory)
         let agentContext = '';
-        const interpretedCmd = AgentBrain.interpret(inputSnippet);
+        const interpretedCmd = AgentBrain.interpret(inputSnippet, memData.working_memory);
         if (interpretedCmd.intent !== 'NONE') {
             console.log(`[AgentPipeline] 🤖 Command detected: ${interpretedCmd.intent} -> ${interpretedCmd.query || ''}`);
             const execRes = await AgentBrain.execute(chatId, interpretedCmd);
@@ -191,6 +198,12 @@ export class PersonalAIOS {
                 agentContext = execRes.context;
             }
         }
+
+        let agentDirectives = `=== AGENT DIRECTIVES ===\n- RESPONSE MODE: ${interpretedCmd.responseMode}\n`;
+        if (interpretedCmd.isAmbiguous) {
+            agentDirectives += `- AMBIGUITY CLARIFICATION REQUIRED: Tanyakan klarifikasi ini ke user secara langsung: "${interpretedCmd.ambiguityClarification}"\n`;
+        }
+        agentDirectives += `========================`;
 
         // 14. TIME AWARENESS & PERSONA DRIFT LOCK
         const timeCtx = TimeAwarenessPersona.getTimeContext();
@@ -207,13 +220,6 @@ export class PersonalAIOS {
         trace.socialMode = socialDynamics.mode;
         trace.energy = socialDynamics.energy;
         trace.budgetTier = responseBudget.tier;
-
-        // 16. LOAD & CONSOLIDATE MEMORY (HARD ISOLATED BY CHATID)
-        let memData = await loadMemory(chatId);
-        if (!memData.working_memory) memData.working_memory = [];
-        memData.working_memory = memData.working_memory.filter(m => 
-            !m.text.includes('nge-lag') && !m.text.includes('offline')
-        );
 
         if (memData.working_memory.length > 15) {
             MemoryConsolidationPipeline.consolidateWorkingMemory(chatId, memData.working_memory).catch(() => {});
@@ -334,6 +340,7 @@ ${callbackRes.directive}
 ${socialCtxRes}
 ${behaviorOSRes.directive}
 ${recommendRes.directive}
+${agentDirectives}
 ${naturalEnhancement}
 ${contextualIntelligence}
 ${visualContinuity}
