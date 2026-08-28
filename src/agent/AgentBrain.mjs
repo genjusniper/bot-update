@@ -8,25 +8,29 @@ export class AgentBrain {
 
     static interpret(text) {
         const lower = (text || '').trim().toLowerCase();
+        
+        // Clean leading Indonesian fillers like "oi", "eh", "bro", "bos", "oy"
+        let cleanText = text.replace(/^(oi|oy|eh|bro|bos|bang|nana|kak|gan|gaes|guys)\b\s*/gi, '').trim();
+        const cleanLower = cleanText.toLowerCase();
 
         // 1. Natural Command Interpreter
         let intent = 'NONE';
         let action = null;
         let query = null;
 
-        if (lower.match(/(carikan|cariin|rekomendasi|cek harga|info tentang)/i)) {
+        if (cleanLower.match(/(carikan|cariin|rekomendasi|cek harga|info tentang)/i)) {
             intent = 'SEARCH';
             action = 'WEB_SEARCH';
-            query = text.replace(/^(tolong|coba)?\s*(carikan|cariin|rekomendasi|tolong cari|coba cari|cek harga|info tentang)\s*/gi, '').trim();
-        } else if (lower.match(/(ingetin|ingatkan|setel alarm|ingat)/i)) {
+            query = cleanText.replace(/^(tolong|coba)?\s*(dong|sih|deh)?\s*(carikan|cariin|rekomendasi|tolong cari|coba cari|cek harga|info tentang)\s*(dong|sih|deh)?\s*/gi, '').trim();
+        } else if (cleanLower.match(/(ingetin|ingatkan|setel alarm|ingat)/i)) {
             intent = 'REMINDER';
             action = 'SET_ALERT';
-            query = text.replace(/^(tolong|coba)?\s*(ingetin|ingatkan|setel alarm|ingat)\s*/gi, '').trim();
-        } else if (lower.match(/(bikinin|buatkan file|tulis)/i)) {
+            query = cleanText.replace(/^(tolong|coba)?\s*(dong|sih|deh)?\s*(ingetin|ingatkan|setel alarm|ingat)\s*(dong|sih|deh)?\s*/gi, '').trim();
+        } else if (cleanLower.match(/(bikinin|buatkan file|tulis)/i)) {
             intent = 'FILE';
             action = 'WRITE_FILE';
-            query = text.replace(/^(tolong|coba)?\s*(bikinin|buatkan file|tulis)\s*/gi, '').trim();
-        } else if (lower.match(/(lanjutin|lanjut)/i)) {
+            query = cleanText.replace(/^(tolong|coba)?\s*(dong|sih|deh)?\s*(bikinin|buatkan file|tulis)\s*(dong|sih|deh)?\s*/gi, '').trim();
+        } else if (cleanLower.match(/(lanjutin|lanjut)/i)) {
             intent = 'RESUME_TASK';
             action = 'RESUME';
         }
