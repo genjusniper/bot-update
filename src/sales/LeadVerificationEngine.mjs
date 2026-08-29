@@ -40,14 +40,6 @@ export class LeadVerificationEngine {
             return { status: VerificationStatus.SKIP, score: 0, riskFlags: ['BLACKLISTED'], coverageOk: false };
         }
 
-        // ── 2. Cek duplikat di CRM ────────────────────────────────
-        const existing = LeadCRM.load(lead.phone);
-        if (existing) {
-            riskFlags.push('DUPLICATE_CRM');
-            return { status: VerificationStatus.SKIP, score: 0, riskFlags, coverageOk: false,
-                recommendation: 'Lead sudah ada di CRM' };
-        }
-
         // ── 3. Validasi format nomor ──────────────────────────────
         const digits = (lead.phone || '').replace(/\D/g, '');
         if (digits.length < 10 || digits.length > 13) {

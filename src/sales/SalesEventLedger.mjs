@@ -41,7 +41,23 @@ export class SalesEventLedger {
     }
 
     /**
-     * Ambil histori ledger untuk satu nomor
+     * Membaca seluruh data ledger bulan ini
+     */
+    static readRawLedger() {
+        const filePath = this._filePath(this._getMonthKey());
+        if (!fs.existsSync(filePath)) return [];
+        return fs.readFileSync(filePath, 'utf-8')
+            .split('\n')
+            .filter(line => line.trim())
+            .map(line => {
+                try { return JSON.parse(line); }
+                catch { return null; }
+            })
+            .filter(Boolean);
+    }
+
+    /**
+     * Ambil histori event spesifik untuk satu nomor
      */
     static getHistoryForLead(phone) {
         const file = this._filePath(this._getMonthKey());
