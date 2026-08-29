@@ -19,7 +19,7 @@ const OBJECTION_SIGNALS = [
     { type: 'QUALITY_DOUBT',    patterns: ['yakin kualitasnya', 'bagus nggak', 'terjamin nggak', 'enak nggak', 'fresh nggak', 'tahan lama nggak', 'beneran fresh'] },
     { type: 'VOLUME_SMALL',     patterns: ['kebutuhan kecil', 'nggak banyak', 'sedikit aja', 'cuma sedikit', 'nggak rutin', 'kadang-kadang aja'] },
     { type: 'NO_TRUST',         patterns: ['beneran nggak', 'legit nggak', 'penipuan', 'penipu', 'percaya nggak', 'risky', 'aman nggak', 'terpercaya nggak'] },
-    { type: 'DELIVERY_CONCERN', patterns: ['bisa kirim', 'kirimnya gimana', 'ongkir', 'jauh nggak', 'bisa sampai', 'daerah aku', 'coverage'] },
+    { type: 'DELIVERY_CONCERN', patterns: ['bisa kirim', 'dikirim', 'kirimnya gimana', 'ongkir', 'jauh nggak', 'bisa sampai', 'daerah aku', 'coverage', 'antar', 'pengiriman', 'sampai sini'] },
 ];
 
 const OBJECTION_RESPONSES = {

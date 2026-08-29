@@ -75,10 +75,11 @@ export class OfferEngine {
         const templateFn = OFFER_TEMPLATES[offerType];
         const offer = templateFn ? templateFn(cat) : OFFER_TEMPLATES.TRIAL(cat);
 
-        // Simpan offer type ke CRM
+        // Simpan offer type ke CRM (fire-and-forget, tidak block evaluate)
         if (lead?.phone) {
-            const { LeadCRM } = require('./LeadCRM.mjs');
-            LeadCRM.update(lead.phone, { offerType }).catch?.(() => {});
+            import('./LeadCRM.mjs').then(({ LeadCRM }) => {
+                LeadCRM.update(lead.phone, { offerType });
+            }).catch(() => {});
         }
 
         const directive = `=== OFFER ENGINE ===\nTipe penawaran: ${offerType}\n${offer.ctaDirective}\nDetail offer: ${offer.detail}\nHook: "${offer.hook}"\n====================`;
