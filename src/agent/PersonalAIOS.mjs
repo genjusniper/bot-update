@@ -107,9 +107,12 @@ import { MemoryManager } from '../memory/MemoryManager.mjs';
 // ========================
 import { LeadCRM } from '../sales/LeadCRM.mjs';
 import { SalesConversationEngine } from '../sales/SalesConversationEngine.mjs';
-import { ObjectionHandler } from '../sales/ObjectionHandler.mjs';
 import { OfferEngine } from '../sales/OfferEngine.mjs';
 import { HumanHandoffEngine } from '../sales/HumanHandoffEngine.mjs';
+import { SalesAutopilotGovernor, GovAction } from '../sales/SalesAutopilotGovernor.mjs';
+import { ObjectionIntelligence } from '../sales/ObjectionIntelligence.mjs';
+import { ProductKnowledgeBase } from '../sales/ProductKnowledgeBase.mjs';
+import { MessageRiskGuard, RiskLevel } from '../sales/MessageRiskGuard.mjs';
 
 
 export class PersonalAIOS {
@@ -219,33 +222,47 @@ export class PersonalAIOS {
         let salesDirective = '';
         let salesHandoffTriggered = false;
         try {
-            const lead = LeadCRM.isSalesLead(chatId) ? LeadCRM.load(chatId) : null;
-            if (lead) {
+            const isSalesChat = LeadCRM.isSalesLead ? LeadCRM.isSalesLead(chatId) : false;
+            if (isSalesChat) {
+                const lead = LeadCRM.load(chatId);
                 console.log(`[SalesOS] 🛒 Sales lead terdeteksi: ${lead.businessName} (${lead.status})`);
 
                 // Deteksi fase percakapan sales
                 const salesEval = SalesConversationEngine.evaluate(inputSnippet, lead);
+                
+                // Cek FAQ Produk
+                const productDirective = ProductKnowledgeBase.getDirective(inputSnippet);
+                if (productDirective) salesDirective += productDirective + '\n';
+
+                // Evaluasi ke Governor (Update timeline & checks)
+                const govDecision = SalesAutopilotGovernor.processIncoming(lead, inputSnippet, salesEval.detectedPhase);
+                salesDirective += govDecision.directive + '\n';
+
+                if (govDecision.action === GovAction.WAIT || govDecision.action === GovAction.SKIP || govDecision.action === GovAction.DO_NOT_CONTACT) {
+                    console.log(`[SalesOS] 🛑 Governor action: ${govDecision.action}. Staying SILENT.`);
+                    await MessageLifecycleTracker.logPhase(lifecycleId, 'GOVERNOR_BLOCKED_SILENT', { reason: govDecision.reason });
+                    return null; // SILENT
+                }
+
+                // Jika SEND atau HUMAN_HANDOFF, lanjut dengan AI response
                 salesDirective += salesEval.directive + '\n';
 
-                // Cek keberatan
-                if (ObjectionHandler.isObjection(inputSnippet)) {
-                    const objection = ObjectionHandler.evaluate(inputSnippet);
+                // Cek keberatan V2
+                if (ObjectionIntelligence.isObjection(inputSnippet)) {
+                    const objection = ObjectionIntelligence.evaluate(inputSnippet, lead);
                     salesDirective += objection.directive + '\n';
                 }
 
                 // Pilih penawaran yang tepat kalau sudah fase INTERESTED/ASKED_PRICE
-                if (['INTERESTED', 'ASKED_PRICE'].includes(salesEval.detectedPhase)) {
+                if (['INTERESTED', 'ASKED_PRICE', 'NEGOTIATION'].includes(salesEval.detectedPhase)) {
                     const offerEval = OfferEngine.evaluate(lead);
                     salesDirective += offerEval.directive + '\n';
                 }
 
-                // Human handoff kalau siap ORDER
-                if (HumanHandoffEngine.needsHandoff(lead, salesEval.detectedPhase)) {
-                    salesDirective += HumanHandoffEngine.getDirective() + '\n';
+                // Human handoff
+                if (govDecision.action === GovAction.HUMAN_HANDOFF) {
                     salesHandoffTriggered = true;
-                    // Handoff dilakukan setelah response dikirim (async)
                     HumanHandoffEngine.execute(lead, inputSnippet, async (phone, msg) => {
-                        // sendMessage injection — akan diisi saat integrasi ke bot engine
                         console.log(`[SalesOS] 🔔 HANDOFF → ${phone}: ${msg.slice(0, 60)}...`);
                     }).catch(e => console.warn('[SalesOS] Handoff error:', e.message));
                 }
@@ -458,6 +475,25 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             verifiedFacts: isolatedFacts,
             maxWords: Math.min(turnTaking.maxWords, responseBudget.maxWords)
         });
+
+        // 26.5 MESSAGE RISK GUARD (SALES ONLY)
+        try {
+            if (LeadCRM.isSalesLead && LeadCRM.isSalesLead(chatId)) {
+                const lead = LeadCRM.load(chatId);
+                const recentMsgs = memData.working_memory.filter(m => m.role === 'assistant').slice(-3).map(m => m.text);
+                const risk = MessageRiskGuard.evaluate(qualityVerdict.sanitizedText, lead, recentMsgs);
+                
+                if (risk.riskLevel === RiskLevel.BLOCK) {
+                    console.warn(`[SalesOS] 🛑 MessageRiskGuard BLOCK: ${risk.flags.join(', ')}. Staying SILENT.`);
+                    await MessageLifecycleTracker.logPhase(lifecycleId, 'RISKGUARD_BLOCKED_SILENT', { reason: risk.flags.join(', ') });
+                    return null; // SILENT - do not send!
+                } else if (risk.riskLevel === RiskLevel.WARN) {
+                    console.warn(`[SalesOS] ⚠️ MessageRiskGuard WARN: ${risk.flags.join(', ')}`);
+                }
+            }
+        } catch (e) {
+            console.warn(`[SalesOS] RiskGuard check error: ${e.message}`);
+        }
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
         sanitizedOutput = sanitizedOutput.replace(/!+/g, ''); // 100% strip exclamation marks for casual WhatsApp style
