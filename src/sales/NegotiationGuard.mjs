@@ -15,6 +15,7 @@ const NEGOTIATION_SIGNALS = [
     'diskon', 'discount', 'kurangi', 'kurang dikit', 'murah lagi', 'bisa lebih murah',
     'nego', 'negosiasi', 'minta kurang', 'terlalu mahal', 'kurang harganya',
     'ada harga lain', 'harga terbaik', 'bisa lebih', 'kalau beli banyak',
+    'kemahalan', 'mahal banget', 'mahal kali', 'harga kok', 'kelewat mahal', 'mahal dong',
 ];
 
 const HIGH_VALUE_SIGNALS = [
