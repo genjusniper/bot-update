@@ -39,10 +39,14 @@ export class DealForecastEngine {
             if (signal === 'LOW') prob -= 10;
         }
 
-        // 3. Penalti Ghosting
+        // 3. Penalti Ghosting & Velocity Bonus
         if (lead.lastContact) {
             const daysSince = (new Date() - new Date(lead.lastContact)) / (1000 * 60 * 60 * 24);
-            if (daysSince > 3) prob -= (daysSince * 2); // -2% tiap hari setelah hari ke-3
+            if (daysSince > 3) {
+                prob -= (daysSince * 2); // -2% tiap hari setelah hari ke-3
+            } else if (daysSince < 1 && ['REPLIED', 'ASKED_PRICE', 'NEGOTIATION'].includes(lead.status)) {
+                prob += 10; // +10% High Velocity Bonus (Fast Replier)
+            }
         }
 
         // 4. Hitung Pipeline Value

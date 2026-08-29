@@ -1,9 +1,10 @@
 // src/sales/ExecutiveDashboard.mjs
-// Laporan Eksekutif V2 dengan Funnel & Learning Insights
+// Laporan Eksekutif V3 dengan Revenue Optimization & Insights
 
 import { PipelineGapAnalyzer } from './PipelineGapAnalyzer.mjs';
 import { SalesLearningEngine } from './SalesLearningEngine.mjs';
 import { LeadCRM } from './LeadCRM.mjs';
+import { DealForecastEngine } from './DealForecastEngine.mjs';
 
 export class ExecutiveDashboard {
     
@@ -11,46 +12,54 @@ export class ExecutiveDashboard {
      * Generate laporan harian/mingguan lengkap
      */
     static generateFullReport(targetRevenue = 5000000) {
-        const activeLeads = LeadCRM.getByStatus(null).filter(l => !['LOST', 'DO_NOT_CONTACT'].includes(l.status));
+        const allLeads = LeadCRM.getByStatus(null);
+        const activeLeads = allLeads.filter(l => !['LOST', 'DO_NOT_CONTACT'].includes(l.status));
         const gap = PipelineGapAnalyzer.analyze(targetRevenue, activeLeads);
         const learnData = SalesLearningEngine.learn();
         
         // Menghitung status lead
         const leads = {
-            discovered: LeadCRM.getByStatus('DISCOVERED').length,
-            qualified: LeadCRM.getByStatus('QUALIFIED').length,
-            contacted: LeadCRM.getByStatus('CONTACTED').length,
-            replied: LeadCRM.getByStatus('REPLIED').length,
-            interested: LeadCRM.getByStatus('INTERESTED').length,
-            negotiation: LeadCRM.getByStatus('NEGOTIATION').length,
-            order: LeadCRM.getByStatus('ORDER').length
+            discovered: allLeads.filter(l => l.status === 'DISCOVERED').length,
+            contacted: allLeads.filter(l => l.status === 'CONTACTED').length,
+            replied: allLeads.filter(l => l.status === 'REPLIED' || l.status === 'CURIOUS' || l.status === 'THINKING').length,
+            negotiation: allLeads.filter(l => l.status === 'ASKED_PRICE' || l.status === 'NEGOTIATION' || l.status === 'INTERESTED').length,
+            order: allLeads.filter(l => l.status === 'ORDER' || l.status === 'REPEAT').length,
+            lost: allLeads.filter(l => l.status === 'LOST').length
         };
+
+        // Expected Revenue Total
+        let totalExpected = 0;
+        for (const l of activeLeads) {
+            const f = DealForecastEngine.forecast(l);
+            totalExpected += f.expectedValue;
+        }
+
+        // Conversion Rate
+        const totalContacted = leads.contacted + leads.replied + leads.negotiation + leads.order + leads.lost;
+        const cvr = totalContacted > 0 ? (leads.order / totalContacted * 100).toFixed(1) : 0;
 
         // Insights extraction
         const bestOpening = this._extractBest(learnData.winningPatterns, 'variant');
         const bestType = this._extractBest(learnData.winningPatterns, 'type');
+        const bestPitch = this._extractBest(learnData.winningPatterns, 'pitchAngleId');
 
-        return `📊 *EXECUTIVE SALES DASHBOARD* 📊\n\n` +
+        return `📊 *REVENUE OPTIMIZATION DASHBOARD* 📊\n\n` +
                `*REVENUE & GAP*\n` +
                `- TARGET: Rp ${gap.targetRevenue.toLocaleString()}\n` +
                `- REALIZED: Rp ${gap.confirmedRevenue.toLocaleString()}\n` +
-               `- PIPELINE: Rp ${gap.pipelineValue.toLocaleString()}\n` +
-               `- GAP: Rp ${gap.gapValue.toLocaleString()}\n\n` +
+               `- EXPECTED REVENUE: Rp ${totalExpected.toLocaleString()}\n` +
+               `- GAP: Rp ${gap.gap.toLocaleString()}\n\n` +
                
-               `*LEAD FUNNEL*\n` +
-               `├─ Discovered: ${leads.discovered}\n` +
-               `├─ Qualified: ${leads.qualified}\n` +
-               `├─ Contacted: ${leads.contacted}\n` +
-               `├─ Replied: ${leads.replied}\n` +
-               `├─ Interested: ${leads.interested}\n` +
-               `├─ Negotiation: ${leads.negotiation}\n` +
-               `└─ Order: ${leads.order}\n\n` +
+               `*PIPELINE EFFICIENCY*\n` +
+               `├─ Total Contacted: ${totalContacted}\n` +
+               `├─ Negosiasi Aktif: ${leads.negotiation}\n` +
+               `├─ Order (Won): ${leads.order}\n` +
+               `└─ Conversion Rate: ${cvr}%\n\n` +
                
-               `*INTELLIGENCE & INSIGHTS*\n` +
-               `- BEST OPENING: ${bestOpening}\n` +
-               `- BEST BIZ TYPE: ${bestType}\n` +
-               `- LEARNINGS:\n` + 
-               learnData.insights.map(i => `  💡 ${i}`).join('\n');
+               `*LEARNING INSIGHTS*\n` +
+               `- BEST SEGMEN: ${bestType}\n` +
+               `- BEST PITCH: ${bestPitch}\n` +
+               `- BEST OPENING: ${bestOpening}\n`;
     }
 
     static _extractBest(patterns, key) {

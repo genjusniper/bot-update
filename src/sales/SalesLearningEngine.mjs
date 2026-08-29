@@ -29,6 +29,10 @@ export class SalesLearningEngine {
                 funnels[line.phone].variant = line.variant;
                 funnels[line.phone].type = line.businessType;
             }
+            if (line.event === 'PITCH_OFFER_SELECTED') {
+                funnels[line.phone].pitchAngleId = line.pitchAngleId;
+                funnels[line.phone].type = line.businessType;
+            }
             if (line.event === 'PROCESSED_INCOMING' || line.event === 'REPLIED') {
                 funnels[line.phone].replied = true;
             }
