@@ -20,7 +20,7 @@ const OBJECTION_PATTERNS = [
     { type: ObjectionType.PRICE,    signals: ['mahal', 'kemahalan', 'kelewat mahal', 'terlalu mahal', 'harga tinggi', 'lebih murah di tempat lain', 'kurangi harga', 'diskon', 'nego'] },
     { type: ObjectionType.SUPPLIER, signals: ['udah ada supplier', 'sudah ada', 'langganan', 'sudah pesan di', 'punya langganan', 'dari tempat lain', 'nggak ganti'] },
     { type: ObjectionType.QUALITY,  signals: ['yakin kualitasnya', 'bagus nggak', 'terjamin', 'fresh nggak', 'enak nggak', 'beneran segar', 'buktiin dulu'] },
-    { type: ObjectionType.DELIVERY, signals: ['bisa kirim', 'dikirim', 'antar', 'ongkir', 'jauh', 'sampai sini', 'pengiriman', 'coverage', 'bisa ke'] },
+    { type: ObjectionType.DELIVERY, signals: ['bisa kirim', 'dikirim', 'antar', 'ongkir', 'jauh', 'sampai sini', 'pengiriman', 'coverage', 'bisa ke', 'sampai ke', 'daerah kami'] },
     { type: ObjectionType.MOQ,      signals: ['kebutuhan sedikit', 'cuma sedikit', 'nggak banyak', 'kecil', 'tidak rutin', 'sesekali'] },
     { type: ObjectionType.TIMING,   signals: ['nanti', 'belum butuh', 'belum siap', 'masih mikir', 'nanti dulu', 'bulan depan', 'tunggu dulu', 'besok'] },
     { type: ObjectionType.TRUST,    signals: ['belum kenal', 'baru tau', 'percaya nggak', 'aman nggak', 'legit nggak', 'penipuan', 'terpercaya nggak'] },

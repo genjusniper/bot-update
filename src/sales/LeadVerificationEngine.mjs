@@ -52,7 +52,7 @@ export class LeadVerificationEngine {
         const digits = (lead.phone || '').replace(/\D/g, '');
         if (digits.length < 10 || digits.length > 13) {
             riskFlags.push('INVALID_PHONE_FORMAT');
-            score -= 30;
+            score -= 60;
         }
         if (!digits.startsWith('62') && !digits.startsWith('08')) {
             riskFlags.push('NON_INDONESIAN_NUMBER');

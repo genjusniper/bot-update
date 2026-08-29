@@ -62,11 +62,11 @@ export class MessageRiskGuard {
         // ── 3. Terlalu panjang ────────────────────────────────────
         const wordCount = message.split(/\s+/).length;
         if (wordCount > 80) {
-            riskScore += 20;
+            riskScore += 45;
             flags.push(`TOO_LONG: ${wordCount} kata`);
             suggestions.push('Perpendek pesan. Ideal untuk WA: < 50 kata per pesan.');
         } else if (wordCount > 50) {
-            riskScore += 8;
+            riskScore += 20;
             flags.push(`SOMEWHAT_LONG: ${wordCount} kata`);
         }
 
