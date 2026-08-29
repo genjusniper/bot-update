@@ -143,6 +143,14 @@ export class PersonalAIOS {
 
         ProductionTelemetry72h.increment('messages', 'received').catch(() => {});
 
+        // 0. SALES COMMAND OS (Interceptor) - Check if Mas Agus sent a command
+        if (rawText.startsWith('!') && mediaOptions.fromMe) {
+            const { SalesCommandOS } = await import('../sales/SalesCommandOS.mjs');
+            const targetPhone = isGroup ? null : chatId; // fallback
+            const cmdRes = SalesCommandOS.execute(rawText, targetPhone);
+            return { text: cmdRes, options: {} };
+        }
+
         // 1. MASTER PERSONAL NUMBER CO-PILOT GATEKEEPER (V13.6)
         const copilotGate = await PersonalCoPilotGuard.evaluateGatekeeper({
             chatId,

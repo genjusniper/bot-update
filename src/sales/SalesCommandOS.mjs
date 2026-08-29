@@ -1,137 +1,74 @@
 // src/sales/SalesCommandOS.mjs
-// SalesCommandOS — Operator control Sales OS via WhatsApp command
+// Sistem kontrol manual untuk operator (Mas Agus)
 
 import { LeadCRM } from './LeadCRM.mjs';
-import { LeadDiscoveryAgent } from './LeadDiscoveryAgent.mjs';
-import { FollowUpEngine } from './FollowUpEngine.mjs';
-import { SalesAnalyticsEngine } from './SalesAnalyticsEngine.mjs';
-import { BlacklistManager, BlacklistReason } from './BlacklistManager.mjs';
-import { ConsentOutreachGuard } from './ConsentOutreachGuard.mjs';
-
-// Nomor operator yang diizinkan (dari env)
-const OPERATOR_PHONES = (process.env.OPERATOR_PHONE || '').split(',').map(p => p.trim()).filter(Boolean);
+import { SalesEventLedger } from './SalesEventLedger.mjs';
+import { DealForecastEngine } from './DealForecastEngine.mjs';
+import { SalesPolicyEngine } from './SalesPolicyEngine.mjs';
 
 export class SalesCommandOS {
+    
     /**
-     * Cek apakah chatId ini adalah nomor operator
+     * Memeriksa apakah pesan masuk adalah command dari admin/owner.
+     * (Asumsi: di aplikasi sebenarnya, kita bisa filter berdasarkan sender === OWNER_NUMBER)
+     * Untuk sekarang, asumsikan jika pesan dimulai dengan '!', maka itu command.
      */
-    static isOperator(phone) {
-        if (!phone) return false;
-        const normalized = phone.replace('@s.whatsapp.net', '');
-        return OPERATOR_PHONES.some(op => op.replace('@s.whatsapp.net', '') === normalized);
+    static isCommand(text) {
+        return text && text.startsWith('!');
     }
 
     /**
-     * Parse & jalankan command dari operator
-     * @param {string} text - pesan dari operator
-     * @param {Function} sendMessageFn - async (phone, msg) => void
-     * @param {string} operatorPhone - nomor operator untuk membalas
-     * @returns {Object} { handled, response }
+     * Mengeksekusi command dan mengembalikan respon teks untuk operator
      */
-    static async execute(text, sendMessageFn, operatorPhone) {
-        const lower = (text || '').trim().toLowerCase();
+    static execute(commandStr, targetPhone = null) {
+        const parts = commandStr.trim().split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        const phoneArg = parts[1] || targetPhone;
 
-        // ── 1. LAPORAN SALES ─────────────────────────────────────
-        if (lower.match(/^laporan|^report|^rekap|^rangkuman/)) {
-            const report = SalesAnalyticsEngine.formatReport();
-            await sendMessageFn(operatorPhone, report);
-            return { handled: true, response: report };
+        switch (cmd) {
+            case '!pause':
+                if (!phoneArg) return '⚠️ Format: !pause <nomor_wa>';
+                LeadCRM.updateStatus(phoneArg, 'DO_NOT_CONTACT', 'Di-pause oleh operator');
+                SalesEventLedger.record('CommandOS', phoneArg, 'MANUAL_PAUSE');
+                return `✅ Bot dihentikan (PAUSE) untuk nomor ${phoneArg}. AI tidak akan membalas.`;
+
+            case '!resume':
+                if (!phoneArg) return '⚠️ Format: !resume <nomor_wa>';
+                // Kembalikan ke CONTACTED atau biarkan policy re-evaluate
+                LeadCRM.updateStatus(phoneArg, 'CONTACTED', 'Di-resume oleh operator');
+                SalesEventLedger.record('CommandOS', phoneArg, 'MANUAL_RESUME');
+                return `✅ Bot diaktifkan kembali (RESUME) untuk nomor ${phoneArg}.`;
+
+            case '!status':
+                if (!phoneArg) return '⚠️ Format: !status <nomor_wa>';
+                const lead = LeadCRM.load(phoneArg);
+                if (!lead) return `⚠️ Lead ${phoneArg} tidak ditemukan di CRM.`;
+                const forecast = DealForecastEngine.forecast(lead);
+                const policy = SalesPolicyEngine.evaluate(lead, [], lead.status);
+                
+                return `📊 *Status Lead: ${lead.businessName || phoneArg}*\n` +
+                       `- Status: ${lead.status}\n` +
+                       `- Tipe: ${lead.businessType || 'UNKNOWN'}\n` +
+                       `- Policy Action: ${policy.action} (${policy.reason})\n` +
+                       `- Probabilitas Win: ${forecast.probability}%\n` +
+                       `- Est. Value: Rp ${forecast.expectedValue.toLocaleString()}\n` +
+                       `- Score: ${lead.score || 'N/A'}`;
+
+            case '!handoff':
+                if (!phoneArg) return '⚠️ Format: !handoff <nomor_wa>';
+                LeadCRM.updateStatus(phoneArg, 'NEGOTIATION', 'Manual Handoff by Admin');
+                SalesEventLedger.record('CommandOS', phoneArg, 'MANUAL_HANDOFF');
+                return `✅ Menandai ${phoneArg} ke mode HANDOFF. Silakan ambil alih percakapan.`;
+
+            case '!blacklist':
+                if (!phoneArg) return '⚠️ Format: !blacklist <nomor_wa>';
+                LeadCRM.update(phoneArg, { blacklist: true });
+                LeadCRM.updateStatus(phoneArg, 'LOST', 'Blacklisted');
+                SalesEventLedger.record('CommandOS', phoneArg, 'BLACKLISTED');
+                return `⛔ Nomor ${phoneArg} masuk daftar hitam permanen.`;
+
+            default:
+                return `⚠️ Perintah tidak dikenal: ${cmd}\nGunakan: !pause, !resume, !status, !handoff, !blacklist`;
         }
-
-        // ── 2. CARI LEAD ─────────────────────────────────────────
-        const searchMatch = lower.match(/^cari\s+(\d+)?\s*(katering|warung|lead|bisnis)?\s*(?:daerah|di|area)?\s*(.+)/i);
-        if (searchMatch) {
-            const maxLeads = parseInt(searchMatch[1]) || 20;
-            const city = searchMatch[3]?.trim() || 'Surabaya';
-            const reply = `🔍 Mencari hingga ${maxLeads} lead di ${city}...\nHasilnya akan dikirim setelah selesai.`;
-            await sendMessageFn(operatorPhone, reply);
-
-            // Jalankan di background
-            LeadDiscoveryAgent.discover({ city, maxLeads }).then(async (leads) => {
-                const summary = [
-                    `✅ Discovery selesai untuk *${city}*`,
-                    `Ditemukan: *${leads.length} lead* yang lolos kualifikasi`,
-                    ...leads.slice(0, 5).map((l, i) => `${i + 1}. ${l.businessName} (${l.score}) — ${l.location}`),
-                    leads.length > 5 ? `... dan ${leads.length - 5} lead lainnya` : '',
-                ].filter(Boolean).join('\n');
-                await sendMessageFn(operatorPhone, summary);
-            }).catch(e => sendMessageFn(operatorPhone, `❌ Discovery error: ${e.message}`));
-
-            return { handled: true, response: reply };
-        }
-
-        // ── 3. FOLLOW-UP SEMUA ───────────────────────────────────
-        if (lower.match(/^follow.?up|^followup/)) {
-            const dueLeads = LeadCRM.getDueFollowUps();
-            if (dueLeads.length === 0) {
-                const reply = '✅ Tidak ada lead yang perlu di-follow-up sekarang.';
-                await sendMessageFn(operatorPhone, reply);
-                return { handled: true, response: reply };
-            }
-            const reply = `📤 Menjalankan follow-up ke *${dueLeads.length} lead*...`;
-            await sendMessageFn(operatorPhone, reply);
-            FollowUpEngine.runDueFollowUps(sendMessageFn).then(sent => {
-                sendMessageFn(operatorPhone, `✅ Follow-up selesai. Terkirim ke: ${sent.length} lead.`);
-            });
-            return { handled: true, response: reply };
-        }
-
-        // ── 4. BLACKLIST NOMOR ───────────────────────────────────
-        const blMatch = lower.match(/^blacklist\s+(\d{9,13})/);
-        if (blMatch) {
-            const phone = `62${blMatch[1].replace(/^0/, '')}@s.whatsapp.net`;
-            BlacklistManager.add(phone, BlacklistReason.DO_NOT_CONTACT, 'Diblacklist oleh operator');
-            const reply = `🚫 Nomor ${blMatch[1]} ditambahkan ke blacklist permanen.`;
-            await sendMessageFn(operatorPhone, reply);
-            return { handled: true, response: reply };
-        }
-
-        // ── 5. STATUS LEAD ───────────────────────────────────────
-        const statusMatch = lower.match(/^status\s+(\d{9,13})/);
-        if (statusMatch) {
-            const phone = `62${statusMatch[1].replace(/^0/, '')}@s.whatsapp.net`;
-            const lead = LeadCRM.load(phone);
-            if (!lead) {
-                const reply = `❓ Lead ${statusMatch[1]} tidak ditemukan di CRM.`;
-                await sendMessageFn(operatorPhone, reply);
-                return { handled: true, response: reply };
-            }
-            const reply = [
-                `📋 *Status Lead: ${lead.businessName}*`,
-                `Status : ${lead.status}`,
-                `Skor   : ${lead.score}`,
-                `Lokasi : ${lead.location || '-'}`,
-                `Follow-up: ${lead.followUpCount || 0}x`,
-                `Kontak terakhir: ${lead.lastContact ? new Date(lead.lastContact).toLocaleDateString('id-ID') : '-'}`,
-            ].join('\n');
-            await sendMessageFn(operatorPhone, reply);
-            return { handled: true, response: reply };
-        }
-
-        // ── 6. RATE LIMIT STATUS ─────────────────────────────────
-        if (lower.match(/^rate|^limit|^quota/)) {
-            const status = ConsentOutreachGuard.getRateLimitStatus();
-            const reply = `📊 *Rate Limit Status*\nTerkirim jam ini: ${status.sentThisHour}/${status.maxPerHour}\nSisa: ${status.remaining}\nCooldown: ${status.cooldownDays} hari`;
-            await sendMessageFn(operatorPhone, reply);
-            return { handled: true, response: reply };
-        }
-
-        // ── 7. HELP ──────────────────────────────────────────────
-        if (lower.match(/^help|^bantuan|^\?$/)) {
-            const reply = [
-                `🤖 *Sales Command OS — Perintah yang tersedia:*`,
-                ``,
-                `\`laporan\` — Laporan funnel hari ini`,
-                `\`cari 30 katering daerah Semarang\` — Cari lead baru`,
-                `\`follow up\` — Jalankan follow-up yang jatuh tempo`,
-                `\`blacklist 08123xxx\` — Blacklist nomor`,
-                `\`status 08123xxx\` — Cek status lead`,
-                `\`rate\` — Cek sisa kuota outreach`,
-            ].join('\n');
-            await sendMessageFn(operatorPhone, reply);
-            return { handled: true, response: reply };
-        }
-
-        return { handled: false, response: null };
     }
 }

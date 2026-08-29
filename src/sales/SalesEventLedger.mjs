@@ -8,7 +8,24 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const LEDGER_DIR = path.join(__dirname, '../../data/ledger');
 
+const CHECKPOINT_FILE = path.join(LEDGER_DIR, 'latest_checkpoint.json');
+
 export class SalesEventLedger {
+    static _lastEventSeq = 0;
+    static _lastCheckpointTs = 0;
+
+    static _initSeq() {
+        if (this._lastEventSeq === 0) {
+            this._lastCheckpointTs = Date.now();
+            if (fs.existsSync(CHECKPOINT_FILE)) {
+                try {
+                    const cp = JSON.parse(fs.readFileSync(CHECKPOINT_FILE, 'utf-8'));
+                    this._lastEventSeq = cp.lastEventSeq || 0;
+                } catch (e) {}
+            }
+        }
+    }
+
     static _filePath(monthKey) {
         if (!fs.existsSync(LEDGER_DIR)) fs.mkdirSync(LEDGER_DIR, { recursive: true });
         return path.join(LEDGER_DIR, `ledger_${monthKey}.jsonl`);
@@ -19,15 +36,26 @@ export class SalesEventLedger {
         return `${d.getFullYear()}_${String(d.getMonth() + 1).padStart(2, '0')}`;
     }
 
+    static createCheckpoint() {
+        if (!fs.existsSync(LEDGER_DIR)) fs.mkdirSync(LEDGER_DIR, { recursive: true });
+        const cp = {
+            ts: new Date().toISOString(),
+            lastEventSeq: this._lastEventSeq
+        };
+        fs.writeFileSync(CHECKPOINT_FILE, JSON.stringify(cp), 'utf-8');
+        this._lastCheckpointTs = Date.now();
+    }
+
     /**
-     * Catat aktivitas ke buku besar
-     * @param {string} sourceModule - Nama modul yang mencatat (misal: 'ResearchAgent', 'Governor')
-     * @param {string} phone - Nomor target
-     * @param {string} event - Nama event (misal: 'DISCOVERED', 'SCORED')
-     * @param {Object} details - Data tambahan terkait event
+     * Catat aktivitas ke buku besar secara durable
      */
     static record(sourceModule, phone, event, details = {}) {
+        this._initSeq();
+        this._lastEventSeq++;
+        const eventId = `EVT-${this._lastEventSeq}`;
+
         const entry = {
+            eventId,
             ts: new Date().toISOString(),
             module: sourceModule,
             phone,
@@ -36,7 +64,15 @@ export class SalesEventLedger {
         };
 
         const file = this._filePath(this._getMonthKey());
+        // Flush langsung ke disk
         fs.appendFileSync(file, JSON.stringify(entry) + '\n', 'utf-8');
+
+        // Checkpoint otomatis tiap 5 menit ATAU jika event kritis
+        const isCritical = ['ORDER', 'HANDOFF', 'DISCOVERED', 'DO_NOT_CONTACT'].includes(event);
+        if (isCritical || Date.now() - this._lastCheckpointTs > 5 * 60 * 1000) {
+            this.createCheckpoint();
+        }
+
         return entry;
     }
 

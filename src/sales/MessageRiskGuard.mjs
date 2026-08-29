@@ -59,15 +59,12 @@ export class MessageRiskGuard {
             suggestions.push('Pesan terlalu memaksa. Kurangi kata-kata urgensi buatan.');
         }
 
-        // ── 3. Terlalu panjang ────────────────────────────────────
+        // ── 3. Terlalu panjang (Diperlonggar sesuai prinsip Phase 6) ──
         const wordCount = message.split(/\s+/).length;
-        if (wordCount > 80) {
-            riskScore += 45;
-            flags.push(`TOO_LONG: ${wordCount} kata`);
-            suggestions.push('Perpendek pesan. Ideal untuk WA: < 50 kata per pesan.');
-        } else if (wordCount > 50) {
-            riskScore += 20;
+        if (wordCount > 150) {
+            riskScore += 15;
             flags.push(`SOMEWHAT_LONG: ${wordCount} kata`);
+            suggestions.push('Pesan cukup panjang. Pastikan ini karena menjawab pertanyaan detail pelanggan, bukan sekadar broadcast spam.');
         }
 
         // ── 4. Emoji berlebihan ────────────────────────────────────
