@@ -102,6 +102,16 @@ import { ReplayStudio } from '../eval/ReplayStudio.mjs';
 import { loadMemory, saveMemory } from '../memory/MemoryStore.mjs';
 import { MemoryManager } from '../memory/MemoryManager.mjs';
 
+// ========================
+// VIRTUAL SALES OS MODULES
+// ========================
+import { LeadCRM } from '../sales/LeadCRM.mjs';
+import { SalesConversationEngine } from '../sales/SalesConversationEngine.mjs';
+import { ObjectionHandler } from '../sales/ObjectionHandler.mjs';
+import { OfferEngine } from '../sales/OfferEngine.mjs';
+import { HumanHandoffEngine } from '../sales/HumanHandoffEngine.mjs';
+
+
 export class PersonalAIOS {
     constructor() {
         this.gateway = new AIGatewayObservable();
@@ -204,6 +214,46 @@ export class PersonalAIOS {
             agentDirectives += `- AMBIGUITY CLARIFICATION REQUIRED: Tanyakan klarifikasi ini ke user secara langsung: "${interpretedCmd.ambiguityClarification}"\n`;
         }
         agentDirectives += `========================`;
+
+        // 13.6. VIRTUAL SALES OS PIPELINE
+        let salesDirective = '';
+        let salesHandoffTriggered = false;
+        try {
+            const lead = LeadCRM.isSalesLead(chatId) ? LeadCRM.load(chatId) : null;
+            if (lead) {
+                console.log(`[SalesOS] 🛒 Sales lead terdeteksi: ${lead.businessName} (${lead.status})`);
+
+                // Deteksi fase percakapan sales
+                const salesEval = SalesConversationEngine.evaluate(inputSnippet, lead);
+                salesDirective += salesEval.directive + '\n';
+
+                // Cek keberatan
+                if (ObjectionHandler.isObjection(inputSnippet)) {
+                    const objection = ObjectionHandler.evaluate(inputSnippet);
+                    salesDirective += objection.directive + '\n';
+                }
+
+                // Pilih penawaran yang tepat kalau sudah fase INTERESTED/ASKED_PRICE
+                if (['INTERESTED', 'ASKED_PRICE'].includes(salesEval.detectedPhase)) {
+                    const offerEval = OfferEngine.evaluate(lead);
+                    salesDirective += offerEval.directive + '\n';
+                }
+
+                // Human handoff kalau siap ORDER
+                if (HumanHandoffEngine.needsHandoff(lead, salesEval.detectedPhase)) {
+                    salesDirective += HumanHandoffEngine.getDirective() + '\n';
+                    salesHandoffTriggered = true;
+                    // Handoff dilakukan setelah response dikirim (async)
+                    HumanHandoffEngine.execute(lead, inputSnippet, async (phone, msg) => {
+                        // sendMessage injection — akan diisi saat integrasi ke bot engine
+                        console.log(`[SalesOS] 🔔 HANDOFF → ${phone}: ${msg.slice(0, 60)}...`);
+                    }).catch(e => console.warn('[SalesOS] Handoff error:', e.message));
+                }
+            }
+        } catch (salesErr) {
+            console.warn(`[SalesOS] ⚠️  Sales pipeline error: ${salesErr.message}`);
+        }
+
 
         // 14. TIME AWARENESS & PERSONA DRIFT LOCK
         const timeCtx = TimeAwarenessPersona.getTimeContext();
@@ -350,6 +400,7 @@ ${multimodalDirective}
 
 ${linkContext}
 ${agentContext}
+${salesDirective}
 ${proactiveContext}
 ${lifeContext}
 

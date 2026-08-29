@@ -1,0 +1,79 @@
+{
+  "phone": "62812TEST001@s.whatsapp.net",
+  "name": "Unknown",
+  "businessName": "Katering Bu Sari",
+  "businessType": "CATERING",
+  "location": "Surabaya",
+  "score": "VERY_HIGH",
+  "potentialVolume": "50-200L/minggu",
+  "status": "CONTACTED",
+  "contactHistory": [
+    {
+      "from": "NEW",
+      "to": "CONTACTED",
+      "at": "2026-08-29T01:37:01.257Z",
+      "notes": "Pesan pertama terkirim"
+    },
+    {
+      "from": "CONTACTED",
+      "to": "ASKED_PRICE",
+      "at": "2026-08-29T01:37:01.262Z",
+      "notes": "Auto-detected dari pesan: \"berapa harganya per liter?\""
+    },
+    {
+      "direction": "IN",
+      "message": "berapa harganya per liter?",
+      "channel": "WHATSAPP",
+      "at": "2026-08-29T01:37:01.263Z"
+    },
+    {
+      "from": "ASKED_PRICE",
+      "to": "CONTACTED",
+      "at": "2026-08-29T01:37:01.265Z",
+      "notes": ""
+    },
+    {
+      "from": "CONTACTED",
+      "to": "INTERESTED",
+      "at": "2026-08-29T01:37:01.266Z",
+      "notes": "Auto-detected dari pesan: \"lumayan menarik tuh, bisa coba dulu?\""
+    },
+    {
+      "direction": "IN",
+      "message": "lumayan menarik tuh, bisa coba dulu?",
+      "channel": "WHATSAPP",
+      "at": "2026-08-29T01:37:01.267Z"
+    },
+    {
+      "from": "INTERESTED",
+      "to": "CONTACTED",
+      "at": "2026-08-29T01:37:01.268Z",
+      "notes": ""
+    },
+    {
+      "from": "CONTACTED",
+      "to": "ORDER",
+      "at": "2026-08-29T01:37:01.269Z",
+      "notes": "Auto-detected dari pesan: \"oke, mau pesan 30 liter minggu ini\""
+    },
+    {
+      "direction": "IN",
+      "message": "oke, mau pesan 30 liter minggu ini",
+      "channel": "WHATSAPP",
+      "at": "2026-08-29T01:37:01.270Z"
+    },
+    {
+      "from": "ORDER",
+      "to": "CONTACTED",
+      "at": "2026-08-29T01:37:01.271Z",
+      "notes": ""
+    }
+  ],
+  "followUpCount": 0,
+  "lastContact": "2026-08-29T01:37:01.271Z",
+  "nextFollowUp": null,
+  "notes": "",
+  "offerType": null,
+  "createdAt": "2026-08-29T01:37:01.253Z",
+  "updatedAt": "2026-08-29T01:37:01.271Z"
+}
