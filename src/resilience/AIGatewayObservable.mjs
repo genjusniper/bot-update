@@ -25,7 +25,7 @@ export class AIGatewayObservable {
         this.fleet = new KeyFleetManager(rawKeys);
     }
 
-    async generate(systemPrompt, rawContents, correlationId = 'req_gen', images = [], quotedContext = null) {
+    async generate(systemPrompt, rawContents, correlationId = 'req_gen', images = [], quotedContext = null, options = {}) {
         const startTime = Date.now();
         const telemetry = {
             correlationId,
@@ -46,11 +46,11 @@ export class AIGatewayObservable {
         const payload = JSON.stringify({
             system_instruction: cleanSystemInstruction,
             contents: cleanContents,
-            generationConfig: {
+            generationConfig: Object.assign({
                 temperature: 0.85,
                 maxOutputTokens: 600,
                 topP: 0.95
-            }
+            }, options.generationConfig || {})
         });
 
         // Fast rotation: try up to 12 attempts across keys and models
