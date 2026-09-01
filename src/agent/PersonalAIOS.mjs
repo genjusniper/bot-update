@@ -103,16 +103,9 @@ import { loadMemory, saveMemory } from '../memory/MemoryStore.mjs';
 import { MemoryManager } from '../memory/MemoryManager.mjs';
 
 // ========================
-// VIRTUAL SALES OS MODULES
+// VIRTUAL SALES OS MODULES (PHASE 5)
 // ========================
-import { LeadCRM } from '../sales/LeadCRM.mjs';
-import { SalesConversationEngine } from '../sales/SalesConversationEngine.mjs';
-import { OfferEngine } from '../sales/OfferEngine.mjs';
-import { HumanHandoffEngine } from '../sales/HumanHandoffEngine.mjs';
-import { SalesAutopilotGovernor, GovAction } from '../sales/SalesAutopilotGovernor.mjs';
-import { ObjectionIntelligence } from '../sales/ObjectionIntelligence.mjs';
-import { ProductKnowledgeBase } from '../sales/ProductKnowledgeBase.mjs';
-import { MessageRiskGuard, RiskLevel } from '../sales/MessageRiskGuard.mjs';
+import { SalesExecutionOS } from '../sales/SalesExecutionOS.mjs';
 
 
 export class PersonalAIOS {
@@ -149,6 +142,26 @@ export class PersonalAIOS {
         const trace = { correlationId: corrId, lifecycleId, chatId, senderId: effectiveSender, pushName, groupSubject, message: inputSnippet, imageCount: images.length, hasAudio };
 
         ProductionTelemetry72h.increment('messages', 'received').catch(() => {});
+
+        // 0. SALES COMMAND OS (Interceptor) - Check if Mas Agus sent a command
+        if (rawText.startsWith('!') && mediaOptions.fromMe) {
+            const { SalesCommandOS } = await import('../sales/SalesCommandOS.mjs');
+            const targetPhone = isGroup ? null : chatId; // fallback
+            const cmdRes = SalesCommandOS.execute(rawText, targetPhone);
+            return { text: cmdRes, options: {} };
+        }
+
+        // [NEW] PHASE 8: ORDER FULFILLMENT INTERCEPTOR
+        try {
+            const { OrderFulfillmentOS } = await import('../sales/OrderFulfillmentOS.mjs');
+            const orderReply = await OrderFulfillmentOS.processIncomingMessage(chatId, inputSnippet, pushName);
+            if (orderReply) {
+                await MessageLifecycleTracker.logPhase(lifecycleId, 'ORDER_FULFILLED_AUTO', { action: 'SENT_INVOICE' });
+                return { text: orderReply }; // Bypass seluruh AI ngobrol, langsung kirim rekapan
+            }
+        } catch (e) {
+            console.error('[PersonalAIOS] ❌ Gagal mengeksekusi OrderFulfillmentOS:', e.message);
+        }
 
         // 1. MASTER PERSONAL NUMBER CO-PILOT GATEKEEPER (V13.6)
         const copilotGate = await PersonalCoPilotGuard.evaluateGatekeeper({
@@ -218,57 +231,19 @@ export class PersonalAIOS {
         }
         agentDirectives += `========================`;
 
-        // 13.6. VIRTUAL SALES OS PIPELINE
+        // 13.6. VIRTUAL SALES OS PIPELINE (DELEGATED TO SalesExecutionOS)
         let salesDirective = '';
-        let salesHandoffTriggered = false;
         try {
-            const isSalesChat = LeadCRM.isSalesLead ? LeadCRM.isSalesLead(chatId) : false;
-            if (isSalesChat) {
-                const lead = LeadCRM.load(chatId);
-                console.log(`[SalesOS] 🛒 Sales lead terdeteksi: ${lead.businessName} (${lead.status})`);
-
-                // Deteksi fase percakapan sales
-                const salesEval = SalesConversationEngine.evaluate(inputSnippet, lead);
-                
-                // Cek FAQ Produk
-                const productDirective = ProductKnowledgeBase.getDirective(inputSnippet);
-                if (productDirective) salesDirective += productDirective + '\n';
-
-                // Evaluasi ke Governor (Update timeline & checks)
-                const govDecision = SalesAutopilotGovernor.processIncoming(lead, inputSnippet, salesEval.detectedPhase);
-                salesDirective += govDecision.directive + '\n';
-
-                if (govDecision.action === GovAction.WAIT || govDecision.action === GovAction.SKIP || govDecision.action === GovAction.DO_NOT_CONTACT) {
-                    console.log(`[SalesOS] 🛑 Governor action: ${govDecision.action}. Staying SILENT.`);
-                    await MessageLifecycleTracker.logPhase(lifecycleId, 'GOVERNOR_BLOCKED_SILENT', { reason: govDecision.reason });
+            const execRes = await SalesExecutionOS.processIncoming(chatId, inputSnippet, memData.working_memory);
+            if (execRes && execRes.isSales) {
+                if (execRes.action === 'SILENT') {
+                    await MessageLifecycleTracker.logPhase(lifecycleId, 'SALES_OS_BLOCKED_SILENT', { reason: 'Blocked by Governor/ExecutionOS' });
                     return null; // SILENT
                 }
-
-                // Jika SEND atau HUMAN_HANDOFF, lanjut dengan AI response
-                salesDirective += salesEval.directive + '\n';
-
-                // Cek keberatan V2
-                if (ObjectionIntelligence.isObjection(inputSnippet)) {
-                    const objection = ObjectionIntelligence.evaluate(inputSnippet, lead);
-                    salesDirective += objection.directive + '\n';
-                }
-
-                // Pilih penawaran yang tepat kalau sudah fase INTERESTED/ASKED_PRICE
-                if (['INTERESTED', 'ASKED_PRICE', 'NEGOTIATION'].includes(salesEval.detectedPhase)) {
-                    const offerEval = OfferEngine.evaluate(lead);
-                    salesDirective += offerEval.directive + '\n';
-                }
-
-                // Human handoff
-                if (govDecision.action === GovAction.HUMAN_HANDOFF) {
-                    salesHandoffTriggered = true;
-                    HumanHandoffEngine.execute(lead, inputSnippet, async (phone, msg) => {
-                        console.log(`[SalesOS] 🔔 HANDOFF → ${phone}: ${msg.slice(0, 60)}...`);
-                    }).catch(e => console.warn('[SalesOS] Handoff error:', e.message));
-                }
+                salesDirective = execRes.directive || '';
             }
         } catch (salesErr) {
-            console.warn(`[SalesOS] ⚠️  Sales pipeline error: ${salesErr.message}`);
+            console.warn(`[PersonalAIOS] ⚠️ SalesExecutionOS error: ${salesErr.message}`);
         }
 
 
@@ -362,10 +337,10 @@ export class PersonalAIOS {
         );
 
         const roleIdentity = isSelfChat
-            ? `Kamu adalah Personal Co-Pilot & Asisten AI pribadi cerdas milik Bos (Agus / Gus). Bantu Bos dengan sigap, santai, dan cerdas.`
-            : `IDENTITAS MUTLAK: Kamu adalah AGUS (panggilan akrab: GUS / Mas Agus). Kamu adalah pemilik asli nomor WhatsApp ini.
-- Bicaralah selalu sebagai AGUS / GUS (orang pertama: aku / kulo / gue), BUKAN asisten, BUKAN pihak ketiga, BUKAN bot, BUKAN AI.
-- JANGAN PERNAH mengaku atau menyebut kata 'bot', 'AI', 'asisten', atau 'sistem'. Jika ada yang bercanda 'Kie bot po?', tolak santai: 'Lha sopo maneh wkwk, yo aku Gus to'.
+            ? `Kamu adalah Personal Co-Pilot & Asisten AI pribadi cerdas milik Bos (Agus Salim / Agus / Gus). Bantu Bos dengan sigap, santai, dan cerdas.`
+            : `IDENTITAS MUTLAK: Kamu adalah AGUS (panggilan akrab singkt agus / Mas Agus). Kamu adalah pemilik asli nomor WhatsApp ini.
+- Bicaralah selalu sebagai AGUS SALIM / AGUS (orang pertama: aku / kulo / gue), BUKAN asisten, BUKAN pihak ketiga, BUKAN bot, BUKAN AI.
+- JANGAN PERNAH mengaku atau menyebut kata 'bot', 'AI', 'asisten', atau 'sistem'. Jika ada yang bercanda 'Kie bot po?', tolak santai: 'Lha sopo maneh wkwk, yo aku Agus to'.
 - SIKAP & ENERGI: Tenang, santai, selow, dan grounded. JANGAN lebay atau over-excited sendiri. Samakan energi lawan bicara secara wajar.
 - CERDAS ADAPTASI: Sesuaikan cara bicaramu dengan lawan bicara (dengan teman cowok/Hanif bicara Jawa Semarangan santai, dengan cewek/Cindy bicara Indonesia ramah hangat, dengan orang Jabar bicara gaul wajar).
 - MENDENGARKAN: Tunjukkan kamu mendengarkan lawan bicara dengan wajar.
@@ -476,23 +451,16 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             maxWords: Math.min(turnTaking.maxWords, responseBudget.maxWords)
         });
 
-        // 26.5 MESSAGE RISK GUARD (SALES ONLY)
+        // 26.5 MESSAGE RISK GUARD (SALES ONLY) - DELEGATED TO SalesExecutionOS
         try {
-            if (LeadCRM.isSalesLead && LeadCRM.isSalesLead(chatId)) {
-                const lead = LeadCRM.load(chatId);
-                const recentMsgs = memData.working_memory.filter(m => m.role === 'assistant').slice(-3).map(m => m.text);
-                const risk = MessageRiskGuard.evaluate(qualityVerdict.sanitizedText, lead, recentMsgs);
-                
-                if (risk.riskLevel === RiskLevel.BLOCK) {
-                    console.warn(`[SalesOS] 🛑 MessageRiskGuard BLOCK: ${risk.flags.join(', ')}. Staying SILENT.`);
-                    await MessageLifecycleTracker.logPhase(lifecycleId, 'RISKGUARD_BLOCKED_SILENT', { reason: risk.flags.join(', ') });
-                    return null; // SILENT - do not send!
-                } else if (risk.riskLevel === RiskLevel.WARN) {
-                    console.warn(`[SalesOS] ⚠️ MessageRiskGuard WARN: ${risk.flags.join(', ')}`);
-                }
+            const isValid = SalesExecutionOS.validateOutgoing(chatId, qualityVerdict.sanitizedText, memData.working_memory);
+            if (!isValid) {
+                console.warn(`[PersonalAIOS] 🛑 SalesExecutionOS blocked outgoing message. Staying SILENT.`);
+                await MessageLifecycleTracker.logPhase(lifecycleId, 'SALES_OS_BLOCKED_SILENT', { reason: 'Blocked by SalesExecutionOS' });
+                return null;
             }
         } catch (e) {
-            console.warn(`[SalesOS] RiskGuard check error: ${e.message}`);
+            console.warn(`[PersonalAIOS] SalesExecutionOS outgoing check error: ${e.message}`);
         }
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
