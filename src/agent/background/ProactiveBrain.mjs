@@ -1,77 +1,64 @@
 // src/agent/background/ProactiveBrain.mjs
-// V11.3 - Background Initiative Engine
+// V15.0 - Proactive Sales Engine (Misi 3: The Aggressive Collector)
+
+import cron from 'node-cron';
+import { ProactiveSalesEngine } from '../../sales/ProactiveSalesEngine.mjs';
 
 export class ProactiveBrain {
-  constructor(options = {}) {
-    this.intervalMs = options.intervalMs || 3600000; // 1 Jam default
-    this.idleThresholdMs = options.idleThresholdMs || 43200000; // 12 Jam default
-    this.chanceToEngage = options.chanceToEngage || 0.20; // 20% chance
-    this.timer = null;
-  }
-
-  start(sock, memoryDB, allowedContacts, getGenerateReplyFn) {
-    if (this.timer) return;
-    console.log("? ProactiveBrain: Dinyalakan (Interval:  menit)");
-    this.timer = setInterval(async () => {
-      await this.scanAndInitiate(sock, memoryDB, allowedContacts, getGenerateReplyFn);
-    }, this.intervalMs);
-  }
-
-  stop() {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
-      console.log('? ProactiveBrain: Dimatikan');
+    constructor(options = {}) {
+        this.task = null;
     }
-  }
 
-  async scanAndInitiate(sock, memoryDB, allowedContacts, getGenerateReplyFn) {
-    if (!sock || !memoryDB || typeof memoryDB !== 'object') {
-        // Jangan paksa lanjut kalau memoryDB null (sedang dibaca/di-backup)
-        return;
+    start(sock, memoryDB, allowedContacts, getGenerateReplyFn) {
+        if (this.task) return;
+        
+        console.log("⏰ ProactiveBrain (Sales Mode): Diaktifkan! Jadwal Weker: 20:00 WIB tiap hari.");
+        
+        // Jadwal: Setiap hari jam 20:00 malam waktu lokal server
+        this.task = cron.schedule('0 20 * * *', async () => {
+            console.log('\n[ProactiveBrain] 🔔 WAKTU FOLLOW-UP! Menyisir OrderLedger...');
+            
+            try {
+                const targets = await ProactiveSalesEngine.getFollowUpTargets();
+                
+                if (targets.length === 0) {
+                    console.log('[ProactiveBrain] ✅ Semua pelanggan VIP sudah order hari ini.');
+                    return;
+                }
+
+                console.log(`[ProactiveBrain] 🎯 Menemukan ${targets.length} target penagihan pesanan.`);
+
+                for (const target of targets) {
+                    const message = ProactiveSalesEngine.generateMessage(target.name);
+                    console.log(`  -> Mengirim ke ${target.name} (${target.chatId}): "${message}"`);
+                    
+                    try {
+                        // Jeda acak antara 5-15 detik per pesan agar tidak kena blokir WhatsApp
+                        const delayMs = Math.floor(Math.random() * 10000) + 5000;
+                        await new Promise(r => setTimeout(r, delayMs));
+
+                        await sock.sendPresenceUpdate('composing', target.chatId);
+                        await new Promise(r => setTimeout(r, 2000)); // Pura-pura ngetik
+                        await sock.sendPresenceUpdate('paused', target.chatId);
+
+                        await sock.sendMessage(target.chatId, { text: message });
+                        console.log(`  ✅ Pesan penagihan sukses terkirim ke ${target.name}`);
+                    } catch (e) {
+                        console.error(`  ❌ Gagal kirim ke ${target.name}:`, e.message);
+                    }
+                }
+                console.log('[ProactiveBrain] 🏁 Misi penagihan selesai!\n');
+            } catch (error) {
+                console.error('[ProactiveBrain] ❌ Error saat eksekusi cron:', error);
+            }
+        });
     }
-    console.log("?? ProactiveBrain: Memindai kontak yang idle...");
-    const now = Date.now();
-    let initiatedCount = 0;
 
-    for (const jid of allowedContacts) {
-      const data = memoryDB[jid];
-      if (!data || !data.shortTerm || data.shortTerm.length === 0) continue;
-
-      const lastMsg = data.shortTerm[data.shortTerm.length - 1];
-      const timeSinceLastMsg = now - (lastMsg.timestamp || now);
-
-      if (timeSinceLastMsg < this.idleThresholdMs) continue;
-
-      if (lastMsg.role === 'assistant') {
-        console.log("?? ProactiveBrain: Skip  karena pesan terakhir dari kita (menunggu balasan).");
-        continue;
-      }
-
-      const roll = Math.random();
-      if (roll > this.chanceToEngage) {
-        console.log("?? ProactiveBrain: Skip  (roll: , butuh <= )");
-        continue;
-      }
-
-      console.log("?? ProactiveBrain: Memutuskan untuk inisiatif chat ke !");
-      try {
-        const contactName = data.pushName || 'Teman';
-        const longTermFacts = Array.isArray(data.longTerm) ? data.longTerm.join(', ') : '';
-        const systemMeta = `=== TUGAS KHUSUS ===\nKamu sedang memulai obrolan duluan secara acak karena sudah lama tidak ngobrol dengan ${contactName}. Buat SATU pesan pembuka yang natural, santai, dan nyambung dengan info orang ini: ${longTermFacts}. Jangan pakai salam kaku. Boleh nanya kabar, share hal random, atau bahas kerjaan.`;
-        const reply = await getGenerateReplyFn(jid, '[Memulai Obrolan]', systemMeta);
-        if (reply && reply !== '[SKIP]') {
-          try { await sock.sendPresenceUpdate('composing', jid); } catch(e){}
-          const typingDelay = Math.min(Math.max(reply.length * 40, 2000), 6000);
-          await new Promise(r => setTimeout(r, typingDelay));
-          try { await sock.sendPresenceUpdate('paused', jid); } catch(e){}
-          await sock.sendMessage(jid, { text: reply });
-          data.shortTerm.push({ role: 'assistant', text: reply, timestamp: Date.now() });
-          console.log("? ProactiveBrain: Berhasil mengirim inisiatif ke  -> ");
-          initiatedCount++;
+    stop() {
+        if (this.task) {
+            this.task.stop();
+            this.task = null;
+            console.log('🛑 ProactiveBrain: Dimatikan');
         }
-      } catch (err) { console.error("? ProactiveBrain Error untuk :", err.message); }
     }
-    console.log("?? ProactiveBrain: Selesai memindai. Menginisiasi  obrolan baru.");
-  }
 }

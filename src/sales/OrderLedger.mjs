@@ -47,4 +47,12 @@ export class OrderLedger {
             return { orders: [] };
         }
     }
+
+    static async hasOrderedToday(chatId) {
+        const todayData = await this.getTodayOrders();
+        if (!todayData || !todayData.orders) return false;
+        
+        // Cari apakah ada order dengan chatId yang cocok
+        return todayData.orders.some(order => order.chatId === chatId);
+    }
 }

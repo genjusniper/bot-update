@@ -40,6 +40,10 @@ export class OrderFulfillmentOS {
         const orderData = await OrderExtractionEngine.extractOrder(text, pushName);
         
         if (orderData && orderData.items && orderData.items.length > 0) {
+            // [UPDATE] Sisipkan chatId agar kita tahu siapa yang pesan
+            orderData.chatId = chatId;
+            orderData.customerName = pushName;
+
             // 1. Simpan ke Ledger Harian
             await OrderLedger.saveOrder(orderData);
             
