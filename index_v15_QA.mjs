@@ -34,6 +34,7 @@ import { ImageGeneratorTool } from './src/core/tools/ImageGeneratorTool.mjs';
 import { PsychologyLieDetector } from './src/core/tools/PsychologyLieDetector.mjs';
 import { SalimCapabilityDiscovery } from './src/core/control/SalimCapabilityDiscovery.mjs';
 import { SalimEvolutionEngine } from './src/core/learning/SalimEvolutionEngine.mjs';
+import { ContactPolicyEngine } from './src/security/copilot/ContactPolicyEngine.mjs';
 
 const OWNER_LID = '236322690191595@lid';
 
@@ -338,6 +339,17 @@ async function start() {
             }
         }
 
+        // ====================================================
+        // PRIVATE CONTACT POLICY GUARD (AUTO vs SILENT / MANUAL)
+        // ====================================================
+        if (!isGroupMsg && !isOwner) {
+            const contactPolicy = await ContactPolicyEngine.getPolicyForContact(chatId);
+            if (contactPolicy.policy !== 'AUTO' && contactPolicy.policy !== 'VIP') {
+                console.log(`[ContactPolicy] 🤫 Skipping message from ${chatId} (${contactPolicy.name}): Policy is ${contactPolicy.policy}`);
+                return;
+            }
+        }
+
         let imageBase64 = null;
 
         let audioBase64 = null;
@@ -518,6 +530,16 @@ async function start() {
                 rawMessage,
                 ownerJid
             };
+
+            // Double Guard: If private chat and policy != AUTO/VIP, cancel immediately
+            if (!chatId.endsWith('@g.us') && !isOwner) {
+                const contactPolicy = await ContactPolicyEngine.getPolicyForContact(chatId);
+                if (contactPolicy.policy !== 'AUTO' && contactPolicy.policy !== 'VIP') {
+                    console.log(`[ContactPolicy Guard] 🛡️ Suppressing AI reply for ${chatId} (${contactPolicy.name}): Policy is ${contactPolicy.policy}`);
+                    ConversationFSM.transition(chatId, 'IDLE');
+                    return;
+                }
+            }
 
             // ── FAST INTERCEPTOR: Smart Natural Reminder ──
             let deliveryPlan = null;
