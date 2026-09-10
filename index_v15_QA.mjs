@@ -35,12 +35,21 @@ import { PsychologyLieDetector } from './src/core/tools/PsychologyLieDetector.mj
 import { SalimCapabilityDiscovery } from './src/core/control/SalimCapabilityDiscovery.mjs';
 import { SalimEvolutionEngine } from './src/core/learning/SalimEvolutionEngine.mjs';
 import { ContactPolicyEngine } from './src/security/copilot/ContactPolicyEngine.mjs';
+import { PersonalLifeGraphEngine } from './src/cognitive/PersonalLifeGraphEngine.mjs';
+import { SituationAwarenessEngine } from './src/cognitive/SituationAwarenessEngine.mjs';
+import { PatternWatcherAndStopMeEngine } from './src/cognitive/PatternWatcherAndStopMeEngine.mjs';
+import { MissionDAGTracker } from './src/cognitive/MissionDAGTracker.mjs';
 
 const OWNER_LID = '236322690191595@lid';
 
 console.log('=============================================');
-console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V15.1 — SALIM OS)');
+console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V16.0 — COGNITIVE SALIM)');
 console.log('=============================================');
+
+// Initialize Cognitive & Situational Engines
+PersonalLifeGraphEngine.init();
+PatternWatcherAndStopMeEngine.init();
+MissionDAGTracker.init();
 
 // Start automated storage & log pruning (every 6h)
 StorageAutoPruner.startCron(6);
@@ -591,6 +600,35 @@ async function start() {
                         bubbles: [expenseRes.response],
                         typingDelays: [800],
                         reactionEmoji: '💰',
+                        action: 'REPLY'
+                    };
+                }
+            }
+
+            // ── FAST INTERCEPTOR: Multi-Step Mission DAG Progression (Owner Only) ──
+            if (!deliveryPlan && isOwner && MissionDAGTracker.isResumeCommand(incomingText)) {
+                const advance = incomingText.trim().toLowerCase() !== 'misi' && incomingText.trim().toLowerCase() !== 'status misi';
+                const missionRes = MissionDAGTracker.handleProgression(advance);
+                if (missionRes.handled) {
+                    deliveryPlan = {
+                        text: missionRes.response,
+                        bubbles: [missionRes.response],
+                        typingDelays: [600],
+                        reactionEmoji: '🧩',
+                        action: 'REPLY'
+                    };
+                }
+            }
+
+            // ── FAST INTERCEPTOR: Pattern Watcher & "STOP ME" Engine (Owner Only) ──
+            if (!deliveryPlan && isOwner) {
+                const stopCheck = PatternWatcherAndStopMeEngine.check(incomingText);
+                if (stopCheck.shouldIntervene && stopCheck.warningMessage) {
+                    deliveryPlan = {
+                        text: stopCheck.warningMessage,
+                        bubbles: [stopCheck.warningMessage],
+                        typingDelays: [800],
+                        reactionEmoji: '✋',
                         action: 'REPLY'
                     };
                 }

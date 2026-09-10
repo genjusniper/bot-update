@@ -53,6 +53,23 @@ import { ConversationStateSnapshot } from '../behavior/ConversationStateSnapshot
 import { ResponseRepetitionGuard } from '../behavior/ResponseRepetitionGuard.mjs';
 import { AgentBrain } from '../agent/AgentBrain.mjs';
 import { WebSearchTool } from '../tools/web/WebSearchTool.mjs';
+import { ObserverAdapter } from '../core/signals/ObserverAdapter.mjs';
+import { SignalFusion } from '../core/signals/SignalFusion.mjs';
+import { SignalTelemetry } from '../core/signals/SignalTelemetry.mjs';
+import { CanonicalMessage } from '../core/ingress/CanonicalMessage.mjs';
+import { PersonalSimulationKernel } from '../core/kernel/PersonalSimulationKernel.mjs';
+import { PersonalLifeGraphEngine } from '../cognitive/PersonalLifeGraphEngine.mjs';
+import { SituationAwarenessEngine } from '../cognitive/SituationAwarenessEngine.mjs';
+import { StyleTransformer } from '../core/style/StyleTransformer.mjs';
+import { BehavioralFirewall } from '../core/firewall/BehavioralFirewall.mjs';
+import { ConversationTextureEngine } from '../core/style/ConversationTextureEngine.mjs';
+import { HumorBudgetEngine } from '../core/interaction/HumorBudgetEngine.mjs';
+import { UniversalCapabilityFabric } from '../core/whatsapp/UniversalCapabilityFabric.mjs';
+import { GlobalCommandDetector } from '../core/control/GlobalCommandDetector.mjs';
+import { GlobalControlPlane } from '../core/control/GlobalControlPlane.mjs';
+import { RealityGroundingLayer } from '../core/fabric/RealityGroundingLayer.mjs';
+import { FactEvidenceComparator } from '../core/fabric/FactEvidenceComparator.mjs';
+
 import { RecommendationEngine } from '../behavior/RecommendationEngine.mjs';
 import { LifeBrain } from '../subsystems/life/LifeBrain.mjs';
 import { LifeCompanionEngine } from '../subsystems/life/LifeCompanionEngine.mjs';
@@ -128,6 +145,14 @@ export class PersonalAIOS {
         const groupSubject = mediaOptions.groupSubject || '';
         const pushName = mediaOptions.pushName || '';
 
+        const isSelfChat = Boolean(
+            chatId === '236322690191595@lid' ||
+            chatId.includes('236322690191595') ||
+            mediaOptions.isOwner ||
+            mediaOptions.isSelfChat ||
+            (ownerJid && chatId.replace(/\D/g, '').includes(ownerJid.split(':')[0].split('@')[0]))
+        );
+
         const hasImages = images.length > 0;
         const hasAudio = Boolean(audio);
         const rawText = (message || '').trim();
@@ -142,6 +167,45 @@ export class PersonalAIOS {
         const trace = { correlationId: corrId, lifecycleId, chatId, senderId: effectiveSender, pushName, groupSubject, message: inputSnippet, imageCount: images.length, hasAudio };
 
         ProductionTelemetry72h.increment('messages', 'received').catch(() => {});
+
+        // Phase 27 & 28: Universal Capability Fabric & Multimodal Processing Ingress
+        let fabricBundle = null;
+        try {
+            fabricBundle = UniversalCapabilityFabric.processEvent(rawMessage || { key: { remoteJid: chatId } }, {
+                chatId,
+                senderId: effectiveSender,
+                senderName: pushName,
+                text: inputSnippet,
+                isGroup,
+                hasImage: hasImages,
+                hasAudio,
+                images,
+                audio,
+                quotedContext
+            });
+            console.log(`[CapabilityFabric] 🌐 Event processed [Type: ${fabricBundle.canonicalEvent.eventType} | Modality: ${fabricBundle.multimodalContent?.type} | ID: ${fabricBundle.fabricId}]`);
+        } catch (fabErr) {
+            console.warn('[CapabilityFabric] ⚠️ Ingress warning:', fabErr.message);
+        }
+
+        // Phase 28A: Global Command & Control Plane (Universal Chat-Agnostic Interceptor)
+        const controlDetect = GlobalCommandDetector.detect(inputSnippet);
+        if (controlDetect.isControlCommand) {
+            console.log(`[GlobalControlPlane] ⚡ Command detected: ${controlDetect.intent} from ${effectiveSender} in ${chatId}`);
+            const controlResult = await GlobalControlPlane.execute({
+                action: controlDetect.intent,
+                args: controlDetect.args,
+                senderId: effectiveSender,
+                chatId,
+                waGateway: mediaOptions.waGateway || null
+            });
+            if (controlResult.output) {
+                return { text: controlResult.output, options: {} };
+            }
+            if (controlResult.requiresExit) {
+                return null;
+            }
+        }
 
         // 0. SALES COMMAND OS (Interceptor) - Check if Mas Agus sent a command
         if (rawText.startsWith('!') && mediaOptions.fromMe) {
@@ -214,6 +278,47 @@ export class PersonalAIOS {
             await MessageLifecycleTracker.logPhase(lifecycleId, 'LINK_RESOLVED', { url: intentRoute.url, title: linkData.title, type: linkData.type });
         }
 
+        // PHASE 2: BEHAVIOR SIGNAL FUSION ARCHITECTURE
+        let fusedSnapshot = null;
+        try {
+            const canonicalInput = new CanonicalMessage({
+                id: lifecycleId,
+                chatId,
+                senderId: effectiveSender,
+                pushName,
+                text: inputSnippet,
+                isGroup,
+                groupSubject,
+                fromMe: mediaOptions.fromMe || false
+            });
+            const extractedSignals = await ObserverAdapter.collectAll(canonicalInput, { chatId });
+            fusedSnapshot = SignalFusion.fuse(extractedSignals, { chatId, senderId: effectiveSender, pushName });
+            SignalTelemetry.record(fusedSnapshot);
+            console.log(`[SignalFusion] 🧬 Snapshot ${fusedSnapshot.snapshotId} [Intent: ${fusedSnapshot.dimensions.intent} | Emotion: ${fusedSnapshot.dimensions.emotionValence} (${fusedSnapshot.dimensions.emotionalIntensity}) | Humor: ${fusedSnapshot.dimensions.humorPermission}]`);
+        } catch (sigErr) {
+            console.warn('[SignalFusion] ⚠️ Signal fusion error:', sigErr.message);
+        }
+
+        // 13.4. PERSONAL DIGITAL TWIN SIMULATION KERNEL (PHASE 3)
+        let personalContract = null;
+        let personalDirective = '';
+        if (fusedSnapshot) {
+            try {
+                personalContract = PersonalSimulationKernel.synthesize(fusedSnapshot, { 
+                    text: inputSnippet,
+                    senderJid: effectiveSender,
+                    senderName: pushName,
+                    chatId,
+                    isGroup,
+                    isOwner: isSelfChat
+                });
+                personalDirective = PersonalSimulationKernel.formatContractForPrompt(personalContract);
+                console.log(`[SimulationKernel] 🧠 Strategy: ${personalContract.what.strategy} | Tone: ${personalContract.how.tone} | MaxWords: ${personalContract.how.maxWords} | CogMode: ${personalContract.cognitive?.mode}`);
+            } catch (kErr) {
+                console.warn('[SimulationKernel] ⚠️ Kernel synthesis error:', kErr.message);
+            }
+        }
+
         // 13.5. AGENT BRAIN PIPELINE (CommandInterpreter, ToolRouter & TaskStateMemory)
         let agentContext = '';
         const interpretedCmd = AgentBrain.interpret(inputSnippet, memData.working_memory);
@@ -257,7 +362,7 @@ export class PersonalAIOS {
         const lifeContext = LifeBrain.formatContext(lifeData);
         const socialDynamics = SocialBrain.evaluateSocialDynamics(inputSnippet);
         const moodState = LifeCompanionEngine.detectMood(inputSnippet);
-        const responseBudget = ResponseBudgetEngine.calculateBudget(inputSnippet, moodState, { hasImage: hasImages, hasAudio });
+        const responseBudget = ResponseBudgetEngine.calculateBudget(inputSnippet, moodState, { hasImage: hasImages, hasAudio }, isSelfChat);
 
         trace.socialMode = socialDynamics.mode;
         trace.energy = socialDynamics.energy;
@@ -270,7 +375,7 @@ export class PersonalAIOS {
         // 17. CONVERSATION STATE & CONTINUITY LOCK
         const convState = ConversationStateEngine.evaluateState(inputSnippet);
         const emotionalCalibration = EmotionalCalibrationEngine.calibrate(inputSnippet);
-        const turnTaking = TurnTakingEngine.evaluateTurn(inputSnippet, memData.working_memory, 1);
+        const turnTaking = TurnTakingEngine.evaluateTurn(inputSnippet, memData.working_memory, 1, isSelfChat);
         const rhythm = HumanRhythmEngine.determineRhythm(inputSnippet, convState);
 
         const continuityLock = await ConversationContinuityLock.updateLock(chatId, {
@@ -331,25 +436,42 @@ export class PersonalAIOS {
             multimodalDirective = "PANDUAN VOICE NOTE: User mengirim rekaman suara ke kamu! Pahami maksud dan suasananya, lalu balas secara hangat dan akrab.";
         }
 
-        const isSelfChat = Boolean(
-            chatId === '236322690191595@lid' ||
-            (ownerJid && chatId.replace(/\D/g, '').includes(ownerJid.split(':')[0].split('@')[0]))
-        );
-
         const roleIdentity = isSelfChat
-            ? `Kamu adalah Personal Co-Pilot & Asisten AI pribadi cerdas milik Bos (Agus Salim / Agus / Gus). Bantu Bos dengan sigap, santai, dan cerdas.`
-            : `IDENTITAS MUTLAK: Kamu adalah AGUS (panggilan akrab singkt agus / Mas Agus). Kamu adalah pemilik asli nomor WhatsApp ini.
+            ? `Kamu adalah SALIM, Personal AI Co-Pilot & Asisten Pribadi Cerdas milik Bos Agus Salim (panggil: Bos / Gus).
+IDENTITAS & PRINSIP TUGAS:
+1. ASISTEN PRIBADI CERDAS, SOLUTIF & SETIA:
+   - Bos adalah pemilik nomor ini dan satu-satunya orang yang kamu layani saat ini.
+   - Bicaralah ramah, santai, cerdas, dan tanggap (bahasa Indonesia santai diselingi celetukan Jawa santai yang luwes layaknya partner pribadi terpercaya).
+2. PANDUAN TEKNIS & TUTORIAL (PENTING & MUTLAK):
+   - Jika Bos meminta panduan/tutorial/bantuan teknis (seperti BCD Windows corrupt, error software, perintah CMD, coding, instalasi, dsb):
+     * JELASKAN SECARA LENGKAP, JELAS, DAN STEP-BY-STEP (LANGKAH DEMI LANGKAH)!
+     * JANGAN NGELES! JANGAN CUMA JAWAB 3-5 KATA!
+     * Tuliskan instruksi langsung apa yang harus diketik Bos di keyboard/CMD/layar beserta penjelasannya.
+     * Tuntun Bos secara sabar sampai masalahnya tuntas beres.
+3. OBROLAN HARIAN / SANTAI:
+   - Jika Bos ngobrol santai atau bertanya ide/pendapat, balas hangat, solutif, cerdas, dan tidak bertele-tele.
+4. FORMAT WHATSAPP:
+   - Gunakan format penomoran (1, 2, 3) atau baris baru agar langkah teknis mudah dibaca Bos di layar HP.`
+            : `IDENTITAS MUTLAK: Kamu adalah AGUS (panggilan akrab: Agus / Mas Agus). Kamu adalah pemilik asli nomor WhatsApp ini.
 - Bicaralah selalu sebagai AGUS SALIM / AGUS (orang pertama: aku / kulo / gue), BUKAN asisten, BUKAN pihak ketiga, BUKAN bot, BUKAN AI.
 - JANGAN PERNAH mengaku atau menyebut kata 'bot', 'AI', 'asisten', atau 'sistem'. Jika ada yang bercanda 'Kie bot po?', tolak santai: 'Lha sopo maneh wkwk, yo aku Agus to'.
-- SIKAP & ENERGI: Tenang, santai, selow, dan grounded. JANGAN lebay atau over-excited sendiri. Samakan energi lawan bicara secara wajar.
-- CERDAS ADAPTASI: Sesuaikan cara bicaramu dengan lawan bicara (dengan teman cowok/Hanif bicara Jawa Semarangan santai, dengan cewek/Cindy bicara Indonesia ramah hangat, dengan orang Jabar bicara gaul wajar).
-- MENDENGARKAN: Tunjukkan kamu mendengarkan lawan bicara dengan wajar.
-- ATURAN FORMAT WHATSAPP:
-  1. SUPER SINGKAT & PADAT (3 - 10 kata per kalimat). JANGAN menulis panjang lebar!
-  2. DILARANG menggunakan tanda seru (!) atau tanda titik (.) di akhir pesan. Biarkan ujung kalimat menggantung tanpa tanda baca.
-  3. BALAS BERUNTUN: Jika ada reaksi + jawaban, pisahkan dengan 1 baris baru (\\n) agar terkirim sebagai 2 bubble chat beruntun.
-  4. BERSIH & NO TOXIC: DILARANG KERAS menggunakan kata-kata kasar/kotor/toxic (seperti cok, cuk, asu, matamu, ndasmu, anjing, goblok, pantek). Selalu berbicara santai, bersih, dan beradab.
-  5. BATASI TAWA: Maksimal gunakan tawa (wkwk/haha) satu kali saja jika perlu. Jangan tertawa berlebihan dalam satu pesan!`;
+
+KARAKTER & SIKAP (COOL, LUCU, SANTAI, GAK SOK ASIK):
+1. JANGAN SOK ASIK & JANGAN LEBAY: Bicara santai, tenang, percaya diri, dan wajar layaknya orang beneran. Jangan memaksakan lelucon garing atau sok akrab berlebihan.
+2. DILARANG KERAS DIKIT-DIKIT NYURUH NGOPI / NGAJAK NGOPI! Kata 'ngopi', 'kurang ngopi', 'mlipir ngopi' itu klise murahan dan garing. HINDARI kata ngopi kecuali lawan bicaramu yang duluan mengajak ngopi secara eksplisit.
+3. HUMOR YANG KEREN, DEADPAN & NATURAL:
+   - Tanggapi LANGSUNG topik yang sedang dibahas lawan bicara dengan celetukan pas, sedikit sarkas halus atau ceng-cengan akrab tapi tetap cool.
+   - Contoh saat teman bahas motor bore-up: tanggapi urusan motor/kantongnya ("nek jebol yo nangis kowe nif", "bore up mung nggo tuku lombok po piye"), BUKAN malah dialihkan suruh ngopi!
+4. ADAPTASI GAYA LAWAN BICARA:
+   - Dengan teman akrab cowok (Hanif, dll.): Gunakan bahasa Jawa Semarangan santai, ceplas-ceplos akrab (contoh: "lha piye to", "rasah neko-neko", "santai wae").
+   - Dengan cewek (Cindy, dll.): Bahasa Indonesia santai, ramah, hangat, dan wajar.
+
+ATURAN FORMAT WHATSAPP:
+1. SUPER SINGKAT & PADAT (3 - 10 kata per kalimat). JANGAN menulis esai panjang lebar!
+2. DILARANG menggunakan tanda seru (!) atau tanda titik (.) di akhir pesan. Biarkan ujung kalimat santai tanpa tanda baca kaku.
+3. BALAS BERUNTUN: Jika ada reaksi + jawaban, pisahkan dengan 1 baris baru (\n) agar terkirim sebagai 2 bubble chat pendek beruntun.
+4. BERSIH & NO TOXIC: DILARANG KERAS menggunakan kata-kata kotor/toxic (seperti cok, cuk, asu, matamu, ndasmu, anjing, goblok, pantek). Selalu berbicara santai, bersih, dan beradab.
+5. BATASI TAWA: Maksimal gunakan tawa (wkwk/haha) satu kali saja jika relevan. Jangan ketawa-ketawa garing sendiri!`;
 
         const outcomeData = await ConversationOutcomeTracker.loadOutcome(chatId);
         const outcomeDirectives = ConversationOutcomeTracker.formatDirectives(outcomeData);
@@ -370,9 +492,31 @@ export class PersonalAIOS {
         const behaviorOSRes = BehaviorDecisionOS.evaluate({ text: inputSnippet, chatId, snapshot, history: memData.working_memory });
         const recommendRes = RecommendationEngine.evaluate({ text: inputSnippet, chatId, searchContext: agentContext, history: memData.working_memory });
 
-        const masterPrompt = `${roleIdentity}
+        let lifeGraphDirective = '';
+        let situationDirective = '';
+        if (isSelfChat) {
+            lifeGraphDirective = PersonalLifeGraphEngine.formatContextDirective(inputSnippet);
+            const situationSnapshot = SituationAwarenessEngine.evaluate({ text: inputSnippet });
+            situationDirective = SituationAwarenessEngine.formatDirective(situationSnapshot);
+        }
+
+        const masterPrompt = isSelfChat
+            ? `${roleIdentity}
+
+${personalDirective ? `\n${personalDirective}\n` : ''}
+${lifeGraphDirective}
+${situationDirective}
+${agentDirectives}
+${multimodalDirective}
+${linkContext}
+${agentContext}
+${memoryPromptStr}
+
+Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`
+            : `${roleIdentity}
 
 ${personaLock}
+${personalDirective ? `\n${personalDirective}\n` : ''}
 ${contactDirectives}
 ${outcomeDirectives}
 ${continuityEngineDirective}
@@ -448,7 +592,8 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         // 26. CONVERSATION QUALITY GATE & BUDGET ENFORCEMENT
         const qualityVerdict = ConversationQualityGate.validateDraft(rawDraft, {
             verifiedFacts: isolatedFacts,
-            maxWords: Math.min(turnTaking.maxWords, responseBudget.maxWords)
+            isOwner: isSelfChat,
+            maxWords: isSelfChat ? 400 : Math.min(turnTaking.maxWords, responseBudget.maxWords)
         });
 
         // 26.5 MESSAGE RISK GUARD (SALES ONLY) - DELEGATED TO SalesExecutionOS
@@ -464,7 +609,9 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         }
 
         let sanitizedOutput = StyleDNA.formatOutput(qualityVerdict.sanitizedText, dna);
-        sanitizedOutput = sanitizedOutput.replace(/!+/g, ''); // 100% strip exclamation marks for casual WhatsApp style
+        if (!isSelfChat) {
+            sanitizedOutput = sanitizedOutput.replace(/!+/g, ''); // 100% strip exclamation marks for casual WhatsApp style
+        }
         sanitizedOutput = sanitizedOutput.replace(/\b(cok|cuk|asu|matamu|ndasmu|pantek|anjing|bangsat|goblok|babi|kontol|memek|jembut)\b/gi, ''); // 100% strip toxic/profanities
         
         // Anti-Laughter Overload (No duplicate wkwk/haha, max one)
@@ -481,7 +628,56 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         sanitizedOutput = sanitizedOutput.replace(/\s{2,}/g, ' ').trim();
         sanitizedOutput = sanitizedOutput.replace(/\.+$/, ''); // 100% strip any trailing periods at the end of the message!
         sanitizedOutput = HumanUXEngine.contextualizeEmojis(sanitizedOutput, socialDynamics.energy);
+        const transformedResult = StyleTransformer.transform(sanitizedOutput, personalContract);
+        sanitizedOutput = transformedResult.fullText || sanitizedOutput;
+
+        // 26.6 BEHAVIORAL FIREWALL (PHASE 13)
+        if (personalContract) {
+            const firewallVerdict = BehavioralFirewall.validate(sanitizedOutput, personalContract, {
+                chatId,
+                isGroup: Boolean(chatId.endsWith('@g.us'))
+            });
+            if (!firewallVerdict.isValid) {
+                console.log(`[BehavioralFirewall] 🛡️ Violations: ${firewallVerdict.violations.join(', ')} -> Action: ${firewallVerdict.action}`);
+            }
+            sanitizedOutput = firewallVerdict.sanitizedText;
+
+            // 26.7 CONVERSATION TEXTURE & WHATSAPP BUBBLE CALIBRATION (PHASE 14)
+            if (personalContract.interaction) {
+                const textureResult = ConversationTextureEngine.apply(sanitizedOutput, personalContract.interaction);
+                sanitizedOutput = textureResult.fullText || sanitizedOutput;
+
+                if (sanitizedOutput.toLowerCase().includes('wkwk') || sanitizedOutput.toLowerCase().includes('haha')) {
+                    HumorBudgetEngine.recordHumorUsed(chatId);
+                }
+            }
+        }
+
+        // 26.8 REALITY GROUNDING & FACT COMPARATOR (PHASE 31)
+        try {
+            const factVerdict = FactEvidenceComparator.compareDraft({
+                draftResponse: sanitizedOutput,
+                groundTruths: [
+                    { subject: 'Agus Salim', predicate: 'IS_OWNER', truthValue: true }
+                ],
+                systemFacts: {
+                    isOnline: true,
+                    hasDatabase: true
+                }
+            });
+            if (!factVerdict.isValid) {
+                console.warn(`[FactEvidenceComparator] 🛡️ Contradictions detected:`, factVerdict.contradictions.map(c => c.type).join(', '));
+                if (factVerdict.requiresRejection) {
+                    console.warn(`[FactEvidenceComparator] 🛑 Dropping contradictory hallucinated draft. Staying SILENT.`);
+                    return null;
+                }
+            }
+        } catch (fecErr) {
+            console.warn('[FactEvidenceComparator] ⚠️ Comparison warning:', fecErr.message);
+        }
+
         await MessageLifecycleTracker.logPhase(lifecycleId, 'QUALITY_CHECKED', { score: qualityVerdict.qualityScore });
+
 
         // 27. ANTI-REPETITION & DUPLICATE RESPONSE GUARD
         const recentResponses = await AntiRepetitionEngine.getRecentResponses(chatId);
@@ -534,6 +730,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
             rawResponse: sanitizedOutput,
             conversationState: convState.phase,
             topicOutcome: outcomeData,
+            isOwner: isSelfChat,
             socialDynamics: {
                 ...socialDynamics,
                 history: memData.working_memory
