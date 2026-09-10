@@ -178,6 +178,25 @@ async function start() {
     WebCockpit.start(3000);
     ReminderSchedulerLoop.start(waGateway);
 
+    EventBus.subscribe('whatsapp.connected', async () => {
+        try {
+            if (waGateway.sock?.groupFetchAllParticipating) {
+                console.log('[ContactPolicy] 🔄 Syncing all participating WhatsApp groups...');
+                const groups = await waGateway.sock.groupFetchAllParticipating();
+                let syncCount = 0;
+                for (const [gid, gdata] of Object.entries(groups)) {
+                    const subject = gdata.subject || 'Grup WhatsApp';
+                    groupSubjectCache.set(gid, subject);
+                    await ContactPolicyEngine.recordSeen(gid, subject, true);
+                    syncCount++;
+                }
+                console.log(`[ContactPolicy] ✅ Synced ${syncCount} WhatsApp groups into policy!`);
+            }
+        } catch (e) {
+            console.warn('[ContactPolicy] ⚠️ Group sync warning:', e.message);
+        }
+    });
+
     EventBus.subscribe('whatsapp.message.received', async (event) => {
         const data = event.payload || event;
         const { unifiedMsg, rawKey, rawMessage, eventId } = data;
@@ -335,8 +354,9 @@ async function start() {
         // ====================================================
         const isGroupMsg = chatId.endsWith('@g.us');
         
-        // Record seen so contact or group appears in Web Cockpit checklist
-        await ContactPolicyEngine.recordSeen(chatId, pushName, isGroupMsg);
+        // Record seen so contact or group appears in Web Cockpit checklist with actual name
+        const entityName = isGroupMsg ? await getGroupSubject(chatId) : pushName;
+        await ContactPolicyEngine.recordSeen(chatId, entityName, isGroupMsg);
 
         const isAllowedChat = isOwner || await ContactPolicyEngine.isAllowed(chatId, isGroupMsg);
         if (!isAllowedChat) {
