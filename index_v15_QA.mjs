@@ -315,17 +315,22 @@ async function start() {
         }
 
         // ====================================================
-        // STRICT OWNER-ONLY MODE: Hanya balas pesan dari Owner (Bos)!
-        // Abaikan semua chat orang lain & grup untuk keamanan mutlak.
+        // CONTACT & GROUP WHITELIST POLICY (WEB COCKPIT & !whitelist)
+        // Owner selalu diizinkan, kontak/grup lain harus diizinkan via Checklist/Command
         // ====================================================
-        if (!isOwner) {
-            return; // Drop total pesan dari siapa pun selain Owner
+        const isGroupMsg = chatId.endsWith('@g.us');
+        
+        // Record seen so contact or group appears in Web Cockpit checklist
+        await ContactPolicyEngine.recordSeen(chatId, pushName, isGroupMsg);
+
+        const isAllowedChat = isOwner || await ContactPolicyEngine.isAllowed(chatId, isGroupMsg);
+        if (!isAllowedChat) {
+            return; // Drop total pesan jika belum diizinkan oleh Owner
         }
 
         // ====================================================
         // GROUP MENTION GUARD — Hanya balas jika di-mention / reply ke bot
         // ====================================================
-        const isGroupMsg = chatId.endsWith('@g.us');
         if (isGroupMsg && !isOwner) {
             const botJid   = waGateway.sock?.user?.id || '';
             const botNumber = botJid.split(':')[0].split('@')[0]; // e.g. "6285600596826"
@@ -343,17 +348,6 @@ async function start() {
 
             if (!botMentioned && !repliedToBot && !textMentionsArka) {
                 // Bukan untuk bot — skip
-                return;
-            }
-        }
-
-        // ====================================================
-        // PRIVATE CONTACT POLICY GUARD (AUTO vs SILENT / MANUAL)
-        // ====================================================
-        if (!isGroupMsg && !isOwner) {
-            const contactPolicy = await ContactPolicyEngine.getPolicyForContact(chatId);
-            if (contactPolicy.policy !== 'AUTO' && contactPolicy.policy !== 'VIP') {
-                console.log(`[ContactPolicy] 🤫 Skipping message from ${chatId} (${contactPolicy.name}): Policy is ${contactPolicy.policy}`);
                 return;
             }
         }
@@ -502,8 +496,9 @@ async function start() {
             if (currentState.version !== version) return;
 
             // Resolve Group Subject (cached)
+            const isGroup = chatId.endsWith('@g.us');
             let groupSubject = '';
-            if (chatId.endsWith('@g.us') && waGateway.sock) {
+            if (isGroup && waGateway.sock) {
                 groupSubject = await getGroupSubject(chatId);
             }
 
@@ -536,19 +531,39 @@ async function start() {
                 pushName,
                 groupSubject,
                 rawMessage,
-                ownerJid
+                ownerJid,
+                isOwner,
+                isSelfChat
             };
 
-            // STRICT OWNER-ONLY MODE (FSM Gate): Abaikan semua eksekusi pesan jika bukan dari Owner
-            if (!isOwner) {
-                console.log(`[StrictOwnerMode] 🛡️ Ignored thinking execution for ${chatId} (Not Owner).`);
+            // Record contact or group so it appears in the Web Cockpit checklist
+            await ContactPolicyEngine.recordSeen(chatId, pushName || groupSubject, isGroup);
+
+            // ── FAST INTERCEPTOR: Owner Whitelist & Permission Control (!whitelist, !izinkan, !mute) ──
+            let deliveryPlan = null;
+            if (isOwner) {
+                const cmdRes = await ContactPolicyEngine.handleOwnerCommand(incomingText, chatId, isGroup, groupSubject);
+                if (cmdRes.handled) {
+                    deliveryPlan = {
+                        text: cmdRes.response,
+                        bubbles: [cmdRes.response],
+                        typingDelays: [800],
+                        reactionEmoji: '🛡️',
+                        action: 'REPLY'
+                    };
+                }
+            }
+
+            // DYNAMIC WHITELIST GATE: Only Owner and Checked Contacts/Groups are processed
+            const isAllowed = isOwner || await ContactPolicyEngine.isAllowed(chatId, isGroup);
+            if (!isAllowed) {
+                console.log(`[ContactPolicy] 🛡️ Ignored thinking execution for ${chatId} (Not in Whitelist).`);
                 ConversationFSM.transition(chatId, 'IDLE');
                 return;
             }
 
             // ── FAST INTERCEPTOR: Smart Natural Reminder (Owner Only) ──
-            let deliveryPlan = null;
-            if (isOwner) {
+            if (!deliveryPlan && isOwner) {
                 const reminderRes = ReminderSchedulerLoop.parseAndSchedule(incomingText, chatId);
                 if (reminderRes.handled && reminderRes.response) {
                     deliveryPlan = {
