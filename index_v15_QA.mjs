@@ -315,6 +315,14 @@ async function start() {
         }
 
         // ====================================================
+        // STRICT OWNER-ONLY MODE: Hanya balas pesan dari Owner (Bos)!
+        // Abaikan semua chat orang lain & grup untuk keamanan mutlak.
+        // ====================================================
+        if (!isOwner) {
+            return; // Drop total pesan dari siapa pun selain Owner
+        }
+
+        // ====================================================
         // GROUP MENTION GUARD — Hanya balas jika di-mention / reply ke bot
         // ====================================================
         const isGroupMsg = chatId.endsWith('@g.us');
@@ -531,30 +539,11 @@ async function start() {
                 ownerJid
             };
 
-            // Double Guard: If private chat and policy != AUTO/VIP, cancel immediately
-            if (!chatId.endsWith('@g.us') && !isOwner) {
-                const contactPolicy = await ContactPolicyEngine.getPolicyForContact(chatId);
-                if (contactPolicy.policy !== 'AUTO' && contactPolicy.policy !== 'VIP') {
-                    console.log(`[ContactPolicy Guard] 🛡️ Suppressing AI reply for ${chatId} (${contactPolicy.name}): Policy is ${contactPolicy.policy}`);
-                    ConversationFSM.transition(chatId, 'IDLE');
-                    return;
-                }
-            }
-
-            // Double Guard: If group chat and bot is NOT explicitly mentioned/replied/addressed, cancel immediately
-            if (chatId.endsWith('@g.us') && !isOwner) {
-                const botJid   = waGateway.sock?.user?.id || '';
-                const botNumber = botJid.split(':')[0].split('@')[0];
-                const mentionedJids = rawMessage?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-                const botMentioned  = botNumber && mentionedJids.some(j => j.includes(botNumber));
-                const quotedParticipant = rawMessage?.extendedTextMessage?.contextInfo?.participant || '';
-                const repliedToBot = botNumber && quotedParticipant.includes(botNumber);
-                const textMentionsSalim = /\bsalim\b/i.test(incomingText);
-
-                if (!botMentioned && !repliedToBot && !textMentionsSalim) {
-                    ConversationFSM.transition(chatId, 'IDLE');
-                    return;
-                }
+            // STRICT OWNER-ONLY MODE (FSM Gate): Abaikan semua eksekusi pesan jika bukan dari Owner
+            if (!isOwner) {
+                console.log(`[StrictOwnerMode] 🛡️ Ignored thinking execution for ${chatId} (Not Owner).`);
+                ConversationFSM.transition(chatId, 'IDLE');
+                return;
             }
 
             // ── FAST INTERCEPTOR: Smart Natural Reminder (Owner Only) ──
