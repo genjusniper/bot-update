@@ -235,39 +235,47 @@ export class ContactPolicyEngine {
         }
     }
 
+    static #lastNumberedGroups = [];
+
     static async getWhitelistSummary() {
         const config = await this.loadPolicy();
         const allowedContacts = Object.entries(config.contacts || {})
             .filter(([jid, c]) => (c.policy === 'AUTO' || c.policy === 'VIP') && !jid.includes('236322690191595'))
             .map(([jid, c]) => `• *${c.name || 'Kontak'}* (\`${jid.split('@')[0]}\`)`);
 
-        const allowedGroups = Object.entries(config.groups || {})
-            .filter(([id, g]) => g.policy === 'AUTO')
-            .map(([id, g]) => `• *${g.name || 'Grup'}* (\`${id.split('@')[0]}\`)`);
+        this.#lastNumberedGroups = Object.entries(config.groups || {}).map(([id, g]) => ({
+            id,
+            name: g.name || 'Grup',
+            policy: g.policy
+        }));
 
-        const mutedGroups = Object.entries(config.groups || {})
-            .filter(([id, g]) => g.policy !== 'AUTO')
-            .map(([id, g]) => `• ${g.name || 'Grup'} (\`${id.split('@')[0]}\`)`);
+        let groupListStr = '';
+        if (this.#lastNumberedGroups.length === 0) {
+            groupListStr = '_(Belum ada grup yang terdeteksi)_\n';
+        } else {
+            groupListStr = this.#lastNumberedGroups.map((g, idx) => {
+                const icon = g.policy === 'AUTO' ? '🟢 *[AKTIF]*' : '🔴 *[MUTE]*';
+                return `${idx + 1}. ${icon} ${g.name}`;
+            }).join('\n');
+        }
 
-        const totalGroups = Object.keys(config.groups || {}).length;
+        const allowedCount = this.#lastNumberedGroups.filter(g => g.policy === 'AUTO').length;
 
-        return `🛡️ *DAFTAR STATUS IZIN AI (WHITELIST)*
+        return `🛡️ *KONTROL IZIN AI WHATSAPP (WHITELIST)*
 ──────────────────────────────
-👤 *Kontak yang Diizinkan AI (${allowedContacts.length}):*
+🏢 *Daftar Grup WhatsApp (${allowedCount}/${this.#lastNumberedGroups.length} Aktif):*
+${groupListStr}
+
+👤 *Kontak Luar yang Diizinkan:*
 ${allowedContacts.length > 0 ? allowedContacts.join('\n') : '_(Semua kontak luar dibungkam demi keamanan)_'}
 
-🏢 *Grup yang Diizinkan AI Membalas (${allowedGroups.length}/${totalGroups}):*
-${allowedGroups.length > 0 ? allowedGroups.join('\n') : '_(Belum ada grup yang diizinkan)_'}
-
-🔇 *Grup Lain yang Dibungkam/Diam (${mutedGroups.length}):*
-${mutedGroups.length > 0 ? mutedGroups.slice(0, 8).join('\n') + (mutedGroups.length > 8 ? `\n• ...dan ${mutedGroups.length - 8} grup lainnya` : '') : '_(Tidak ada)_'}
-
 ──────────────────────────────
-⚙️ *Cara Mengubah Izin:*
-• \`!izinkan grup\` (Ketik langsung di dalam grup yang mau diaktifkan)
-• \`!mute grup\` (Ketik di dalam grup yang mau didiamkan)
-• \`!izinkan <nomor/nama kontak>\`
-🌐 *Atau centang ceklis di Web Cockpit:*
+⚙️ *Ubah Izin Cukup dari Chat Ini (Tanpa Masuk Grup):*
+• \`!izinkan 1\` atau \`!mute 1\` (Pakai nomor urut grup di atas)
+• \`!izinkan climbers\` (Pakai kata dari nama grup)
+• \`!izinkan 0812xxxx [Nama]\` (Beri izin kontak HP)
+• \`!mute 0812xxxx\` (Bungkam kontak HP)
+🌐 *Atau klik switch di Web Cockpit:*
 http://192.168.0.100:3000`;
     }
 
@@ -278,42 +286,46 @@ http://192.168.0.100:3000`;
         const raw = (text || '').trim();
         const lower = raw.toLowerCase();
 
+        // Anti-Leak Guard: If typed inside a public group, NEVER output bot commands publicly!
+        if (isGroup) {
+            return { handled: true, response: null };
+        }
+
         // 1. View Whitelist
         if (lower === '!whitelist' || lower === '!list izin' || lower === '!daftar izin' || lower === '!cek izin') {
             const summary = await this.getWhitelistSummary();
             return { handled: true, response: summary };
         }
 
-        // 2. Allow Group
-        if (lower.startsWith('!izinkan grup') || lower.startsWith('!allow group') || lower.startsWith('!allow grup')) {
-            const targetGroupId = isGroup ? chatId : raw.replace(/^(?:!izinkan grup|!allow group|!allow grup)\s*/i, '').trim();
-            if (!targetGroupId) {
-                return { handled: true, response: '⚠️ Bos, masukkan ID grup atau ketik command ini langsung di dalam grupnya.' };
-            }
-            await this.setGroupPolicy(targetGroupId, groupSubject || 'Grup WhatsApp', 'AUTO');
-            return { handled: true, response: `✅ *Grup Diizinkan!*\nAI sekarang akan merespons chat di grup ini jika dipanggil/relevan.` };
-        }
-
-        // 3. Mute Group
-        if (lower.startsWith('!mute grup') || lower.startsWith('!blokir grup') || lower.startsWith('!mute group')) {
-            const targetGroupId = isGroup ? chatId : raw.replace(/^(?:!mute grup|!blokir grup|!mute group)\s*/i, '').trim();
-            if (!targetGroupId) {
-                return { handled: true, response: '⚠️ Bos, masukkan ID grup atau ketik command ini langsung di dalam grupnya.' };
-            }
-            await this.setGroupPolicy(targetGroupId, groupSubject || 'Grup WhatsApp', 'SILENT');
-            return { handled: true, response: `🔇 *Grup Dinonaktifkan!*\nAI sekarang 100% diam dan mengabaikan grup ini.` };
-        }
-
-        // 4. Allow Contact: !izinkan 08123456789 Budi
+        // 2. Allow Group or Contact: !izinkan <nomor/nama/no hp>
         if (lower.startsWith('!izinkan ') || lower.startsWith('!allow ')) {
-            const args = raw.replace(/^(?:!izinkan|!allow)\s+/i, '').trim().split(/\s+/);
-            let target = args[0] || '';
-            const name = args.slice(1).join(' ') || 'Kontak Whitelist';
-
-            if (!target) {
-                return { handled: true, response: '⚠️ Format: `!izinkan 0812xxxxxxxx [Nama]`' };
+            const query = raw.replace(/^(?:!izinkan|!allow)\s+/i, '').trim();
+            if (!query) {
+                return { handled: true, response: '⚠️ Format: `!izinkan <Nomor dari list / Nama Grup / No HP>`' };
             }
 
+            // A. Check if query is a group index number (e.g. !izinkan 1, !izinkan 2)
+            const numIdx = parseInt(query, 10);
+            if (!isNaN(numIdx) && numIdx >= 1 && numIdx <= this.#lastNumberedGroups.length && !query.startsWith('08') && !query.startsWith('62') && query.length <= 2) {
+                const targetGroup = this.#lastNumberedGroups[numIdx - 1];
+                if (targetGroup) {
+                    await this.setGroupPolicy(targetGroup.id, targetGroup.name, 'AUTO');
+                    return { handled: true, response: `✅ *Grup Diizinkan (AUTO)!*\n🏢 *${targetGroup.name}*\n\nAI sekarang akan merespons di grup ini jika di-mention atau dipanggil.` };
+                }
+            }
+
+            // B. Check if query matches a group name in config.groups
+            const config = await this.loadPolicy();
+            for (const [gid, g] of Object.entries(config.groups || {})) {
+                if (g.name && g.name.toLowerCase().includes(query.toLowerCase())) {
+                    await this.setGroupPolicy(gid, g.name, 'AUTO');
+                    return { handled: true, response: `✅ *Grup Diizinkan (AUTO)!*\n🏢 *${g.name}*\n\nAI sekarang akan merespons di grup ini jika di-mention atau dipanggil.` };
+                }
+            }
+
+            // C. Otherwise treat as contact / phone number
+            let target = query.split(/\s+/)[0];
+            const name = query.split(/\s+/).slice(1).join(' ') || 'Kontak Whitelist';
             if (!target.includes('@')) {
                 let cleanNum = target.replace(/\D/g, '');
                 if (cleanNum.startsWith('0')) cleanNum = '62' + cleanNum.slice(1);
@@ -324,13 +336,34 @@ http://192.168.0.100:3000`;
             return { handled: true, response: `✅ *Kontak Diizinkan!*\nNama: *${name}*\nID: \`${target}\`\nAI sekarang akan merespons pesan dari orang ini.` };
         }
 
-        // 5. Mute Contact: !mute 08123456789
+        // 3. Mute Group or Contact: !mute <nomor/nama/no hp>
         if (lower.startsWith('!mute ') || lower.startsWith('!blokir ')) {
-            let target = raw.replace(/^(?:!mute|!blokir)\s+/i, '').trim();
-            if (!target) {
-                return { handled: true, response: '⚠️ Format: `!mute 0812xxxxxxxx`' };
+            const query = raw.replace(/^(?:!mute|!blokir)\s+/i, '').trim();
+            if (!query) {
+                return { handled: true, response: '⚠️ Format: `!mute <Nomor dari list / Nama Grup / No HP>`' };
             }
 
+            // A. Check if query is a group index number (e.g. !mute 1, !mute 2)
+            const numIdx = parseInt(query, 10);
+            if (!isNaN(numIdx) && numIdx >= 1 && numIdx <= this.#lastNumberedGroups.length && !query.startsWith('08') && !query.startsWith('62') && query.length <= 2) {
+                const targetGroup = this.#lastNumberedGroups[numIdx - 1];
+                if (targetGroup) {
+                    await this.setGroupPolicy(targetGroup.id, targetGroup.name, 'SILENT');
+                    return { handled: true, response: `🔇 *Grup Dinonaktifkan (SILENT)!*\n🏢 *${targetGroup.name}*\n\nAI sekarang 100% diam dan mengabaikan grup ini.` };
+                }
+            }
+
+            // B. Check if query matches a group name in config.groups
+            const config = await this.loadPolicy();
+            for (const [gid, g] of Object.entries(config.groups || {})) {
+                if (g.name && g.name.toLowerCase().includes(query.toLowerCase())) {
+                    await this.setGroupPolicy(gid, g.name, 'SILENT');
+                    return { handled: true, response: `🔇 *Grup Dinonaktifkan (SILENT)!*\n🏢 *${g.name}*\n\nAI sekarang 100% diam dan mengabaikan grup ini.` };
+                }
+            }
+
+            // C. Otherwise treat as contact / phone number
+            let target = query;
             if (!target.includes('@')) {
                 let cleanNum = target.replace(/\D/g, '');
                 if (cleanNum.startsWith('0')) cleanNum = '62' + cleanNum.slice(1);
