@@ -246,8 +246,14 @@ export class GlobalControlPlane {
 
                     case 'CAPABILITIES':
                     case 'HELP':
-                    case 'MENU': {
+                    case 'MENU':
+                    case 'LIST': {
                         return CapabilityRegistry.formatCard(role);
+                    }
+
+                    case 'INFO': {
+                        const health = await HealthManager.evaluate(waGateway);
+                        return `🤖 *SALIM PERSONAL AI OS v15.1*\n────────────────────────\n• Role: Master Co-Pilot & Personal Assistant\n• Status: ${health.overall || 'HEALTHY'}\n• Memory: ${(process.memoryUsage().rss / 1024 / 1024).toFixed(1)} MB\n• Uptime: ${health.uptime}\n• Web Cockpit: http://192.168.0.100:3000\n\nKetik */help* atau *menu* untuk melihat daftar fitur lengkap.`;
                     }
 
                     case 'GOALS': {

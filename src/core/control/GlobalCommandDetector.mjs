@@ -85,7 +85,17 @@ export class GlobalCommandDetector {
         '/open-loops': 'OPEN_LOOPS',
         '!open-loops': 'OPEN_LOOPS',
         '/help': 'HELP',
-        '/menu': 'HELP'
+        '!help': 'HELP',
+        'help': 'HELP',
+        '/healp': 'HELP',
+        'healp': 'HELP',
+        '/menu': 'HELP',
+        '!menu': 'HELP',
+        'menu': 'HELP',
+        '/list': 'HELP',
+        '!list': 'HELP',
+        'list': 'HELP',
+        'bantuan': 'HELP'
     });
 
     /**
@@ -211,6 +221,11 @@ export class GlobalCommandDetector {
         // OPEN LOOPS
         if (/\b(open loops|open loop|utang janji|pending janji|komitmen aktif)\b/i.test(lower)) {
             return { isControlCommand: true, intent: 'OPEN_LOOPS', actionName: 'OPEN_LOOPS', operationType: 'READ', args: [], rawText: raw, confidence: 0.95 };
+        }
+
+        // HELP & MENU & LIST
+        if (/^(help|menu|list|healp|bantuan|fitur|perintah)(\s*(bot|arka|salim|list)?)?$/i.test(lower) || /\b(menu bot|list fitur|daftar fitur|menu bantuan|daftar perintah|menu list|list menu)\b/i.test(lower)) {
+            return { isControlCommand: true, intent: 'HELP', actionName: 'HELP', operationType: 'READ', args: [], rawText: raw, confidence: 1.0 };
         }
 
         return { isControlCommand: false, intent: null, actionName: null, operationType: null, args: [], rawText: raw, confidence: 0 };

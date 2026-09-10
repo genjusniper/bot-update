@@ -13,9 +13,11 @@ export class SalimCapabilityDiscovery {
         return Boolean(
             lower.match(/^(?:salim\s+)?(?:lo|lu|kamu|bot)?\s*(?:bisa|ngapain|fitur|kemampuan)\s*(?:ngapain|apa\s*aja|gimana|apaan|bisa\s*apa)\b/i) ||
             lower.match(/^(?:salim\s+)?(?:lo\s+bisa\s+ngapain|kamu\s+bisa\s+apa|fitur\s+kamu|fitur\s+salim|capability|capabilities|help|menu|bantuan)\b/i) ||
+            lower.match(/fitur\s+(?:apa\s+aja|apaan\s+aja|yang\s+udah\s+bisa|yang\s+ada|yang\s+aktif|udah\s+jalan)/i) ||
+            lower.match(/ini\s+semua\s+fitur\s+(?:yakin\s+)?udah\s+bisa/i) ||
+            lower.match(/^(?:cek\s+fitur|list\s+fitur|fitur)$/i) ||
             lower === 'bisa apa aja' ||
-            lower === 'lo bisa apa' ||
-            lower === 'fitur'
+            lower === 'lo bisa apa'
         );
     }
 

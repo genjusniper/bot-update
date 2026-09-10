@@ -213,7 +213,13 @@ async function start() {
                 waGateway
             });
             if (controlResult.output && waGateway.sock) {
-                await waGateway.sock.sendMessage(canonicalMsg.chatId, { text: controlResult.output });
+                try {
+                    await waGateway.sendMessage(canonicalMsg.chatId, controlResult.output);
+                    console.log(`[GlobalControlPlane] ✅ Dispatched response for "${cmdDetect.intent}" to ${canonicalMsg.chatId}`);
+                } catch (e) {
+                    console.error('[GlobalControlPlane] ❌ Failed to send command output:', e.message);
+                    await waGateway.sock.sendMessage(canonicalMsg.chatId, { text: controlResult.output }).catch(() => {});
+                }
             }
             PersistFirstIngress.markCompleted(canonicalMsg.id);
             return;
