@@ -18,11 +18,27 @@ import { OwnerPresenceEngine } from './src/security/copilot/OwnerPresenceEngine.
 import { OwnerMentionResolver } from './src/security/copilot/OwnerMentionResolver.mjs';
 import { NaturalTypoEditor } from './src/behavior/NaturalTypoEditor.mjs';
 import { StorageAutoPruner } from './src/maintenance/StorageAutoPruner.mjs';
+import { CanonicalMessage } from './src/core/ingress/CanonicalMessage.mjs';
+import { PersistFirstIngress } from './src/core/ingress/PersistFirstIngress.mjs';
+import { AuthorityManager } from './src/core/control/AuthorityManager.mjs';
+import { CommandRouter } from './src/core/control/CommandRouter.mjs';
+import { SystemControlPlane } from './src/core/control/SystemControlPlane.mjs';
+import { GlobalCommandDetector } from './src/core/control/GlobalCommandDetector.mjs';
+import { GlobalControlPlane } from './src/core/control/GlobalControlPlane.mjs';
+import { arkaIntegrationHub } from './src/core/orchestration/ARKAIntegrationHub.mjs';
+import { GracefulShutdownManager } from './src/core/control/GracefulShutdownManager.mjs';
+import { FeatureFlags } from './src/core/control/FeatureFlags.mjs';
+import { ExpenseTracker } from './src/core/tools/ExpenseTracker.mjs';
+import { ReminderSchedulerLoop } from './src/core/autonomy/ReminderSchedulerLoop.mjs';
+import { ImageGeneratorTool } from './src/core/tools/ImageGeneratorTool.mjs';
+import { PsychologyLieDetector } from './src/core/tools/PsychologyLieDetector.mjs';
+import { SalimCapabilityDiscovery } from './src/core/control/SalimCapabilityDiscovery.mjs';
+import { SalimEvolutionEngine } from './src/core/learning/SalimEvolutionEngine.mjs';
 
 const OWNER_LID = '236322690191595@lid';
 
 console.log('=============================================');
-console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V14.1)');
+console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V15.1 — SALIM OS)');
 console.log('=============================================');
 
 // Start automated storage & log pruning (every 6h)
@@ -30,6 +46,46 @@ StorageAutoPruner.startCron(6);
 
 const personalAI = new PersonalAIOS();
 const waGateway = new WhatsAppGateway('auth-v5-test');
+
+// V15.1: Inject AIGateway adapter into ARKAIntegrationHub
+// AIGatewayObservable uses positional args: generate(prompt, contents, corrId, images, quotedCtx)
+// ARKAIntegrationHub expects: generate(prompt, { systemPrompt, conversationId, history, images, audio })
+// → buat adapter yang translate interface-nya
+try {
+    if (personalAI.gateway) {
+        const arkaGatewayAdapter = {
+            generate: async (prompt, opts = {}) => {
+                const { systemPrompt, conversationId, history, images, audio } = opts;
+                // Build contents array (same format as PersonalAIOS uses)
+                const contents = [];
+                if (systemPrompt) contents.push({ role: 'system', parts: [{ text: systemPrompt }] });
+                if (Array.isArray(history)) {
+                    for (const h of history) {
+                        if (h.role && h.text) contents.push({ role: h.role, parts: [{ text: h.text }] });
+                    }
+                }
+                // Call AIGatewayObservable with its actual signature
+                const res = await personalAI.gateway.generate(
+                    prompt,
+                    contents,
+                    conversationId || 'arka_hub',
+                    images || [],
+                    null // quotedContext
+                );
+                // Normalize to ARKAHub expected format: { ok, text, error }
+                if (res && res.success) {
+                    return { ok: true, text: res.text || '' };
+                }
+                return { ok: false, text: '', error: res?.error || 'gateway_failed' };
+            }
+        };
+        arkaIntegrationHub.setAIGateway(arkaGatewayAdapter);
+        console.log('[V15.1] ✅ ARKAIntegrationHub: AIGatewayAdapter injected (interface adapted)');
+    }
+} catch (_injectErr) {
+    console.warn('[V15.1] ⚠️ AIGateway adapter injection failed (non-fatal):', _injectErr?.message);
+}
+
 
 if (!EventBus.publish) {
     EventBus.publish = (event, payload) => EventBus.emit(event, payload);
@@ -68,6 +124,7 @@ const burstAggregator = new ChatBurstAggregator(2500, (aggregatedJob) => {
     // Enqueue standard Schema V1 payload
     JobQueue.enqueue(eventId, correlationId, aggregatedJob.chatId, aggregatedJob);
     JobQueue.markMessageProcessed(eventId, aggregatedJob.chatId);
+    PersistFirstIngress.markEnqueued(eventId);
     FSMEventBus.emit('message.queued', {});
 });
 
@@ -83,8 +140,33 @@ function shouldQuoteMessage(text, chatId, hasAttachment = false) {
 async function start() {
     JobQueue.init();
     ConversationFSM.init();
+    PersistFirstIngress.init();
+
+    // Check previous graceful shutdown snapshot
+    const prevShutdown = GracefulShutdownManager.checkPreviousShutdown();
+    if (prevShutdown) {
+        console.log(`[Bootloader] 🔄 Clean recovery verified from: ${prevShutdown.reason} (PID ${prevShutdown.pid})`);
+    }
+
+    // Recover unprocessed ingress events if node restarted unexpectedly
+    const unprocEvents = PersistFirstIngress.getUnprocessedEvents();
+    if (unprocEvents && unprocEvents.length > 0) {
+        console.log(`[Bootloader] ♻️ Replaying ${unprocEvents.length} unaggregated events from disk...`);
+        for (const ev of unprocEvents) {
+            try {
+                const canonical = JSON.parse(ev.canonical_payload);
+                burstAggregator.push(ev.chat_id, canonical);
+                PersistFirstIngress.markEnqueued(ev.event_id);
+            } catch (e) {}
+        }
+    }
+
+    // Register system shutdown signals
+    process.on('SIGINT', () => GracefulShutdownManager.shutdown({ reason: 'SIGINT', waGateway }));
+    process.on('SIGTERM', () => GracefulShutdownManager.shutdown({ reason: 'SIGTERM', waGateway }));
 
     WebCockpit.start(3000);
+    ReminderSchedulerLoop.start(waGateway);
 
     EventBus.subscribe('whatsapp.message.received', async (event) => {
         const data = event.payload || event;
@@ -114,6 +196,28 @@ async function start() {
             (ownerPhone && chatId.replace(/\D/g, '').includes(ownerPhone))
         );
 
+        // 1. Convert to CanonicalMessage & Persist immediately (Persist-First: Zero Data Loss)
+        const canonicalMsg = CanonicalMessage.fromBaileys(data, { ownerLid: OWNER_LID, ownerPhone });
+        PersistFirstIngress.persist(canonicalMsg);
+
+        // 2. Global Command & Control Plane (Deterministic Operational System Actions)
+        const cmdDetect = GlobalCommandDetector.detect(canonicalMsg.text || incomingText);
+        if (cmdDetect.isControlCommand) {
+            console.log(`[GlobalControlPlane] ⚡ Intercepted command "${cmdDetect.intent}" from ${canonicalMsg.senderId} in ${canonicalMsg.chatId}`);
+            const controlResult = await GlobalControlPlane.execute({
+                action: cmdDetect.intent,
+                args: cmdDetect.args,
+                senderId: canonicalMsg.senderId,
+                chatId: canonicalMsg.chatId,
+                waGateway
+            });
+            if (controlResult.output && waGateway.sock) {
+                await waGateway.sock.sendMessage(canonicalMsg.chatId, { text: controlResult.output });
+            }
+            PersistFirstIngress.markCompleted(canonicalMsg.id);
+            return;
+        }
+
         // If the owner typed manually to ANOTHER person -> Record Human Takeover & NEVER let AI reply
         if (fromMe && !isSelfChat) {
             OwnerPresenceEngine.recordOwnerMessage(chatId);
@@ -121,7 +225,121 @@ async function start() {
             return;
         }
 
+        // ====================================================
+        // SALES PIPELINE ADMIN INTERCEPTOR (/leads, /approve)
+        // ====================================================
+        const isOwner = Boolean(chatId === OWNER_LID || isSelfChat || chatId.includes('236322690191595'));
+        const lcmd = incomingText.toLowerCase();
+        if (isOwner && (lcmd.startsWith('/leads') || lcmd.startsWith('/approve') || lcmd.startsWith('/pdf') || lcmd.startsWith('/portfolio') || lcmd.includes('kirim pdf') || lcmd.includes('kirimkan ke waku') || lcmd.includes('minta pdf'))) {
+            console.log(`[SalesAdmin] 🎯 Intercepted Admin Command: "${incomingText}" from ${chatId}`);
+            try {
+                const { SalesIntegrator } = await import('./SalesIntegrator.mjs');
+                await SalesIntegrator.handleAdminCommand(waGateway.sock, chatId, incomingText);
+            } catch (err) {
+                console.error('[SalesAdmin] ❌ Execution Error:', err);
+                if (waGateway.sock) {
+                    await waGateway.sock.sendMessage(chatId, { text: `❌ Error Sales Admin: ${err.message}` });
+                }
+            }
+            return;
+        }
+
+        // ====================================================
+        // TITIP CHAT OUTBOUND RELAY (!chat <nama/nomor> <pesan>)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!chat') || lcmd.startsWith('/chat'))) {
+            const parts = incomingText.trim().split(/\s+/);
+            if (parts.length < 3) {
+                await waGateway.sock?.sendMessage(chatId, {
+                    text: '⚠️ Format salah. Gunakan:\n`!chat <Nama/Nomor> <Pesan>`\n\nContoh:\n`!chat Hanif Masuk shift apa hari ini?`\n`!chat Cindy Nanti sore ada acara gak?`'
+                });
+                return;
+            }
+
+            const targetQuery = parts[1].toLowerCase();
+            const messageToSend = parts.slice(2).join(' ');
+            let targetName = parts[1];
+
+            try {
+                const fs = await import('fs');
+                const path = await import('path');
+                const policyPath = path.resolve(process.cwd(), 'config', 'personal_contact_policy.json');
+                const policy = JSON.parse(fs.readFileSync(policyPath, 'utf8'));
+                const contacts = policy.contacts || {};
+
+                let targetJid = null;
+
+                // 1. If target is pure numbers
+                const rawDigits = targetQuery.replace(/\D/g, '');
+                if (rawDigits.length >= 9) {
+                    let formatted = rawDigits;
+                    if (formatted.startsWith('08')) formatted = '628' + formatted.slice(2);
+                    targetJid = `${formatted}@s.whatsapp.net`;
+                    targetName = formatted;
+                } else {
+                    // 2. Search in policy contacts by name
+                    for (const [jid, cdata] of Object.entries(contacts)) {
+                        const cname = (cdata.name || '').toLowerCase();
+                        if (cname.includes(targetQuery) || targetQuery.includes(cname)) {
+                            targetJid = jid;
+                            targetName = cdata.name;
+                            break;
+                        }
+                    }
+                }
+
+                if (!targetJid) {
+                    await waGateway.sock?.sendMessage(chatId, {
+                        text: `❌ Kontak *"${targetQuery}"* tidak ditemukan di daftar VIP.\n\nGunakan nama terdaftar (contoh: Hanif, Cindy, Novita, Ayu, Aziz, Vio, Bunga) atau masukkan nomor HP langsung (contoh: 08123456789).`
+                    });
+                    return;
+                }
+
+                console.log(`[!chat Relay] 📤 Owner dispatching message to ${targetName} (${targetJid}): "${messageToSend}"`);
+                await waGateway.sock?.sendMessage(targetJid, { text: messageToSend });
+
+                await waGateway.sock?.sendMessage(chatId, {
+                    text: `✅ *PESAN BERHASIL TERKIRIM!*\n` +
+                          `👤 *Tujuan:* ${targetName}\n` +
+                          `📱 *JID:* \`${targetJid}\`\n` +
+                          `💬 *Pesan:*\n"${messageToSend}"`
+                });
+            } catch (err) {
+                console.error('[!chat Relay] ❌ Failed to send:', err);
+                await waGateway.sock?.sendMessage(chatId, {
+                    text: `❌ Gagal mengirim pesan ke ${targetName}: ${err.message}`
+                });
+            }
+            return;
+        }
+
+        // ====================================================
+        // GROUP MENTION GUARD — Hanya balas jika di-mention / reply ke bot
+        // ====================================================
+        const isGroupMsg = chatId.endsWith('@g.us');
+        if (isGroupMsg && !isOwner) {
+            const botJid   = waGateway.sock?.user?.id || '';
+            const botNumber = botJid.split(':')[0].split('@')[0]; // e.g. "6285600596826"
+
+            // 1. @mention langsung
+            const mentionedJids = rawMessage?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+            const botMentioned  = botNumber && mentionedJids.some(j => j.includes(botNumber));
+
+            // 2. Reply ke pesan bot
+            const quotedParticipant = rawMessage?.extendedTextMessage?.contextInfo?.participant || '';
+            const repliedToBot = botNumber && quotedParticipant.includes(botNumber);
+
+            // 3. Sebut "salim" di teks
+            const textMentionsArka = /\bsalim\b/i.test(incomingText);
+
+            if (!botMentioned && !repliedToBot && !textMentionsArka) {
+                // Bukan untuk bot — skip
+                return;
+            }
+        }
+
         let imageBase64 = null;
+
         let audioBase64 = null;
         let mimeType = 'text/plain';
         let quotedContext = null;
@@ -178,10 +396,56 @@ async function start() {
                     audioBase64 = buffer.toString('base64');
                     mimeType = rawMessage?.audioMessage?.mimetype || 'audio/ogg; codecs=opus';
                     console.log(`[WA Audio] 🎵 Downloaded voice note (${(buffer.length/1024).toFixed(1)} KB) from ${chatId}`);
+
+                    // Transcribe VN automatically via Groq Whisper
+                    const groqKey = process.env.GROQ_API_KEY;
+                    if (groqKey) {
+                        try {
+                            const { transcribeAudio } = await import('./src/agent/VoiceTranscriber.mjs');
+                            const transcript = await transcribeAudio(buffer, groqKey);
+                            if (transcript && !transcript.includes('Gagal')) {
+                                incomingText = incomingText 
+                                    ? `${incomingText}\n[Pesan Suara / Voice Note]: "${transcript}"`
+                                    : `[Pesan Suara / Voice Note]: "${transcript}"`;
+                                console.log(`[WA Audio] 📝 Transcribed VN: "${transcript}"`);
+                            }
+                        } catch (tErr) {
+                            console.warn('[WA Audio] ⚠️ Whisper transcribe warning:', tErr.message);
+                        }
+                    }
                 }
             }
         } catch (e) {
             console.warn('[WA Audio] ⚠️ Could not download audio:', e.message);
+        }
+
+        // 4. Download Document Media (PDF, TXT, DOCX, CSV)
+        let docBase64 = null;
+        let docFileName = '';
+        try {
+            const isDoc = Boolean(rawMessage?.documentMessage);
+            if (isDoc && waGateway.sock) {
+                docFileName = rawMessage.documentMessage.fileName || 'document.pdf';
+                const buffer = await downloadMediaMessage(
+                    { key: rawKey, message: rawMessage },
+                    'buffer', {},
+                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.sock.updateMediaMessage }
+                );
+                if (buffer) {
+                    docBase64 = buffer.toString('base64');
+                    mimeType = rawMessage.documentMessage.mimetype || 'application/pdf';
+                    console.log(`[WA Doc] 📄 Downloaded document "${docFileName}" (${(buffer.length/1024).toFixed(1)} KB) from ${chatId}`);
+
+                    if (docFileName.endsWith('.txt') || docFileName.endsWith('.csv') || docFileName.endsWith('.json') || docFileName.endsWith('.md')) {
+                        const snippet = buffer.toString('utf8').slice(0, 4000);
+                        incomingText = incomingText ? `${incomingText}\n[Isi Dokumen "${docFileName}"]:\n${snippet}` : `[Isi Dokumen "${docFileName}"]:\n${snippet}`;
+                    } else {
+                        incomingText = incomingText ? `${incomingText}\n[Lampiran Dokumen]: "${docFileName}"` : `[Lampiran Dokumen]: "${docFileName}" (Tolong baca dan buatkan ringkasan isi dokumen ini)`;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[WA Doc] ⚠️ Could not download document:', e.message);
         }
 
         // Push to Chat Burst Aggregator
@@ -194,10 +458,13 @@ async function start() {
             pushName,
             imageBase64,
             audioBase64,
+            docBase64,
+            docFileName,
             mimeType,
             quotedContext,
             ownerJid: waGateway.sock?.user?.id || null
         });
+
     });
 
     QueueWorker.start(async (job) => {
@@ -234,6 +501,12 @@ async function start() {
             const rawKey = msg.rawKey || payload.rawKey;
             const rawMessage = msg.rawMessage || payload.rawMessage;
             const ownerJid = ctx.ownerJid || payload.ownerJid || waGateway.sock?.user?.id || null;
+            const ownerPhone = ownerJid ? ownerJid.split(':')[0].split('@')[0] : '';
+            const isSelfChat = Boolean(
+                chatId === OWNER_LID || 
+                (ownerPhone && chatId.replace(/\D/g, '').includes(ownerPhone))
+            );
+            const isOwner = Boolean(chatId === OWNER_LID || isSelfChat || chatId.includes('236322690191595'));
 
             const mediaOptions = {
                 images,
@@ -246,13 +519,178 @@ async function start() {
                 ownerJid
             };
 
-            const deliveryPlan = await personalAI.process(
-                chatId,
-                incomingText,
-                `wa_${jobId}`,
-                null,
-                mediaOptions
-            );
+            // ── FAST INTERCEPTOR: Smart Natural Reminder ──
+            let deliveryPlan = null;
+            const reminderRes = ReminderSchedulerLoop.parseAndSchedule(incomingText, chatId);
+            if (reminderRes.handled && reminderRes.response) {
+                deliveryPlan = {
+                    text: reminderRes.response,
+                    bubbles: [reminderRes.response],
+                    typingDelays: [800],
+                    reactionEmoji: '⏰',
+                    action: 'REPLY'
+                };
+            }
+
+            // ── FAST INTERCEPTOR: Daily Expense Tracker ──
+            if (!deliveryPlan) {
+                const expenseRes = ExpenseTracker.processText(incomingText, chatId);
+                if (expenseRes.handled && expenseRes.response) {
+                    deliveryPlan = {
+                        text: expenseRes.response,
+                        bubbles: [expenseRes.response],
+                        typingDelays: [800],
+                        reactionEmoji: '💰',
+                        action: 'REPLY'
+                    };
+                }
+            }
+
+            // ── FAST INTERCEPTOR: AI Image Generation (FLUX 4K) ──
+            if (!deliveryPlan && ImageGeneratorTool.isImageRequest(incomingText)) {
+                const prompt = ImageGeneratorTool.extractPrompt(incomingText);
+                if (prompt && waGateway.sock) {
+                    await waGateway.sock.sendMessage(chatId, { text: `🎨 Sedang membuat gambar AI untuk: "${prompt}"... (tunggu sebentar ya Gus)` }).catch(() => {});
+                    const genRes = await ImageGeneratorTool.generate(prompt);
+                    if (genRes.success && genRes.buffer) {
+                        await waGateway.sock.sendMessage(chatId, {
+                            image: genRes.buffer,
+                            caption: `✨ *AI Image Generated (FLUX Engine)*\n📌 *Prompt:* "${prompt}"`
+                        });
+                        if (jobId && claimToken) JobQueue.complete(jobId, claimToken);
+                        ConversationFSM.transition(chatId, 'IDLE');
+                        return;
+                    } else {
+                        deliveryPlan = {
+                            text: '⚠️ Maaf Gus, gagal membuat gambar: ' + (genRes.error || 'Server sibuk'),
+                            bubbles: ['⚠️ Maaf Gus, gagal membuat gambar: ' + (genRes.error || 'Server sibuk')],
+                            action: 'REPLY'
+                        };
+                    }
+                }
+            }
+
+            // ── FAST INTERCEPTOR: Psychology & Lie Detector ──
+            if (!deliveryPlan && PsychologyLieDetector.isAnalysisRequest(incomingText, quotedContext)) {
+                const targetText = quotedContext?.text || incomingText.replace(/^(?:salim\s+)?(?:tolong\s+)?(?:analisis|cek kebohongan|deteksi emosi)\s*(?:chat|pesan)?\s*(?:ini|itu)?\s*:?\s*/i, '').trim();
+                if (targetText && personalAI.gateway) {
+                    const prompt = PsychologyLieDetector.buildAnalysisPrompt(targetText);
+                    const aiRes = await personalAI.gateway.generate(prompt, [], 'psychology_analysis');
+                    if (aiRes && aiRes.success && aiRes.text) {
+                        deliveryPlan = {
+                            text: aiRes.text,
+                            bubbles: [aiRes.text],
+                            typingDelays: [1200],
+                            reactionEmoji: '🕵️‍♂️',
+                            action: 'REPLY'
+                        };
+                    }
+                }
+            }
+
+            // ── FAST INTERCEPTOR: Capability Discovery (Self-Awareness) ──
+            if (!deliveryPlan && SalimCapabilityDiscovery.isDiscoveryQuery(incomingText)) {
+                const card = SalimCapabilityDiscovery.getMasterCapabilityCard();
+                deliveryPlan = {
+                    text: card,
+                    bubbles: [card],
+                    typingDelays: [800],
+                    reactionEmoji: '🧠',
+                    action: 'REPLY'
+                };
+            }
+
+            // ── FAST INTERCEPTOR: Self-Introspection & Evolution Report ──
+            if (!deliveryPlan && SalimEvolutionEngine.isIntrospectionQuery(incomingText)) {
+                const report = SalimEvolutionEngine.formatIntrospectionReport();
+                deliveryPlan = {
+                    text: report,
+                    bubbles: [report],
+                    typingDelays: [800],
+                    reactionEmoji: '🪞',
+                    action: 'REPLY'
+                };
+            }
+
+            // ── FAST INTERCEPTOR: Auto-Feedback & Lesson Learning ──
+            if (!deliveryPlan) {
+                const fbRes = SalimEvolutionEngine.processFeedback(incomingText, chatId);
+                if (fbRes.handled && fbRes.response) {
+                    deliveryPlan = {
+                        text: fbRes.response,
+                        bubbles: [fbRes.response],
+                        typingDelays: [800],
+                        reactionEmoji: '🧬',
+                        action: 'REPLY'
+                    };
+                }
+            }
+
+
+
+            // ── PRIMARY PIPELINE: Full 30-Stage PersonalAIOS Master Brain ──
+            if (!deliveryPlan) {
+                try {
+                    deliveryPlan = await personalAI.process(
+                        chatId,
+                        incomingText,
+                        `wa_${jobId}`,
+                        null,
+                        mediaOptions
+                    );
+                    if (deliveryPlan) {
+                        console.log(`[PersonalAIOS] 🧠 Master Brain generated deliveryPlan for ${chatId} (Bubbles: ${deliveryPlan.bubbles?.length || 0})`);
+                    }
+                } catch (pErr) {
+                    console.warn('[PersonalAIOS] ⚠️ Primary pipeline error, falling back to SalimHub:', pErr.message);
+                }
+            }
+
+
+            // ── Secondary Fallback: SalimHub ──
+            if (!deliveryPlan && incomingText) {
+                try {
+                    const hubRes = await arkaIntegrationHub.processIncomingMessage({
+                        text: incomingText,
+                        senderJid: chatId,
+                        senderName: pushName || '',
+                        chatId,
+                        isGroup: chatId.endsWith('@g.us'),
+                        isOwner: isOwner,
+                        userTier: isOwner ? 'OWNER' : (chatId.endsWith('@g.us') ? 'GROUP' : 'NORMAL'),
+                        systemPrompt: chatId === OWNER_LID || isSelfChat
+                            ? `Kamu adalah Personal Co-Pilot & Asisten AI pribadi cerdas milik Bos (Agus Salim / Agus / Gus). Bantu Bos dengan sigap, santai, dan cerdas. Jawab singkat, padat, Jaksel casual.`
+                            : `IDENTITAS MUTLAK: Kamu adalah AGUS (panggilan akrab: Agus / Mas Agus). Kamu adalah pemilik asli nomor WhatsApp ini.
+- Bicaralah selalu sebagai AGUS (orang pertama: aku / gue), BUKAN asisten, BUKAN bot, BUKAN AI.
+- JANGAN PERNAH menyebut kata 'bot', 'AI', 'asisten', atau 'sistem'. Kalau ada yang tanya, tolak santai.
+- Karakter: santai, deadpan, cool, tidak lebay. Adaptasi gaya lawan bicara.
+- Dengan teman cowok: bahasa Jawa Semarangan santai (lha piye to, santai wae, rasah neko-neko).
+- Dengan cewek: bahasa Indonesia santai, ramah, wajar.
+- Format: SUPER SINGKAT (3-10 kata/kalimat). Tanpa tanda seru atau titik di akhir. Multi-bubble pakai newline.
+- DILARANG kata kotor. DILARANG lebay/sok asik. Maksimal 1x tawa (wkwk) jika relevan.`,
+                        history: [],
+                        images: images || [],
+                        audio: audio || null,
+                        quotedContext,
+                        waGateway,
+                        metadata: { jobId, ownerJid }
+                    });
+
+                    if (hubRes && hubRes.handled && hubRes.bubbles?.length > 0) {
+                        deliveryPlan = {
+                            text: hubRes.finalText || hubRes.response || '',
+                            bubbles: hubRes.bubbles || [],
+                            typingDelays: hubRes.bubbles?.map(() => Math.max(1000, Math.min(5000, hubRes.typingDelayMs || 1500))) || [1500],
+                            reactionEmoji: hubRes.reaction || null,
+                            action: null
+                        };
+                        console.log(`[SalimHub] ⚡ Handled Stage ${hubRes.stage} (${hubRes.status}) for ${chatId}`);
+                    }
+                } catch (_hErr) {
+                    console.warn('[SalimHub] ⚠️ Fallback error:', _hErr.message);
+                }
+            }
+
 
             // If deliveryPlan is null (Silent / Human in control / AI Failure), complete job silently
             if (!deliveryPlan || !deliveryPlan.text && !deliveryPlan.reactionEmoji && deliveryPlan.action !== 'REACT_ONLY') {
@@ -343,6 +781,26 @@ async function start() {
 
     await waGateway.connect();
     console.log('✅ [V14.1 Bootloader] Master Universal Co-Pilot (Strict Isolation) Online.');
+
+    // Auto-dispatch Portfolio PDF to owner on startup
+    setTimeout(async () => {
+        try {
+            const fs = await import('fs');
+            const pdfPath = './Agus_Salim_AI_Automation_Portfolio.pdf';
+            if (fs.existsSync(pdfPath) && waGateway.sock) {
+                console.log('[Portfolio] 🚀 Dispatching Portfolio PDF to Owner...');
+                await waGateway.sock.sendMessage(OWNER_LID, {
+                    document: fs.readFileSync(pdfPath),
+                    mimetype: 'application/pdf',
+                    fileName: 'Agus_Salim_AI_Automation_Portfolio.pdf',
+                    caption: '📄 *Portofolio Profesional AI Automation & Agentic Systems*\n👤 *Agus Salim*\n\nBerikut dokumen portofolio resmi Anda, siap dilampirkan untuk melamar kerja remote & freelance internasional!'
+                });
+                console.log('[Portfolio] ✅ Portfolio PDF successfully sent to Owner WhatsApp!');
+            }
+        } catch (err) {
+            console.warn('[Portfolio] Could not auto-send PDF:', err.message);
+        }
+    }, 4000);
 }
 
 process.on('SIGINT', () => {
