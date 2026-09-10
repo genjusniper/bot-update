@@ -541,21 +541,39 @@ async function start() {
                 }
             }
 
-            // ── FAST INTERCEPTOR: Smart Natural Reminder ──
-            let deliveryPlan = null;
-            const reminderRes = ReminderSchedulerLoop.parseAndSchedule(incomingText, chatId);
-            if (reminderRes.handled && reminderRes.response) {
-                deliveryPlan = {
-                    text: reminderRes.response,
-                    bubbles: [reminderRes.response],
-                    typingDelays: [800],
-                    reactionEmoji: '⏰',
-                    action: 'REPLY'
-                };
+            // Double Guard: If group chat and bot is NOT explicitly mentioned/replied/addressed, cancel immediately
+            if (chatId.endsWith('@g.us') && !isOwner) {
+                const botJid   = waGateway.sock?.user?.id || '';
+                const botNumber = botJid.split(':')[0].split('@')[0];
+                const mentionedJids = rawMessage?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                const botMentioned  = botNumber && mentionedJids.some(j => j.includes(botNumber));
+                const quotedParticipant = rawMessage?.extendedTextMessage?.contextInfo?.participant || '';
+                const repliedToBot = botNumber && quotedParticipant.includes(botNumber);
+                const textMentionsSalim = /\bsalim\b/i.test(incomingText);
+
+                if (!botMentioned && !repliedToBot && !textMentionsSalim) {
+                    ConversationFSM.transition(chatId, 'IDLE');
+                    return;
+                }
             }
 
-            // ── FAST INTERCEPTOR: Daily Expense Tracker ──
-            if (!deliveryPlan) {
+            // ── FAST INTERCEPTOR: Smart Natural Reminder (Owner Only) ──
+            let deliveryPlan = null;
+            if (isOwner) {
+                const reminderRes = ReminderSchedulerLoop.parseAndSchedule(incomingText, chatId);
+                if (reminderRes.handled && reminderRes.response) {
+                    deliveryPlan = {
+                        text: reminderRes.response,
+                        bubbles: [reminderRes.response],
+                        typingDelays: [800],
+                        reactionEmoji: '⏰',
+                        action: 'REPLY'
+                    };
+                }
+            }
+
+            // ── FAST INTERCEPTOR: Daily Expense Tracker (Owner Only) ──
+            if (!deliveryPlan && isOwner) {
                 const expenseRes = ExpenseTracker.processText(incomingText, chatId);
                 if (expenseRes.handled && expenseRes.response) {
                     deliveryPlan = {
@@ -568,8 +586,8 @@ async function start() {
                 }
             }
 
-            // ── FAST INTERCEPTOR: AI Image Generation (FLUX 4K) ──
-            if (!deliveryPlan && ImageGeneratorTool.isImageRequest(incomingText)) {
+            // ── FAST INTERCEPTOR: AI Image Generation (FLUX 4K) (Owner Only) ──
+            if (!deliveryPlan && isOwner && ImageGeneratorTool.isImageRequest(incomingText)) {
                 const prompt = ImageGeneratorTool.extractPrompt(incomingText);
                 if (prompt && waGateway.sock) {
                     await waGateway.sock.sendMessage(chatId, { text: `🎨 Sedang membuat gambar AI untuk: "${prompt}"... (tunggu sebentar ya Gus)` }).catch(() => {});
@@ -592,8 +610,8 @@ async function start() {
                 }
             }
 
-            // ── FAST INTERCEPTOR: Psychology & Lie Detector ──
-            if (!deliveryPlan && PsychologyLieDetector.isAnalysisRequest(incomingText, quotedContext)) {
+            // ── FAST INTERCEPTOR: Psychology & Lie Detector (Owner Only) ──
+            if (!deliveryPlan && isOwner && PsychologyLieDetector.isAnalysisRequest(incomingText, quotedContext)) {
                 const targetText = quotedContext?.text || incomingText.replace(/^(?:salim\s+)?(?:tolong\s+)?(?:analisis|cek kebohongan|deteksi emosi)\s*(?:chat|pesan)?\s*(?:ini|itu)?\s*:?\s*/i, '').trim();
                 if (targetText && personalAI.gateway) {
                     const prompt = PsychologyLieDetector.buildAnalysisPrompt(targetText);
@@ -610,8 +628,8 @@ async function start() {
                 }
             }
 
-            // ── FAST INTERCEPTOR: Capability Discovery (Self-Awareness) ──
-            if (!deliveryPlan && SalimCapabilityDiscovery.isDiscoveryQuery(incomingText)) {
+            // ── FAST INTERCEPTOR: Capability Discovery (Self-Awareness) (Owner Only) ──
+            if (!deliveryPlan && isOwner && SalimCapabilityDiscovery.isDiscoveryQuery(incomingText)) {
                 const card = SalimCapabilityDiscovery.getMasterCapabilityCard();
                 deliveryPlan = {
                     text: card,
@@ -622,8 +640,8 @@ async function start() {
                 };
             }
 
-            // ── FAST INTERCEPTOR: Self-Introspection & Evolution Report ──
-            if (!deliveryPlan && SalimEvolutionEngine.isIntrospectionQuery(incomingText)) {
+            // ── FAST INTERCEPTOR: Self-Introspection & Evolution Report (Owner Only) ──
+            if (!deliveryPlan && isOwner && SalimEvolutionEngine.isIntrospectionQuery(incomingText)) {
                 const report = SalimEvolutionEngine.formatIntrospectionReport();
                 deliveryPlan = {
                     text: report,
@@ -634,8 +652,8 @@ async function start() {
                 };
             }
 
-            // ── FAST INTERCEPTOR: Auto-Feedback & Lesson Learning ──
-            if (!deliveryPlan) {
+            // ── FAST INTERCEPTOR: Auto-Feedback & Lesson Learning (Owner Only) ──
+            if (!deliveryPlan && isOwner) {
                 const fbRes = SalimEvolutionEngine.processFeedback(incomingText, chatId);
                 if (fbRes.handled && fbRes.response) {
                     deliveryPlan = {
