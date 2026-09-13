@@ -2,18 +2,30 @@
 // Turn Taking Engine with Question Budget & Minimal Response Policy
 
 export class TurnTakingEngine {
-    static evaluateTurn(message, history = [], currentQuestionBudget = 1) {
+    static evaluateTurn(message, history = [], currentQuestionBudget = 1, isOwner = false) {
         const text = (message || '').trim().toLowerCase();
         const words = text.split(/\s+/).length;
+
+        // 0. OWNER CO-PILOT TASK / TUTORIAL / HELP
+        if (isOwner) {
+            const isHelpOrTech = text.match(/(tutor|bantuin|bantu|cara|kenapa|gimana|jelasin|mulai|error|bcd|cmd|fix|tolong|bikin|code|coding|buat|setting|install|cek|analisis|alon|step|langkah|solusi)/i);
+            if (isHelpOrTech) {
+                return {
+                    turnType: 'CO_PILOT_GUIDE',
+                    allowQuestion: true,
+                    maxWords: 350,
+                    directive: "KEBIJAKAN RESPON: Berikan panduan teknis/tutorial langkah demi langkah yang runtut dan jelas untuk Bos. Tuliskan perintah CMD/langkah yang spesifik."
+                };
+            }
+        }
 
         // 1. Check recent AI questions to prevent interrogation feel
         const lastAiMessages = history.filter(m => m.role === 'assistant').slice(-3);
         const recentQuestionsCount = lastAiMessages.filter(m => m.text.includes('?')).length;
         const allowQuestion = recentQuestionsCount < currentQuestionBudget;
 
-        // 2. Minimal / Reaction Only Policy
-        // If user says something laughing or a brief reaction
-        if (/^(wkwk|haha|njir|anjir|lol|astaga|lah)$/i.test(text) || (words <= 2 && /^(iya|oke|sip|yoi|mantap|siap)$/i.test(text))) {
+        // 2. Minimal / Reaction Only Policy (Pure laughter or tiny acknowledgement only)
+        if (!isOwner && (/^(wkwk|haha|njir|anjir|lol|astaga|lah)$/i.test(text) || (words <= 2 && /^(iya|oke|sip|yoi|mantap|siap)$/i.test(text)))) {
             return {
                 turnType: 'MINIMAL_REACTION',
                 allowQuestion: false,

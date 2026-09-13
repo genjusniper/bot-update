@@ -181,4 +181,39 @@ export class PersonalLifeGraphEngine {
         directive += `ARAHAN GRAF: Sambungkan langsung percakapan Bos dengan entitas & masalah di atas jika relevan. Bos tidak perlu mengulang cerita dari nol!\n`;
         return directive;
     }
+
+    /**
+     * Extracts verified ground-truth fact strings for EpistemicPartitionEngine
+     * @param {string} text
+     * @returns {string[]} Array of verified fact strings
+     */
+    static getFacts(text = '') {
+        const matches = this.resolveEntities(text);
+        const facts = [
+            `Owner: Agus Salim, domisili Semarang, Jawa Tengah.`,
+            `HP Android (Termux): Operational daemon aktif menjalankan Salim OS V16.`
+        ];
+
+        for (const d of matches.devices) {
+            facts.push(`Perangkat ${d.name} berstatus ${d.status}${d.activeProblem ? ` (${d.activeProblem})` : ''}.`);
+        }
+
+        for (const l of matches.activeLoops) {
+            facts.push(`Masalah aktif "${l.title}" berstatus ${l.status} (langkah terakhir: ${l.lastStep}).`);
+        }
+
+        for (const p of matches.people) {
+            facts.push(`Kontak ${p.name} (${p.relationship}): ${p.notes}.`);
+        }
+
+        // If specific devices weren't matched in text, always keep PC status available if user talks about tech/work
+        if (matches.devices.length === 0) {
+            const pc = this.#graph.devices?.pc_desktop;
+            if (pc) {
+                facts.push(`PC Desktop: ${pc.status} (${pc.activeProblem || 'normal'}).`);
+            }
+        }
+
+        return facts;
+    }
 }

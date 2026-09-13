@@ -1,0 +1,37 @@
+{
+  "activeMissionId": "mission_bcd_repair",
+  "missions": {
+    "mission_bcd_repair": {
+      "id": "mission_bcd_repair",
+      "title": "Perbaikan Boot BCD Windows 10/11",
+      "currentStepIndex": 2,
+      "steps": [
+        {
+          "index": 0,
+          "title": "Masuk Windows Recovery via Bootable USB",
+          "commandOrAction": "Colok flashdisk bootable, nyalakan PC tekan F12/F8 pilih USB, masuk Repair your computer -> Troubleshoot -> Advanced Options -> Command Prompt",
+          "status": "COMPLETED"
+        },
+        {
+          "index": 1,
+          "title": "Eksekusi Rekonstruksi MBR & BCD",
+          "commandOrAction": "Ketik di CMD berturut-turut:\n1. `bootrec /fixmbr` (Enter)\n2. `bootrec /fixboot` (Enter)\n3. `bootrec /rebuildbcd` (Enter)\nJika muncul 'Add installation to boot list?', tekan `Y` lalu Enter.",
+          "status": "COMPLETED"
+        },
+        {
+          "index": 2,
+          "title": "Verifikasi Partisi Aktif via Diskpart (Jika BCD gagal)",
+          "commandOrAction": "Ketik `diskpart` -> `list disk` -> `select disk 0` -> `list partition` -> cek partisi System Reserved/EFI",
+          "status": "IN_PROGRESS"
+        },
+        {
+          "index": 3,
+          "title": "Reboot & Testing Boot Normal",
+          "commandOrAction": "Cabut flashdisk, ketik `exit`, lalu klik 'Continue to Windows 10/11'",
+          "status": "PENDING"
+        }
+      ],
+      "updatedAt": 1789108081522
+    }
+  }
+}

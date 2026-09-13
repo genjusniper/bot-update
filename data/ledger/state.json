@@ -1,0 +1,282 @@
+{
+  "lead-1788363284123-174": {
+    "state": "INVALID",
+    "history": [
+      "evt-1788363284124-2944",
+      "evt-1788363284128-7782",
+      "evt-1788363284279-1044",
+      "evt-1788363284280-3854",
+      "evt-1788363284285-5497"
+    ],
+    "processedCorrelations": [
+      "flow-1788363284123-709-discover",
+      "flow-1788363284123-709-source",
+      "flow-1788363284123-709-verify",
+      "flow-1788363284123-709-uncertainty",
+      "flow-1788363284123-709-lost"
+    ]
+  },
+  "lead-1788363301186-310": {
+    "state": "INVALID",
+    "history": [
+      "evt-1788363301186-6143",
+      "evt-1788363301188-6365",
+      "evt-1788363301331-9608",
+      "evt-1788363301332-126",
+      "evt-1788363301335-3756"
+    ],
+    "processedCorrelations": [
+      "flow-1788363301186-834-discover",
+      "flow-1788363301186-834-source",
+      "flow-1788363301186-834-verify",
+      "flow-1788363301186-834-uncertainty",
+      "flow-1788363301186-834-lost"
+    ]
+  },
+  "lead-1788363318064-802": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788363318064-6841",
+      "evt-1788363318065-1877",
+      "evt-1788363318303-3011",
+      "evt-1788363318304-3014",
+      "evt-1788363318405-2528"
+    ],
+    "processedCorrelations": [
+      "flow-1788363318064-535-discover",
+      "flow-1788363318064-535-source",
+      "flow-1788363318064-535-verify",
+      "flow-1788363318064-535-uncertainty",
+      "flow-1788363318064-535-qualify"
+    ]
+  },
+  "lead-1788363375554-526": {
+    "state": "INVALID",
+    "history": [
+      "evt-1788363375554-629",
+      "evt-1788363375555-2935",
+      "evt-1788363375723-5083",
+      "evt-1788363375724-4733",
+      "evt-1788363375725-9230"
+    ],
+    "processedCorrelations": [
+      "flow-1788363375554-810-discover",
+      "flow-1788363375554-810-source",
+      "flow-1788363375554-810-verify",
+      "flow-1788363375554-810-uncertainty",
+      "flow-1788363375554-810-lost"
+    ]
+  },
+  "lead-1788363397872-968": {
+    "state": "INVALID",
+    "history": [
+      "evt-1788363397872-1275",
+      "evt-1788363397873-1156",
+      "evt-1788363398022-2910",
+      "evt-1788363398023-5235",
+      "evt-1788363398025-8066"
+    ],
+    "processedCorrelations": [
+      "flow-1788363397872-967-discover",
+      "flow-1788363397872-967-source",
+      "flow-1788363397872-967-verify",
+      "flow-1788363397872-967-uncertainty",
+      "flow-1788363397872-967-lost"
+    ]
+  },
+  "lead-1788372391380-29": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788372391381-2466",
+      "evt-1788372391386-6423",
+      "evt-1788372391394-2187",
+      "evt-1788372391413-9414"
+    ],
+    "processedCorrelations": [
+      "flow-1788372391380-678-discover",
+      "flow-1788372391380-678-source",
+      "flow-1788372391380-678-verify",
+      "flow-1788372391380-678-qualify"
+    ]
+  },
+  "lead-1788372978422-513": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788372978424-1912",
+      "evt-1788372978427-4378",
+      "evt-1788372978434-144",
+      "evt-1788372978447-2630"
+    ],
+    "processedCorrelations": [
+      "flow-1788372978422-502-discover",
+      "flow-1788372978422-502-source",
+      "flow-1788372978422-502-verify",
+      "flow-1788372978422-502-qualify"
+    ]
+  },
+  "lead-1788400327285-611": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788400327286-4386",
+      "evt-1788400327290-5097",
+      "evt-1788400327293-9731",
+      "evt-1788400327308-2413"
+    ],
+    "processedCorrelations": [
+      "flow-1788400327285-949-discover",
+      "flow-1788400327285-949-source",
+      "flow-1788400327285-949-verify",
+      "flow-1788400327285-949-qualify"
+    ]
+  },
+  "lead-1788400356020-532": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788400356020-5496",
+      "evt-1788400356021-969",
+      "evt-1788400356023-1360",
+      "evt-1788400356030-3130"
+    ],
+    "processedCorrelations": [
+      "flow-1788400356020-744-discover",
+      "flow-1788400356020-744-source",
+      "flow-1788400356020-744-verify",
+      "flow-1788400356020-744-qualify"
+    ]
+  },
+  "lead-1788400574552-73": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788400574552-8605",
+      "evt-1788400574553-1646",
+      "evt-1788400574556-8859",
+      "evt-1788400574564-7391"
+    ],
+    "processedCorrelations": [
+      "flow-1788400574552-939-discover",
+      "flow-1788400574552-939-source",
+      "flow-1788400574552-939-verify",
+      "flow-1788400574552-939-qualify"
+    ]
+  },
+  "lead-1788400603512-560": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788400603512-2319",
+      "evt-1788400603514-9689",
+      "evt-1788400603516-2846",
+      "evt-1788400603523-4936"
+    ],
+    "processedCorrelations": [
+      "flow-1788400603512-78-discover",
+      "flow-1788400603512-78-source",
+      "flow-1788400603512-78-verify",
+      "flow-1788400603512-78-qualify"
+    ]
+  },
+  "lead-1788400875084-167": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788400875084-4381",
+      "evt-1788400875087-6400",
+      "evt-1788400875093-1986",
+      "evt-1788400875108-3593"
+    ],
+    "processedCorrelations": [
+      "flow-1788400875084-898-discover",
+      "flow-1788400875084-898-source",
+      "flow-1788400875084-898-verify",
+      "flow-1788400875084-898-qualify"
+    ]
+  },
+  "lead-1788401056332-590": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788401056332-3088",
+      "evt-1788401056335-7277",
+      "evt-1788401056337-3784",
+      "evt-1788401056348-8288"
+    ],
+    "processedCorrelations": [
+      "flow-1788401056332-159-discover",
+      "flow-1788401056332-159-source",
+      "flow-1788401056332-159-verify",
+      "flow-1788401056332-159-qualify"
+    ]
+  },
+  "lead-1788401639499-915": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788401639499-7429",
+      "evt-1788401639500-6640",
+      "evt-1788401639502-2218",
+      "evt-1788401639512-3333"
+    ],
+    "processedCorrelations": [
+      "flow-1788401639499-630-discover",
+      "flow-1788401639499-630-source",
+      "flow-1788401639499-630-verify",
+      "flow-1788401639499-630-qualify"
+    ]
+  },
+  "lead-1788403442601-272": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788403442602-2696",
+      "evt-1788403442605-1947",
+      "evt-1788403442611-3548",
+      "evt-1788403442925-4692"
+    ],
+    "processedCorrelations": [
+      "flow-1788403442601-431-discover",
+      "flow-1788403442601-431-source",
+      "flow-1788403442601-431-verify",
+      "flow-1788403442601-431-qualify"
+    ]
+  },
+  "lead-1788403442995-601": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788403442995-1946",
+      "evt-1788403442997-1109",
+      "evt-1788403442999-8841",
+      "evt-1788403443157-4272"
+    ],
+    "processedCorrelations": [
+      "flow-1788403442995-477-discover",
+      "flow-1788403442995-477-source",
+      "flow-1788403442995-477-verify",
+      "flow-1788403442995-477-qualify"
+    ]
+  },
+  "lead-1788403445160-639": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788403445160-4975",
+      "evt-1788403445161-7253",
+      "evt-1788403445164-9701",
+      "evt-1788403445335-9525"
+    ],
+    "processedCorrelations": [
+      "flow-1788403445160-597-discover",
+      "flow-1788403445160-597-source",
+      "flow-1788403445160-597-verify",
+      "flow-1788403445160-597-qualify"
+    ]
+  },
+  "lead-1788407304276-5": {
+    "state": "QUALIFIED",
+    "history": [
+      "evt-1788407304278-9758",
+      "evt-1788407304282-8795",
+      "evt-1788407304292-1033",
+      "evt-1788407304465-1194"
+    ],
+    "processedCorrelations": [
+      "flow-1788407304276-857-discover",
+      "flow-1788407304276-857-source",
+      "flow-1788407304276-857-verify",
+      "flow-1788407304276-857-qualify"
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "leadId": "lead-sandbox-004",
+  "evidenceLog": [
+    {
+      "evidenceId": "EV-SBX-004-A",
+      "domain": "identity",
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "gmaps://rm-peterongan-jaya",
+      "capturedAt": "2026-09-03T01:49:25.824Z",
+      "rawValue": "Rumah Makan Peterongan Jaya",
+      "normalizedValue": "Rumah Makan Peterongan Jaya",
+      "reliability": 0.85,
+      "directness": "DIRECT",
+      "completeness": 100,
+      "classification": "FACT",
+      "fingerprint": "fp-356ad363"
+    },
+    {
+      "evidenceId": "EV-SBX-004-B",
+      "domain": "menu",
+      "sourceType": "PUBLIC_MENU",
+      "sourceRef": "public://rm-peterongan-jaya",
+      "capturedAt": "2026-09-03T01:49:25.824Z",
+      "rawValue": "nasi rames, gulai telur, tumis tempe, ikan goreng, sayur lodeh, tahu bacem",
+      "normalizedValue": "nasi rames gulai telur tumis tempe ikan goreng sayur lodeh tahu bacem",
+      "reliability": 0.9,
+      "directness": "DIRECT",
+      "completeness": 85,
+      "classification": "INFERENCE",
+      "fingerprint": "fp-5954dd33"
+    }
+  ],
+  "fingerprints": [
+    "fp-356ad363",
+    "fp-5954dd33"
+  ],
+  "claims": {},
+  "conflicts": [],
+  "snapshots": [],
+  "blockOutreach": false
+}

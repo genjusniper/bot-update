@@ -45,7 +45,8 @@ export class ConversationOutcomeTracker {
         const outcome = await this.loadOutcome(chatId);
 
         // 1. Detect planning / activity keywords (Jawa & Indo)
-        const isPlanningIntent = Boolean(combined.match(/(ngopi|mangkat|panjat|climbing|camp|kemah|ngaji|ketemu|dolan|mampir|tuku|gas|sido|sidone|rencana|jam piro|jam berapa|kapan)/i));
+        // Only track planning if user explicitly asks for a meeting/appointment (NOT casual ngopi remarks)
+        const isPlanningIntent = Boolean(userText.match(/(ayo ketemuan|kapan ketemu|sido mangkat|jam piro ketemuan|rencana mangkat|kapan dolan)/i));
 
         if (isPlanningIntent) {
             // Extract topic summary

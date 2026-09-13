@@ -1,0 +1,110 @@
+{
+  "canary_1788317337081:62899999999@s.whatsapp.net": {
+    "idempotency_key": "canary_1788317337081:62899999999@s.whatsapp.net",
+    "campaign_id": "canary_1788317337081",
+    "phone": "62899999999@s.whatsapp.net",
+    "state": "SENT",
+    "score": 99,
+    "reason": "Human Approved (Canary Test)",
+    "draft_message": "Halo Mas Agus, ini bot. Canary test Phase G. Kalau pesan ini sampai, berarti arsitektur Enterprise Queue Worker kita berhasil 100%.",
+    "attempt_count": 1,
+    "created_at": 1788317337091,
+    "updated_at": 1788317598825,
+    "history": [
+      {
+        "state": "PENDING",
+        "timestamp": 1788317337091
+      },
+      {
+        "state": "CLAIMED",
+        "timestamp": 1788317597303
+      },
+      {
+        "state": "SENDING",
+        "timestamp": 1788317597311
+      },
+      {
+        "state": "SENT",
+        "timestamp": 1788317598825
+      }
+    ]
+  },
+  "g3_live:628999999999@s.whatsapp.net": {
+    "idempotency_key": "g3_live:628999999999@s.whatsapp.net",
+    "campaign_id": "g3_live",
+    "phone": "628999999999@s.whatsapp.net",
+    "state": "SENT",
+    "score": 99,
+    "reason": "Human Approved",
+    "draft_message": "Halo, ini uji coba G3 LIVE (Controlled Observation) dari Termux. Mohon abaikan pesan ini.",
+    "attempt_count": 2,
+    "created_at": 1788319109006,
+    "updated_at": 1788319188396,
+    "history": [
+      {
+        "state": "PENDING",
+        "timestamp": 1788319109006
+      },
+      {
+        "state": "CLAIMED",
+        "timestamp": 1788319186871
+      },
+      {
+        "state": "SENDING",
+        "timestamp": 1788319186880
+      },
+      {
+        "state": "SENT",
+        "timestamp": 1788319188396
+      }
+    ]
+  },
+  "g3_live_real:6285741318412@s.whatsapp.net": {
+    "idempotency_key": "g3_live_real:6285741318412@s.whatsapp.net",
+    "campaign_id": "g3_live_real",
+    "phone": "6285741318412@s.whatsapp.net",
+    "state": "SENT",
+    "score": 99,
+    "reason": "Human Approved (G3 Real Test)",
+    "draft_message": "Halo Mas Agus, ini bot. Canary test Phase G. Kalau pesan ini sampai, berarti arsitektur Enterprise Queue Worker kita berhasil 100% dan saya mematuhi SalesGuardOS secara riil.",
+    "attempt_count": 2,
+    "created_at": 1788319680336,
+    "updated_at": 1788319682913,
+    "history": [
+      {
+        "state": "PENDING",
+        "timestamp": 1788319680336
+      },
+      {
+        "state": "CLAIMED",
+        "timestamp": 1788319681390
+      },
+      {
+        "state": "SENDING",
+        "timestamp": 1788319681399
+      },
+      {
+        "state": "SENT",
+        "timestamp": 1788319682913
+      }
+    ]
+  },
+  "g3_live_real2:6285741318412@s.whatsapp.net": {
+    "idempotency_key": "g3_live_real2:6285741318412@s.whatsapp.net",
+    "campaign_id": "g3_live_real2",
+    "phone": "6285741318412@s.whatsapp.net",
+    "state": "PENDING",
+    "score": 99,
+    "reason": "Human Approved (G3 Real Test)",
+    "draft_message": "Halo Mas Agus, ini pengujian langsung dari Live Server (Phase G3). SalesGuardOS berjalan sukses!",
+    "attempt_count": 0,
+    "created_at": 1788319966124,
+    "updated_at": 1788319966124,
+    "history": [
+      {
+        "state": "PENDING",
+        "timestamp": 1788319966124
+      }
+    ]
+  }
+}

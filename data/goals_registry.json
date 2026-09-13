@@ -1,0 +1,63 @@
+[
+  {
+    "goalId": "goal_arka_os_v1",
+    "title": "Build ARKA OS v1 (Unified Personal AI OS)",
+    "projectRef": "proj_arka",
+    "ownerId": "person_agus",
+    "status": "ACTIVE",
+    "priority": "HIGH",
+    "milestones": [
+      {
+        "id": "m27",
+        "name": "Phase 27: Universal WhatsApp Capability Fabric",
+        "status": "COMPLETED",
+        "completedAt": 1788974324868
+      },
+      {
+        "id": "m28",
+        "name": "Phase 28: Universal Multimodal Intelligence Fabric",
+        "status": "COMPLETED",
+        "completedAt": 1788974324868
+      },
+      {
+        "id": "m28a",
+        "name": "Phase 28A: Global Command & Control Plane",
+        "status": "COMPLETED",
+        "completedAt": 1788974324868
+      },
+      {
+        "id": "m29",
+        "name": "Phase 29: Persistent World Model & Temporal Entity Engine",
+        "status": "COMPLETED",
+        "completedAt": 1788974324868
+      },
+      {
+        "id": "m30",
+        "name": "Phase 30: Causal & Uncertainty Engine",
+        "status": "COMPLETED",
+        "completedAt": 1788974324868
+      },
+      {
+        "id": "m31",
+        "name": "Phase 31: Evidence & Reality Grounding Layer",
+        "status": "COMPLETED",
+        "completedAt": 1788974324868
+      },
+      {
+        "id": "m32",
+        "name": "Phase 32: Goal & Open Loop Intelligence",
+        "status": "ACTIVE",
+        "completedAt": null
+      },
+      {
+        "id": "m60",
+        "name": "Phase 60: ARKA OS v1 Master Release",
+        "status": "PROPOSED",
+        "completedAt": null
+      }
+    ],
+    "progressPercent": 75,
+    "createdAt": 1788974324869,
+    "updatedAt": 1788974324869
+  }
+]

@@ -21,11 +21,23 @@ export class ClosureEngine {
      * @param {string} [params.languageStyle='CASUAL_INDO']
      * @returns {Object} Closure evaluation
      */
-    static evaluate({ text = '', languageStyle = 'CASUAL_INDO' }) {
+    static evaluate({ text = '', languageStyle = 'CASUAL_INDO', isOwner = false }) {
         const lower = text.toLowerCase().trim();
 
+        // If message contains action, tutorial, troubleshooting, or command words, it is NEVER closure!
+        const hasActionIntent = /\b(tutor|mulai|lanjut|gimana|cara|bantuin|bantu|coba|kirim|cek|bikin|buat|setting|install|apa|kenapa|tolong|gas|gaskeun|alon|step|perintah|cmd|fix)\b/i.test(lower);
+        if (hasActionIntent) {
+            return {
+                isClosing: false,
+                requiresResponse: true,
+                terminalResponse: null,
+                directiveText: 'PERCAKAPAN BERJALAN: Jawab secara wajar dan solutif.'
+            };
+        }
+
         const words = lower.split(/\s+/).filter(Boolean);
-        const hasClosure = /\b(makasih|terima\s*kasih|terimakasih|suwun|matur\s*nuwun|maturnuwun|thx|thanks|yowis|yo wis|duluan|bye|dadah|oke|siap|sip|mantap|noted|aman)\b/i.test(lower);
+        const hasClosure = /\b(makasih|terima\s*kasih|terimakasih|suwun|matur\s*nuwun|maturnuwun|thx|thanks|yowis|yo wis|duluan|bye|dadah)\b/i.test(lower) ||
+            (!isOwner && words.length <= 2 && /^(oke|siap|sip|mantap|noted|aman)$/i.test(lower));
         const isClosing = words.length <= 5 && hasClosure && !lower.includes('?');
 
         if (!isClosing) {

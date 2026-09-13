@@ -1,64 +1,81 @@
 // src/agent/background/ProactiveBrain.mjs
-// V15.0 - Proactive Sales Engine (Misi 3: The Aggressive Collector)
-
-import cron from 'node-cron';
-import { ProactiveSalesEngine } from '../../sales/ProactiveSalesEngine.mjs';
+import { OutboundQueueManager } from '../../sales/OutboundQueueManager.mjs';
+import { SalesGuardOS } from '../../sales/SalesGuardOS.mjs';
 
 export class ProactiveBrain {
     constructor(options = {}) {
-        this.task = null;
+        this.workerInterval = null;
+        this.isProcessing = false;
     }
 
-    start(sock, memoryDB, allowedContacts, getGenerateReplyFn) {
-        if (this.task) return;
+    async start(sock, memoryDB, allowedContacts, getGenerateReplyFn) {
+        if (this.workerInterval) return;
         
-        console.log("⏰ ProactiveBrain (Sales Mode): Diaktifkan! Jadwal Weker: 20:00 WIB tiap hari.");
+        console.log(`🔥 [PHASE G3] ProactiveBrain (Sales Worker) ONLINE! Mode: ${SalesGuardOS.CONFIG.OUTBOUND_MODE}`);
         
-        // Jadwal: Setiap hari jam 20:00 malam waktu lokal server
-        this.task = cron.schedule('0 20 * * *', async () => {
-            console.log('\n[ProactiveBrain] 🔔 WAKTU FOLLOW-UP! Menyisir OrderLedger...');
+        try {
+            await OutboundQueueManager.recoverCrash();
+        } catch (e) {
+            console.error('[ProactiveBrain] Gagal menjalankan Crash Recovery:', e.message);
+        }
+
+        // Loop setiap 10 detik
+        this.workerInterval = setInterval(async () => {
+            if (this.isProcessing) return;
+            this.isProcessing = true;
             
             try {
-                const targets = await ProactiveSalesEngine.getFollowUpTargets();
-                
-                if (targets.length === 0) {
-                    console.log('[ProactiveBrain] ✅ Semua pelanggan VIP sudah order hari ini.');
-                    return;
-                }
-
-                console.log(`[ProactiveBrain] 🎯 Menemukan ${targets.length} target penagihan pesanan.`);
-
-                for (const target of targets) {
-                    const message = ProactiveSalesEngine.generateMessage(target.name);
-                    console.log(`  -> Mengirim ke ${target.name} (${target.chatId}): "${message}"`);
+                const job = await OutboundQueueManager.claimNext();
+                if (job) {
+                    console.log(`\n[Outbound Worker] 📥 Memproses Job: ${job.idempotency_key}`);
                     
-                    try {
-                        // Jeda acak antara 5-15 detik per pesan agar tidak kena blokir WhatsApp
-                        const delayMs = Math.floor(Math.random() * 10000) + 5000;
-                        await new Promise(r => setTimeout(r, delayMs));
+                    // 1. Lewati Sales Guard
+                    const guardCheck = SalesGuardOS.canSend(job);
+                    if (!guardCheck.allowed) {
+                        console.log(`[Outbound Worker] 🛑 BLOCKED OLEH GUARD: ${guardCheck.reason}`);
+                        await OutboundQueueManager.updateState(job.idempotency_key, 'FAILED_GUARD');
+                        await SalesGuardOS.logAudit(job.campaign_id, job.phone, 'BLOCKED', guardCheck.reason);
+                        this.isProcessing = false;
+                        return;
+                    }
 
-                        await sock.sendPresenceUpdate('composing', target.chatId);
-                        await new Promise(r => setTimeout(r, 2000)); // Pura-pura ngetik
-                        await sock.sendPresenceUpdate('paused', target.chatId);
+                    // 2. Tandai SENDING (Titik kritis crash recovery)
+                    await OutboundQueueManager.updateState(job.idempotency_key, 'SENDING');
 
-                        await sock.sendMessage(target.chatId, { text: message });
-                        console.log(`  ✅ Pesan penagihan sukses terkirim ke ${target.name}`);
-                    } catch (e) {
-                        console.error(`  ❌ Gagal kirim ke ${target.name}:`, e.message);
+                    // 3. Sanitasi Pesan (Pastikan THOUGHT hilang)
+                    const cleanMessage = SalesGuardOS.sanitizePayload(job.draft_message);
+
+                    // 4. Kirim via Baileys (Simulasi UX)
+                    await sock.sendPresenceUpdate('composing', job.phone);
+                    await new Promise(r => setTimeout(r, 2000));
+                    await sock.sendPresenceUpdate('paused', job.phone);
+
+                    await sock.sendMessage(job.phone, { text: cleanMessage });
+                    console.log(`[Outbound Worker] 🚀 Pesan G3 terkirim ke: ${job.phone}`);
+                    
+                    // 5. Tandai SENT & Record Budget
+                    await OutboundQueueManager.updateState(job.idempotency_key, 'SENT');
+                    SalesGuardOS.recordSent();
+                    await SalesGuardOS.logAudit(job.campaign_id, job.phone, 'SENT', 'G3 Live Delivery');
+                    
+                    console.log(`[Outbound Worker] ✅ Sisa Budget G3: ${SalesGuardOS.CONFIG.G3_BUDGET}`);
+                    if (SalesGuardOS.CONFIG.OUTBOUND_MODE === 'DRY_RUN') {
+                        console.log(`[Outbound Worker] 🔒 G3 BUDGET EXHAUSTED. KEMBALI KE DRY_RUN.`);
                     }
                 }
-                console.log('[ProactiveBrain] 🏁 Misi penagihan selesai!\n');
             } catch (error) {
-                console.error('[ProactiveBrain] ❌ Error saat eksekusi cron:', error);
+                console.error('[Outbound Worker] ❌ Kesalahan Eksekusi:', error);
+            } finally {
+                this.isProcessing = false;
             }
-        });
+        }, 10000); // 10 Detik
     }
 
     stop() {
-        if (this.task) {
-            this.task.stop();
-            this.task = null;
-            console.log('🛑 ProactiveBrain: Dimatikan');
+        if (this.workerInterval) {
+            clearInterval(this.workerInterval);
+            this.workerInterval = null;
+            console.log('🛑 ProactiveBrain (Sales Worker): Dimatikan');
         }
     }
 }

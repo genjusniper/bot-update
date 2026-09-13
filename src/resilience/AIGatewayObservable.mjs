@@ -6,11 +6,10 @@ import { ErrorTaxonomy } from '../fleet/ErrorTaxonomy.mjs';
 import { ProviderHealthMatrix } from '../fleet/ProviderHealthMatrix.mjs';
 import { PayloadSanitizer } from './PayloadSanitizer.mjs';
 
-// Confirmed fastest valid Gemini models on Termux
+// Confirmed fastest valid Gemini models on Termux (flash-lite prioritized for quota stability)
 const MODELS = [
-    'gemini-2.5-flash',
-    'gemini-flash-latest',
-    'gemini-flash-lite-latest'
+    'gemini-flash-lite-latest',
+    'gemini-flash-latest'
 ];
 
 export class AIGatewayObservable {
@@ -57,7 +56,7 @@ export class AIGatewayObservable {
         const maxAttempts = Math.min(12, this.fleet.fleet.length);
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            if (Date.now() - startTime > 25000) break; // 25s max global budget
+            if (Date.now() - startTime > 30000) break; // 30s max global budget
 
             const currentModel = MODELS[this.modelIndex % MODELS.length];
             const keyItem = this.fleet.getHealthyKey();
@@ -77,7 +76,7 @@ export class AIGatewayObservable {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: payload,
-                    signal: AbortSignal.timeout(5500) // Fast 5.5s timeout: if slow, rotate immediately!
+                    signal: AbortSignal.timeout(10000) // 10s timeout: resilient against cellular latency
                 });
 
                 const latency = Date.now() - reqStart;

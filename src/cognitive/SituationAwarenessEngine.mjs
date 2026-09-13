@@ -51,7 +51,7 @@ export class SituationAwarenessEngine {
         const urgentKeywords = ['besok masuk', 'besok kerja', 'pagi harus', 'segera', 'urgent', 'penting', 'darurat', 'belum beres'];
         const hasUrgency = urgentKeywords.some(kw => raw.includes(kw));
 
-        // 4. What-Happens-Next Prediction
+        // 4. What-Happens-Next Prediction & Strategy
         let predictedNeed = 'GENERAL_ASSISTANCE';
         let suggestedStrategy = 'BALANCED_CO_PILOT';
 
@@ -66,6 +66,18 @@ export class SituationAwarenessEngine {
             suggestedStrategy = 'RESUME_DAG_STEP';
         }
 
+        // 5. Higher-Order Intent Implication & Latent Goal Extraction
+        const intentImplication = this.extractIntentImplication(text, {
+            raw,
+            timePhase,
+            hour,
+            isLateNight,
+            isEarlyMorning,
+            energyLevel,
+            hasUrgency,
+            predictedNeed
+        });
+
         return {
             timePhase,
             hour,
@@ -75,7 +87,52 @@ export class SituationAwarenessEngine {
             hasUrgency,
             predictedNeed,
             suggestedStrategy,
+            intentImplication,
             rawText: text
+        };
+    }
+
+    /**
+     * Extracts latent implications, hidden constraints, and next probable actions from owner chat
+     */
+    static extractIntentImplication(originalText = '', ctx = {}) {
+        const raw = ctx.raw || String(originalText || '').toLowerCase();
+        let explicit = originalText.trim();
+        let implied = 'Membutuhkan respon tanggap dan solutif.';
+        let goal = 'Menjawab atau menyelesaikan topik.';
+        let constraint = 'Normal';
+        let nextProbableAction = 'Memberikan insight atau panduan jelas.';
+
+        if (ctx.hasUrgency) {
+            if (raw.includes('laptop') || raw.includes('pc') || raw.includes('komputer') || raw.includes('bcd') || raw.includes('windows')) {
+                implied = 'Device PC/Laptop harus segera siap sebelum jadwal esok, atau opsi cadangan harus diputuskan malam ini.';
+                goal = 'Menyelesaikan perbaikan boot Windows tanpa membuang waktu.';
+                constraint = ctx.isLateNight ? 'Waktu tidur sangat terbatas & energi mulai menipis' : 'Waktu mendesak';
+                nextProbableAction = 'Ketik 1 instruksi CMD perbaikan terarah atau putuskan tunda tidur.';
+            } else if (raw.includes('kerja') || raw.includes('masuk') || raw.includes('kantor') || raw.includes('tugas')) {
+                implied = 'Ada kewajiban esok pagi yang menekan pikiran malam ini.';
+                goal = 'Menyaring prioritas agar tidak panik / burnout.';
+                constraint = 'Jadwal masuk kerja esok pagi';
+                nextProbableAction = 'Pangkas daftar tugas menjadi 1 hal paling krusial.';
+            }
+        } else if (raw.includes('proyek') || raw.includes('bikin') || raw.includes('ide baru')) {
+            implied = 'Sedang antusias dengan ide baru namun berisiko memecah fokus open loop yang belum tuntas.';
+            goal = 'Eksplorasi ide tanpa mengorbankan project utama.';
+            constraint = 'Beban kognitif & batas fokus harian';
+            nextProbableAction = 'Catat idenya di backlog, selesaikan loop aktif dulu.';
+        } else if (ctx.isLateNight && ctx.energyLevel === 'LOW_ENERGY') {
+            implied = 'Sebenarnya sudah lelah dan butuh jeda istirahat.';
+            goal = 'Menutup hari tanpa beban pikiran menggantung.';
+            constraint = 'Energi fisik & mental rendah';
+            nextProbableAction = 'Rangkum status terakhir & sarankan tidur.';
+        }
+
+        return {
+            explicit,
+            implied,
+            goal,
+            constraint,
+            nextProbableAction
         };
     }
 
@@ -83,16 +140,24 @@ export class SituationAwarenessEngine {
      * Formats situational guidance for the Master Brain
      */
     static formatDirective(situation) {
-        let out = `\n[SITUATION AWARENESS & PREDICTION]:\n`;
+        let out = `\n[SITUATION AWARENESS & INTENT PREDICTION]:\n`;
         out += `• Waktu: Jam ${situation.hour}.00 (${situation.timePhase})\n`;
         out += `• Tingkat Energi Bos: ${situation.energyLevel}\n`;
-        out += `• Urgensi/Tenggat: ${situation.hasUrgency ? 'TINGGI (Besok ada aktivitas/urgensi)' : 'NORMAL'}\n`;
-        out += `• Prediksi Kebutuhan: ${situation.predictedNeed}\n`;
+        out += `• Urgensi: ${situation.hasUrgency ? 'TINGGI (Mendesak / Esok ada jadwal)' : 'NORMAL'}\n`;
+        
+        if (situation.intentImplication) {
+            const ii = situation.intentImplication;
+            out += `• INTENT EKSPLISIT: "${ii.explicit}"\n`;
+            out += `• INTENT TERSIRAT (IMPLIED): ${ii.implied}\n`;
+            out += `• TUJUAN SEBENARNYA (GOAL): ${ii.goal}\n`;
+            out += `• KENDALA (CONSTRAINT): ${ii.constraint}\n`;
+            out += `• TINDAKAN TERBAIK BERIKUTNYA: ${ii.nextProbableAction}\n`;
+        }
 
         if (situation.isLateNight && situation.energyLevel === 'LOW_ENERGY') {
-            out += `• PETUNJUK RESPOIN: Jangan berikan esai panjang! Bos sedang lelah/malam hari. Berikan 1 langkah esensial atau sarankan istirahat & lanjut besok pagi.\n`;
+            out += `• ATURAN COGNITIVE LOAD: Bos sedang malam hari & lelah. JANGAN BERIKAN 10 OPSI ATAU PARAGRAF PANJANG! Cukup 1 langkah praktis atau ajak istirahat.\n`;
         } else if (situation.hasUrgency) {
-            out += `• PETUNJUK RESPON: Prioritaskan solusi langsung to-the-point agar masalah utama beres secepat mungkin tanpa basa-basi.\n`;
+            out += `• ATURAN COGNITIVE LOAD: Langsung to-the-point ke solusi utama yang menyelesaikan hambatan Bos.\n`;
         }
 
         return out;

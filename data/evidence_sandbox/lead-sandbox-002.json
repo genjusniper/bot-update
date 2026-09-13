@@ -1,0 +1,41 @@
+{
+  "leadId": "lead-sandbox-002",
+  "evidenceLog": [
+    {
+      "evidenceId": "EV-SBX-002-A",
+      "domain": "identity",
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "gmaps://warung-bu-sari",
+      "capturedAt": "2026-09-03T01:49:25.823Z",
+      "rawValue": "Warung Makan Bu Sari",
+      "normalizedValue": "Warung Makan Bu Sari",
+      "reliability": 0.85,
+      "directness": "DIRECT",
+      "completeness": 100,
+      "classification": "FACT",
+      "fingerprint": "fp-bb2b24cc"
+    },
+    {
+      "evidenceId": "EV-SBX-002-B",
+      "domain": "menu",
+      "sourceType": "PUBLIC_MENU",
+      "sourceRef": "public://warung-bu-sari-menu",
+      "capturedAt": "2026-09-03T01:49:25.823Z",
+      "rawValue": "ayam goreng, telur dadar, tempe orek, sayur asem, sambal",
+      "normalizedValue": "ayam goreng telur dadar tempe orek sayur asem sambal",
+      "reliability": 0.88,
+      "directness": "DIRECT",
+      "completeness": 80,
+      "classification": "INFERENCE",
+      "fingerprint": "fp-fe0bb040"
+    }
+  ],
+  "fingerprints": [
+    "fp-bb2b24cc",
+    "fp-fe0bb040"
+  ],
+  "claims": {},
+  "conflicts": [],
+  "snapshots": [],
+  "blockOutreach": false
+}

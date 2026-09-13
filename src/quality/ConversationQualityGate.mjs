@@ -29,9 +29,9 @@ export class ConversationQualityGate {
             text = factVerification.cleanText;
         }
 
-        // 3. Excessive Length Guard
+        // 3. Excessive Length Guard (Only for non-owner public/casual chats)
         const words = text.split(/\s+/).length;
-        if (context.maxWords && words > (context.maxWords + 15)) {
+        if (!context.isOwner && context.maxWords && words > (context.maxWords + 15)) {
             failures.push('OVER_LENGTH_LIMIT');
             // Trim to max sentences
             const sentences = text.split(/(?<=[.?!])\s+/);

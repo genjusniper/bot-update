@@ -4,7 +4,7 @@ import { HumanUXEngine } from '../subsystems/ux/HumanUXEngine.mjs';
 import { UXConflictResolver } from './UXConflictResolver.mjs';
 
 export class ConversationDirector {
-    static orchestrate({ text, chatId, pushName, rawResponse, conversationState, topicOutcome, socialDynamics = {} }) {
+    static orchestrate({ text, chatId, pushName, rawResponse, conversationState, topicOutcome, socialDynamics = {}, isOwner = false }) {
         const incomingText = (text || '').trim();
         const responseText = (rawResponse || '').trim();
 
@@ -26,17 +26,18 @@ export class ConversationDirector {
             text: incomingText,
             chatId,
             rawResponse: responseText,
-            history: socialDynamics.history || []
+            history: socialDynamics.history || [],
+            isOwner
         });
 
         // Final Decision Logic (Orchestration)
         let finalAction = necessity.decision === 'REPLY' ? resolvedDecision.action : necessity.decision;
         let finalReaction = necessity.reactionEmoji || resolvedDecision.reactionEmoji || delivery.reactionEmoji;
-        let finalBubbles = necessity.decision === 'REPLY' && resolvedDecision.action === 'REPLY' ? [resolvedDecision.text] : [];
+        let finalBubbles = (necessity.decision === 'REPLY' || isOwner) && resolvedDecision.action === 'REPLY' ? [resolvedDecision.text] : [];
         let finalDelays = [0];
 
-        // If the reply necessity says REACT_ONLY or resolver says REACT_ONLY
-        if (necessity.decision === 'REACT_ONLY' || resolvedDecision.action === 'REACT_ONLY') {
+        // If the reply necessity says REACT_ONLY or resolver says REACT_ONLY (unless owner asking a question/task)
+        if (!isOwner && (necessity.decision === 'REACT_ONLY' || resolvedDecision.action === 'REACT_ONLY')) {
             finalAction = 'REACT_ONLY';
             finalReaction = necessity.reactionEmoji || resolvedDecision.reactionEmoji || '😂';
             finalBubbles = [];
@@ -44,7 +45,7 @@ export class ConversationDirector {
         }
 
         // If the reply necessity says READ_ONLY or IGNORE or resolver says SILENT
-        if (necessity.decision === 'READ_ONLY' || necessity.decision === 'IGNORE' || resolvedDecision.action === 'READ_ONLY' || resolvedDecision.action === 'SILENT') {
+        if (!isOwner && (necessity.decision === 'READ_ONLY' || necessity.decision === 'IGNORE' || resolvedDecision.action === 'READ_ONLY' || resolvedDecision.action === 'SILENT')) {
             finalAction = 'READ_ONLY';
             finalBubbles = [];
             finalDelays = [0];
@@ -52,7 +53,7 @@ export class ConversationDirector {
 
         // 4. Post-Processing & Output Sanitation (Trailing periods, exclamation marks, laughter limits)
         const cleanedBubbles = finalBubbles.map(b => {
-            let clean = b.replace(/!+/g, ''); // Strip exclamation marks
+            let clean = isOwner ? b : b.replace(/!+/g, ''); // Strip exclamation marks for casual non-owner only
             clean = clean.replace(/\b(cok|cuk|asu|matamu|ndasmu|pantek|anjing|bangsat|goblok|babi|kontol|memek|jembut)\b/gi, ''); // Strip toxic profanities
             
             // Limit wkwk/haha laughter to max one

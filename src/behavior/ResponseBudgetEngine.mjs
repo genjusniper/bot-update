@@ -2,11 +2,28 @@
 // Super Short, Natural Indonesian Human Chat Budget (Anti-Robot / Anti-Panjang)
 
 export class ResponseBudgetEngine {
-    static calculateBudget(userMessage, moodState = 'CASUAL', attachments = {}) {
+    static calculateBudget(userMessage, moodState = 'CASUAL', attachments = {}, isOwner = false) {
         const text = (userMessage || '').trim().toLowerCase();
 
-        // 1. Ultra-short slang / reaction intents -> Micro Budget
-        if (text.match(/^(p|oi|oy|wkwk|haha|oke|sip|gas|lah|anjir|yo|mantap|siap|ok|gass|gaskeun)$/i)) {
+        // 0. OWNER CO-PILOT PRIORITY: If Owner asks for tutorial, help, explanation, or troubleshooting
+        if (isOwner) {
+            const isHelpOrTech = text.match(/(tutor|bantuin|bantu|cara|kenapa|gimana|jelasin|mulai|error|bcd|cmd|fix|tolong|bikin|code|coding|buat|setting|install|cek|analisis|alon|step|langkah|solusi|kenapa|gagal|corrupt)/i) ||
+                attachments.hasImage || attachments.hasAudio;
+
+            if (isHelpOrTech) {
+                return {
+                    tier: 'CO_PILOT_GUIDE',
+                    maxWords: 350,
+                    maxBubbles: 2,
+                    allowEmoji: true,
+                    reactionEligible: false,
+                    directive: "BATAS PANJANG: Berikan tutorial/bantuan lengkap, jelas, step-by-step dan terstruktur untuk Bos. Boleh panjang dan detail (sampai 250-350 kata) agar solusinya tuntas."
+                };
+            }
+        }
+
+        // 1. Ultra-short slang / reaction intents -> Micro Budget (Only if not asking tutorial)
+        if (text.match(/^(p|oi|oy|wkwk|haha|lah|anjir|yo)$/i)) {
             return {
                 tier: 'MICRO',
                 maxWords: 5,
@@ -18,7 +35,7 @@ export class ResponseBudgetEngine {
         }
 
         // 2. Conversation Ending / Sign-off -> Micro Budget
-        if (text.match(/^(oke makasih|makasih bro|suwun ya|tengkyu|sip otw|tidur dulu|cabut dulu|bye|dada|yaudah)$/i)) {
+        if (text.match(/^(oke makasih|makasih bro|suwun ya|tengkyu|sip otw|tidur dulu|cabut dulu|bye|dada)$/i)) {
             return {
                 tier: 'ENDING',
                 maxWords: 5,
@@ -65,7 +82,18 @@ export class ResponseBudgetEngine {
             };
         }
 
-        // 6. Default Casual Conversation -> Short & Natural (10-18 words)
+        // 6. Default Casual Conversation
+        if (isOwner) {
+            return {
+                tier: 'OWNER_CASUAL',
+                maxWords: 120,
+                maxBubbles: 1,
+                allowEmoji: true,
+                reactionEligible: false,
+                directive: "BATAS PANJANG: Berikan jawaban santai, cerdas, dan hangat untuk Bos (1-3 kalimat alami). Jangan terlalu kaku membatasi diri."
+            };
+        }
+
         return {
             tier: 'CASUAL',
             maxWords: 18,

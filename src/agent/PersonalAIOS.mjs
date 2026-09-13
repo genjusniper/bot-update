@@ -60,6 +60,7 @@ import { CanonicalMessage } from '../core/ingress/CanonicalMessage.mjs';
 import { PersonalSimulationKernel } from '../core/kernel/PersonalSimulationKernel.mjs';
 import { PersonalLifeGraphEngine } from '../cognitive/PersonalLifeGraphEngine.mjs';
 import { SituationAwarenessEngine } from '../cognitive/SituationAwarenessEngine.mjs';
+import { EpistemicPartitionEngine } from '../core/reasoning/EpistemicPartitionEngine.mjs';
 import { StyleTransformer } from '../core/style/StyleTransformer.mjs';
 import { BehavioralFirewall } from '../core/firewall/BehavioralFirewall.mjs';
 import { ConversationTextureEngine } from '../core/style/ConversationTextureEngine.mjs';
@@ -123,6 +124,7 @@ import { MemoryManager } from '../memory/MemoryManager.mjs';
 // VIRTUAL SALES OS MODULES (PHASE 5)
 // ========================
 import { SalesExecutionOS } from '../sales/SalesExecutionOS.mjs';
+import { CognitivePersonaLayer } from '../os/cognition/CognitivePersonaLayer.mjs';
 
 
 export class PersonalAIOS {
@@ -431,27 +433,34 @@ export class PersonalAIOS {
         // 23. MULTIMODAL DIRECTIVES
         let multimodalDirective = '';
         if (hasImages) {
-            multimodalDirective = `PANDUAN MULTI-FOTO / SLIDE / VISION: User mengirim ${images.length} foto/slide ke kamu! Analisis seluruh sudut/slide foto secara komprehensif, santai, dan to-the-point.\n${ProductLocationAdvisor.getProductDirective()}\n${ProductLocationAdvisor.getLocationDirective()}`;
+            const hasPdf = images.some(img => img.mimeType === 'application/pdf' || img.isDocument);
+            if (hasPdf) {
+                multimodalDirective = `PANDUAN DOKUMEN PDF: User mengirimkan file dokumen PDF kepada kamu! Analisis, baca, dan pahami seluruh teks, tabel, serta angka di dalam dokumen PDF ini secara cermat, akurat, dan solutif. Berikan jawaban atau ringkasan yang jelas dan to-the-point sesuai kebutuhan user.`;
+            } else {
+                multimodalDirective = `PANDUAN MULTI-FOTO / SLIDE / VISION: User mengirim ${images.length} foto/slide ke kamu! Analisis seluruh sudut/slide foto secara komprehensif, santai, dan to-the-point.\n${ProductLocationAdvisor.getProductDirective()}\n${ProductLocationAdvisor.getLocationDirective()}`;
+            }
         } else if (hasAudio) {
             multimodalDirective = "PANDUAN VOICE NOTE: User mengirim rekaman suara ke kamu! Pahami maksud dan suasananya, lalu balas secara hangat dan akrab.";
         }
 
         const roleIdentity = isSelfChat
-            ? `Kamu adalah SALIM, Personal AI Co-Pilot & Asisten Pribadi Cerdas milik Bos Agus Salim (panggil: Bos / Gus).
+            ? `Kamu adalah SALIM, Personal AI Co-Pilot, Sparring Partner, & Sahabat Sejati milik Bos Agus Salim (panggil: Bos / Gus).
 IDENTITAS & PRINSIP TUGAS:
-1. ASISTEN PRIBADI CERDAS, SOLUTIF & SETIA:
-   - Bos adalah pemilik nomor ini dan satu-satunya orang yang kamu layani saat ini.
-   - Bicaralah ramah, santai, cerdas, dan tanggap (bahasa Indonesia santai diselingi celetukan Jawa santai yang luwes layaknya partner pribadi terpercaya).
-2. PANDUAN TEKNIS & TUTORIAL (PENTING & MUTLAK):
-   - Jika Bos meminta panduan/tutorial/bantuan teknis (seperti BCD Windows corrupt, error software, perintah CMD, coding, instalasi, dsb):
-     * JELASKAN SECARA LENGKAP, JELAS, DAN STEP-BY-STEP (LANGKAH DEMI LANGKAH)!
-     * JANGAN NGELES! JANGAN CUMA JAWAB 3-5 KATA!
-     * Tuliskan instruksi langsung apa yang harus diketik Bos di keyboard/CMD/layar beserta penjelasannya.
-     * Tuntun Bos secara sabar sampai masalahnya tuntas beres.
-3. OBROLAN HARIAN / SANTAI:
-   - Jika Bos ngobrol santai atau bertanya ide/pendapat, balas hangat, solutif, cerdas, dan tidak bertele-tele.
-4. FORMAT WHATSAPP:
-   - Gunakan format penomoran (1, 2, 3) atau baris baru agar langkah teknis mudah dibaca Bos di layar HP.`
+1. SAHABAT CERDAS, HUMORIS, & ENAK DIAJAK NGOBROL:
+   - Bicaralah santai, hidup, hangat, dan luwes (bahasa Indonesia santai, sesekali celetukan Jawa Semarangan yang pas).
+   - Humoris, lucu, dan menghibur secara natural (ceng-cengan akrab, wit tajam, tidak kaku seperti robot kantor).
+2. PARTNER TUMBUH BERSAMA (BIKIN BOS MAKIN PINTAR & DEWASA):
+   - Gunakan lensa berpikir cerdas (Mental Models): *First Principles* (akar masalah), *Pareto 80/20* (20% aksi hasil 80%), dan *Stoikisme* (fokus hanya ke apa yang bisa dikontrol).
+   - Ajarkan wawasan psikologi manusia praktis (cara membaca situasi, negosiasi win-win, menghadapi orang manipulatif/defensif).
+   - PENDUKUNG KEDEWASAAN: Bantu Bos mengelola stres, kurangi overthinking, dan dorong ketenangan emosional saat situasi rumit.
+3. PEMECAH MASALAH REALISTIS & ANTI "YES-MAN":
+   - JANGAN JADI PENJILAT ("Yes-Man"). Kalau rencana Bos punya celah atau berisiko, katakan sejujurnya secara logis, lalu sodorkan alternatif terbaik.
+   - Orientasi tindakan: Setiap masalah rumit dipecah jadi 1-2-3 langkah realistis yang bisa dieksekusi detik ini.
+   - MEMPERMUDAH URUSAN: Jika Bos butuh komunikasi dengan rekan kerja/atasan/vendor, langsung buatkan draf kalimat siap copy-paste!
+4. PANDUAN TEKNIS, KERJA, & HOBI:
+   - Jika Bos minta bantuan teknis, coding, masalah HP/PC, urusan shift kerja, atau outdoor/gunung: Jelaskan secara terstruktur, jelas, dan tuntas sampai beres.
+5. FORMAT OUTPUT:
+   - Gunakan format rapi, poin-poin jelas, dan bahasa santai agar nyaman dibaca di layar WhatsApp HP.`
             : `IDENTITAS MUTLAK: Kamu adalah AGUS (panggilan akrab: Agus / Mas Agus). Kamu adalah pemilik asli nomor WhatsApp ini.
 - Bicaralah selalu sebagai AGUS SALIM / AGUS (orang pertama: aku / kulo / gue), BUKAN asisten, BUKAN pihak ketiga, BUKAN bot, BUKAN AI.
 - JANGAN PERNAH mengaku atau menyebut kata 'bot', 'AI', 'asisten', atau 'sistem'. Jika ada yang bercanda 'Kie bot po?', tolak santai: 'Lha sopo maneh wkwk, yo aku Agus to'.
@@ -494,16 +503,55 @@ ATURAN FORMAT WHATSAPP:
 
         let lifeGraphDirective = '';
         let situationDirective = '';
+        let epistemicDirective = '';
+        let cognitivePersonaDirective = '';
+        let verifiedGroundFacts = [];
         if (isSelfChat) {
+            try {
+                cognitivePersonaDirective = CognitivePersonaLayer.evaluate({
+                    text: inputSnippet,
+                    chatId,
+                    isSelfChat: true,
+                    history: memData.working_memory
+                });
+            } catch (cpErr) {
+                console.warn('[PersonalAIOS] ⚠️ CognitivePersonaLayer error:', cpErr.message);
+            }
             lifeGraphDirective = PersonalLifeGraphEngine.formatContextDirective(inputSnippet);
             const situationSnapshot = SituationAwarenessEngine.evaluate({ text: inputSnippet });
             situationDirective = SituationAwarenessEngine.formatDirective(situationSnapshot);
+
+            // Epistemic Partitioning: Grounded Facts vs Inferences vs Predictions
+            try {
+                verifiedGroundFacts = PersonalLifeGraphEngine.getFacts(inputSnippet);
+                const inferences = [];
+                const predictions = [];
+                if (situationSnapshot.intentImplication) {
+                    inferences.push(`Tersirat: ${situationSnapshot.intentImplication.implied}`);
+                    inferences.push(`Tujuan utama Bos: ${situationSnapshot.intentImplication.goal}`);
+                    predictions.push(`Langkah efisien berikutnya: ${situationSnapshot.intentImplication.nextProbableAction}`);
+                }
+                if (situationSnapshot.hasUrgency) {
+                    inferences.push(`Kondisi mendesak, utamakan efisiensi kognitif Bos.`);
+                }
+
+                const partitionRecord = EpistemicPartitionEngine.partition({
+                    facts: verifiedGroundFacts,
+                    inferences,
+                    predictions
+                });
+                epistemicDirective = EpistemicPartitionEngine.formatForPrompt(partitionRecord);
+            } catch (epErr) {
+                console.warn('[PersonalAIOS] ⚠️ EpistemicPartition error:', epErr.message);
+            }
         }
 
         const masterPrompt = isSelfChat
             ? `${roleIdentity}
 
+${cognitivePersonaDirective}
 ${personalDirective ? `\n${personalDirective}\n` : ''}
+${epistemicDirective}
 ${lifeGraphDirective}
 ${situationDirective}
 ${agentDirectives}
@@ -579,6 +627,13 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
 
         if (gatewayRes.success) {
             rawDraft = gatewayRes.text;
+            if (isSelfChat && verifiedGroundFacts.length > 0) {
+                const antiHallucination = EpistemicPartitionEngine.enforceAntiHallucination(rawDraft, verifiedGroundFacts);
+                if (!antiHallucination.passed) {
+                    console.log(`[Epistemic] 🛡️ Sanitized draft from ungrounded certainty:`, antiHallucination.flaggedClaims);
+                    rawDraft = antiHallucination.sanitizedText;
+                }
+            }
             trace.modelUsed = gatewayRes.modelUsed;
             await MessageLifecycleTracker.logPhase(lifecycleId, 'AI_GENERATED', { model: gatewayRes.modelUsed, latencyMs: gatewayRes.latencyMs });
             ProductionTelemetry72h.increment('aiGateway', 'geminiSuccess').catch(() => {});
@@ -630,6 +685,7 @@ Waktu: ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`;
         sanitizedOutput = HumanUXEngine.contextualizeEmojis(sanitizedOutput, socialDynamics.energy);
         const transformedResult = StyleTransformer.transform(sanitizedOutput, personalContract);
         sanitizedOutput = transformedResult.fullText || sanitizedOutput;
+        sanitizedOutput = CognitivePersonaLayer.calibrateOutput(sanitizedOutput, isSelfChat);
 
         // 26.6 BEHAVIORAL FIREWALL (PHASE 13)
         if (personalContract) {

@@ -1,0 +1,72 @@
+[
+    {
+      "id": "KELAPA_PARUT",
+      "name": "Kelapa Parut Segar",
+      "unit": "kg",
+      "price": 15000,
+      "margin": 3000,
+      "available_today": true,
+      "avg_daily_qty": 3,
+      "tags": ["warteg", "katering", "jajanan pasar", "gulai", "padang", "rendang"]
+    },
+    {
+      "id": "TAHU",
+      "name": "Tahu Putih / Tahu Kuning",
+      "unit": "papan",
+      "price": 6000,
+      "margin": 1500,
+      "available_today": true,
+      "avg_daily_qty": 5,
+      "tags": ["warteg", "gorengan", "pecel", "burjo", "katering"]
+    },
+    {
+      "id": "TEMPE",
+      "name": "Tempe Daun / Papan",
+      "unit": "potong",
+      "price": 4500,
+      "margin": 1000,
+      "available_today": true,
+      "avg_daily_qty": 8,
+      "tags": ["warteg", "gorengan", "pecel", "burjo", "katering"]
+    },
+    {
+      "id": "TELUR",
+      "name": "Telur Ayam Ras",
+      "unit": "kg",
+      "price": 28000,
+      "margin": 2500,
+      "available_today": true,
+      "avg_daily_qty": 5,
+      "tags": ["warteg", "burjo", "katering", "kue", "nasi goreng"]
+    },
+    {
+      "id": "CABAI_RAWIT",
+      "name": "Cabai Rawit Merah",
+      "unit": "kg",
+      "price": 65000,
+      "margin": 6000,
+      "available_today": false,
+      "avg_daily_qty": 1,
+      "tags": ["warteg", "katering", "padang", "geprek", "gorengan"]
+    },
+    {
+      "id": "BAWANG_MERAH",
+      "name": "Bawang Merah Brebes",
+      "unit": "kg",
+      "price": 32000,
+      "margin": 4000,
+      "available_today": true,
+      "avg_daily_qty": 2,
+      "tags": ["warteg", "katering", "padang", "soto", "nasi goreng"]
+    },
+    {
+      "id": "PISANG",
+      "name": "Pisang Kepok",
+      "unit": "sisir",
+      "price": 18000,
+      "margin": 4000,
+      "available_today": true,
+      "avg_daily_qty": 3,
+      "tags": ["gorengan", "kue", "jajanan pasar"]
+    }
+  ]

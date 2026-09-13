@@ -26,7 +26,7 @@ export class DontOverhelpEngine {
         const generalReplies = [
             "capek banget ya hari ini? istirahat dulu bro, jangan terlalu dipikir berat.",
             "rehat sek bro, badan sama pikiran butuh jeda. Semangat ya!",
-            "berat ya bro hari ini? rehat sek wae, ngopi santai ben rada enteng."
+            "berat ya bro hari ini? rehat sek wae, rasah dipikir abot"
         ];
         return generalReplies[Math.floor(Math.random() * generalReplies.length)];
     }

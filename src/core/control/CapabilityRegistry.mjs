@@ -234,39 +234,66 @@ export class CapabilityRegistry {
      */
     static formatCard(userRole = 'USER') {
         const isOwner = userRole === 'OWNER';
-        const isAdmin = isOwner || userRole === 'ADMIN';
 
-        let out = `🤖 *SALIM PERSONAL AI OS — MENU & FITUR*\n────────────────────────\n`;
+        let out = `*SALIM PERSONAL AI OS — MENU & FITUR*\n───────────────────────────────\n`;
         if (isOwner) {
-            out += `👑 *Mode: Owner / Co-Pilot Utama*\n\n`;
-            out += `⭐ *FITUR SUPER & CO-PILOT:*
-• *Tanya Jawab & Troubleshooting:* Tanya bebas soal error PC, Windows (BCD, CMD, booting, dll). Jawaban runtut & lengkap.
-• *Pencarian Web & Google Maps:* Ketik "cari tempat ngopi di Semarang" atau "lokasi bengkel" — langsung disertai link peta.
-• *Pengingat Alami:* "Ingatkan besok jam 7 pagi ada meeting" atau "Ingatkan 10 menit lagi angkat jemuran".
-• *Catat Keuangan:* "Catat pengeluaran 25rb makan siang" atau "Catat pemasukan 500rb dari proyek".
-• *Generate Gambar AI (FLUX 4K):* "Gambar pemandangan senja di gunung format 4k".
-• *Kirim Chat Outbound:* \`!chat <Nama/Nomor> <Pesan>\` (Kirim pesan WA lewat nomor bot).
+            out += `Mode: Owner & Master Co-Pilot\n\n`;
+            out += `[ASISTEN PRIBADI & PRODUKTIVITAS]
+- Tanya & Konsultasi: Diskusi ide, problem solving, atau tanya jawab umum.
+- Cari Info & Lokasi: "Cari bengkel terdekat" / "Tempat ngopi di Semarang" (link maps).
+- Pengingat Alami: "Ingatkan meeting besok jam 9" / "10 menit lagi jemuran".
+- Catat Keuangan: "Catat pengeluaran 50rb makan siang" / "Pemasukan 500rb".
+- AI Image Generator: "Gambar pemandangan senja cyberpunk format 4k".
+- Chat Outbound: !chat <Nomor/Nama> <Pesan> (Kirim WA via nomor bot).
 
-🛡️ *PENGATURAN KEAMANAN & WHITELIST:*
-• \`!whitelist\` — Lihat daftar kontak & grup yang diizinkan
-• \`!izinkan <nomor/nama/link>\` — Buka izin chat agar dibalas AI
-• \`!mute <nomor/nama/link>\` — Kunci/diamkan chat agar AI tidak membalas
-• *Web Checklist UI:* Buka http://192.168.0.100:3000 di browser HP/PC untuk ceklis interaktif.
+[BISNIS, TOKO & TRANSAKSI]
+- /shop atau /katalog: Buka katalog produk & transaksi belanja.
+- /wallet atau /saldo: Cek saldo kasir & dana perantara (rekber).
+- /topup: Layanan top-up voucher game, pulsa & token PLN.
+- /admin: Dashboard eksekutif penjualan & ringkasan omzet.
 
-⚙️ *PERINTAH OPERASIONAL SISTEM:*
-• */status* / *status* — Cek kondisi bot, socket & antrean
-• */health* — Diagnosa kesehatan database, socket & AI
-• */memory* / *cek ram* — Cek konsumsi RAM Termux
-• */doctor* — Diagnosa kendala bot otomatis
-• */ping* — Cek responsivitas bot
-• */restart* — Restart bot secara aman
-• */shutdown* — Matikan proses bot
+[MINI-APP & HIBURAN]
+- /game atau /rpg: Mini-game petualangan Salim RPG.
+- /miniapp: Buka antarmuka WebApp / GUI Webview di browser.
 
-_Ketik apa saja langsung atau gunakan perintah di atas!_`;
+[KONTROL & PRIVASI CHAT]
+- !whitelist: Cek daftar kontak & grup yang diizinkan.
+- !izinkan / !mute: Buka izin chat atau diamkan kontak tertentu.
+- /takeover: Ambil alih chat langsung (AI standby/hening).
+- /resume_ai: Aktifkan kembali AI setelah Anda selesai chat.
+
+[STATUS & OPERASIONAL SISTEM]
+- /status: Cek kondisi server, koneksi socket WA & antrean pesan.
+- /doctor: Diagnosa kendala bot otomatis.
+- /memory atau /cek ram: Cek konsumsi memori/RAM.
+- /ping: Cek responsivitas bot.
+- Web Cockpit UI: http://192.168.0.100:3000
+
+───────────────────────────────
+Ketik perintah di atas atau langsung chat santai seperti biasa.`;
         } else {
-            out += `• *Tanya Info:* Tanya info umum atau panduan
-• */ping* — Tes koneksi
-• */help* — Bantuan`;
+            out += `Mode: Layanan Pelanggan & Publik\n\n`;
+            out += `[BELANJA & PESANAN]
+- /shop: Katalog produk & promo belanja.
+- /tracking: Lacak status pengiriman kurir.
+
+[DIGITAL & TOP-UP]
+- /topup: Top-up voucher game, pulsa & token PLN.
+- /wallet: Cek saldo akun & riwayat transaksi.
+
+[HIBURAN & MINI-APP]
+- /game: Mainkan mini-game RPG interaktif.
+- /miniapp: Buka tampilan WebApp.
+
+[BANTUAN & CS]
+- /ticket: Layanan CS & tiket aduan komplain.
+- /why: Transparansi alasan bot merekomendasikan produk.
+- /rules: Syarat ketentuan, garansi & kebijakan privasi.
+- /ping: Tes responsivitas bot.
+
+───────────────────────────────
+Tips: Anda juga bisa langsung chat santai seperti biasa:
+"Mas mau pesan flanel merah ukuran L" atau "Cek ongkir ke Semarang".`;
         }
 
         return out;

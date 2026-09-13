@@ -1,0 +1,168 @@
+{
+  "PEOPLE": {
+    "agus": {
+      "id": "person_agus",
+      "canonicalName": "Agus Salim",
+      "aliases": [
+        "agus",
+        "mas agus",
+        "bos",
+        "owner"
+      ],
+      "role": "Principal Architect & System Owner",
+      "relationship": "SELF_OWNER",
+      "trustScore": 1,
+      "communicationStyle": "Pragmatic, direct, Semarangan casual, anti-corporate fluff",
+      "activeProjects": [
+        "proj_arka",
+        "proj_ev_tuner",
+        "proj_web"
+      ],
+      "notes": "Creator and owner of ARKA Personal AI OS.",
+      "updatedAt": 1788971176475
+    },
+    "dito": {
+      "id": "person_dito",
+      "canonicalName": "Dito",
+      "aliases": [
+        "dito",
+        "mas dito"
+      ],
+      "role": "Close Friend & Collaborator",
+      "relationship": "CLOSE_FRIEND",
+      "trustScore": 0.9,
+      "communicationStyle": "Casual, santai, tech banter",
+      "activeProjects": [
+        "proj_ev_tuner"
+      ],
+      "notes": "Collaborates on technical projects & EV conversions.",
+      "updatedAt": 1788971176475
+    }
+  },
+  "PROJECTS": {
+    "arka": {
+      "id": "proj_arka",
+      "name": "ARKA Personal AI OS",
+      "codeName": "wa-bot-super",
+      "repo": "https://github.com/genjusniper/wa-bot-super",
+      "status": "ACTIVE_DEVELOPMENT",
+      "techStack": [
+        "Node.js (ESM)",
+        "Baileys",
+        "SQLite",
+        "PM2",
+        "Termux Android"
+      ],
+      "activeProblems": [
+        "Multimodal edge-cases",
+        "Context compression",
+        "Model routing optimization"
+      ],
+      "recentDecisions": [
+        "Adopt Decoupled Intelligence & Personality Architecture",
+        "Implement Global Control Plane"
+      ],
+      "assignedPeople": [
+        "person_agus"
+      ],
+      "updatedAt": 1788971176475
+    },
+    "ev_tuner": {
+      "id": "proj_ev_tuner",
+      "name": "EV Tuner & Telemetry",
+      "codeName": "ev-tuner",
+      "repo": "local-workspace",
+      "status": "PLANNING",
+      "techStack": [
+        "C++",
+        "CAN-Bus",
+        "ESP32",
+        "Python Telemetry"
+      ],
+      "activeProblems": [
+        "Battery management system (BMS) communication protocol"
+      ],
+      "recentDecisions": [
+        "Use ESP32-S3 for CAN-Bus sniffing"
+      ],
+      "assignedPeople": [
+        "person_agus",
+        "person_dito"
+      ],
+      "updatedAt": 1788971176475
+    },
+    "website": {
+      "id": "proj_web",
+      "name": "Personal & Portfolio Website",
+      "codeName": "personal-web",
+      "repo": "github.com/genjusniper/web",
+      "status": "MAINTENANCE",
+      "techStack": [
+        "Next.js",
+        "TailwindCSS"
+      ],
+      "activeProblems": [],
+      "recentDecisions": [],
+      "assignedPeople": [
+        "person_agus"
+      ],
+      "updatedAt": 1788971176475
+    }
+  },
+  "GOALS": {
+    "goal_arka_os": {
+      "id": "goal_arka_os",
+      "title": "Build ARKA OS v1 - The Universal Personal AI Agent",
+      "projectRef": "proj_arka",
+      "status": "IN_PROGRESS",
+      "priority": "HIGH",
+      "milestones": [
+        {
+          "name": "Phase 27 Universal WA Fabric",
+          "done": true
+        },
+        {
+          "name": "Phase 28 Multimodal Fabric",
+          "done": true
+        },
+        {
+          "name": "Phase 28A Global Control Plane",
+          "done": true
+        },
+        {
+          "name": "Phase 29 Persistent World Model",
+          "done": true
+        },
+        {
+          "name": "Phase 60 ARKA OS v1 Master Release",
+          "done": false
+        }
+      ],
+      "createdAt": 1788971176475,
+      "updatedAt": 1788971176475
+    }
+  },
+  "COMMITMENTS": {
+    "com_check_ev": {
+      "id": "com_check_ev",
+      "from": "person_agus",
+      "to": "person_dito",
+      "statement": "Cek protokol CAN-Bus controller minggu depan",
+      "temporalRef": "NEXT_WEEK",
+      "status": "PENDING",
+      "createdAt": 1788971176475
+    }
+  },
+  "PREFERENCES": {
+    "verbosity": 0.35,
+    "humorLevel": 0.4,
+    "directness": 0.9,
+    "defaultModelSpeed": "FAST",
+    "quietHours": {
+      "enabled": true,
+      "start": "23:00",
+      "end": "06:00"
+    },
+    "safeModeDefault": false
+  }
+}

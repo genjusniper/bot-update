@@ -170,6 +170,18 @@ export class PersonalAIOS {
             return null;
         }
 
+        // [NEW] PHASE 8: ORDER FULFILLMENT INTERCEPTOR (Placed AFTER Gatekeeper to preserve safety & group rules)
+        try {
+            const { OrderFulfillmentOS } = await import('../sales/OrderFulfillmentOS.mjs');
+            const orderReply = await OrderFulfillmentOS.processIncomingMessage(chatId, inputSnippet, pushName);
+            if (orderReply) {
+                await MessageLifecycleTracker.logPhase(lifecycleId, 'ORDER_FULFILLED_AUTO', { action: 'SENT_INVOICE' });
+                return { text: orderReply }; // Bypass AI ngobrol, langsung kirim rekapan
+            }
+        } catch (e) {
+            console.error('[PersonalAIOS] ❌ Gagal mengeksekusi OrderFulfillmentOS:', e.message);
+        }
+
         // 16. LOAD & CONSOLIDATE MEMORY (HARD ISOLATED BY CHATID)
         let memData = await loadMemory(chatId);
         if (!memData.working_memory) memData.working_memory = [];

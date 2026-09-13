@@ -9,7 +9,7 @@ export class ChatBurstAggregator {
         this.MAX_BURST_ITEMS = 6; // Auto-flush immediately if burst > 6 items
     }
 
-    push(chatId, { eventId, text, rawKey, rawMessage, fromMe, pushName, imageBase64, audioBase64, mimeType, quotedContext, ownerJid }) {
+    push(chatId, { eventId, text, rawKey, rawMessage, fromMe, pushName, imageBase64, audioBase64, docBase64, docFileName, mimeType, quotedContext, ownerJid }) {
         let entry = this.buffers.get(chatId);
 
         if (!entry) {
@@ -49,6 +49,17 @@ export class ChatBurstAggregator {
         // Accumulate ALL images from all burst messages
         if (imageBase64) {
             entry.images.push({ base64: imageBase64, mimeType: mimeType || 'image/jpeg' });
+            entry.itemCount++;
+        }
+
+        // Accumulate PDF documents into images array (Gemini inline_data supports application/pdf)
+        if (docBase64) {
+            entry.images.push({
+                base64: docBase64,
+                mimeType: mimeType || 'application/pdf',
+                fileName: docFileName || 'document.pdf',
+                isDocument: true
+            });
             entry.itemCount++;
         }
 

@@ -39,8 +39,69 @@ import { PersonalLifeGraphEngine } from './src/cognitive/PersonalLifeGraphEngine
 import { SituationAwarenessEngine } from './src/cognitive/SituationAwarenessEngine.mjs';
 import { PatternWatcherAndStopMeEngine } from './src/cognitive/PatternWatcherAndStopMeEngine.mjs';
 import { MissionDAGTracker } from './src/cognitive/MissionDAGTracker.mjs';
+import { VoiceSynthesizer } from './src/multimodal/VoiceSynthesizer.mjs';
+import { NaturalReminderEngine } from './src/os/reminders/NaturalReminderEngine.mjs';
+import { ShiftWorkTracker } from './src/os/shift/ShiftWorkTracker.mjs';
+import { GroupChatSummarizer } from './src/os/intel/GroupChatSummarizer.mjs';
+import { DailyLifeBriefing } from './src/os/briefing/DailyLifeBriefing.mjs';
+import { WisdomSparringEngine } from './src/os/growth/WisdomSparringEngine.mjs';
+import { MountainCopilot } from './src/os/outdoor/MountainCopilot.mjs';
+import { SmartBudgetGuard } from './src/os/finance/SmartBudgetGuard.mjs';
+import { TermuxDeviceBridge } from './src/os/device/TermuxDeviceBridge.mjs';
+import { LiveWebSearch } from './src/os/search/LiveWebSearch.mjs';
+import { AggressiveAlarmEngine } from './src/os/reminders/AggressiveAlarmEngine.mjs';
+import { AntiScamGuard } from './src/security/AntiScamGuard.mjs';
+import { PeopleMemoryCRM } from './src/os/crm/PeopleMemoryCRM.mjs';
+import { ReceiptScannerOCR } from './src/os/finance/ReceiptScannerOCR.mjs';
+import { TwoWayVoiceDirector } from './src/os/voice/TwoWayVoiceDirector.mjs';
+import { HabitTrackerEngine } from './src/os/habits/HabitTrackerEngine.mjs';
+import { PersonalJournalEngine } from './src/os/journal/PersonalJournalEngine.mjs';
+import { SplitBillCalculator } from './src/os/finance/SplitBillCalculator.mjs';
+import { EmailSentinelEngine } from './src/os/bridges/EmailSentinelEngine.mjs';
+import { SteamRadarEngine } from './src/os/bridges/SteamRadarEngine.mjs';
+import { CourierTrackerEngine } from './src/os/bridges/CourierTrackerEngine.mjs';
+import { TelegramMirrorGateway } from './src/os/bridges/TelegramMirrorGateway.mjs';
+import { DeviceHardwareSentinel } from './src/os/utility/DeviceHardwareSentinel.mjs';
+import { UniversalMediaDownloader } from './src/os/utility/UniversalMediaDownloader.mjs';
+import { WeatherOutdoorRadar } from './src/os/utility/WeatherOutdoorRadar.mjs';
+import { TenantContextIsolation } from './src/platform/tenant/TenantContextIsolation.mjs';
+import { ActionPermissionEngine } from './src/platform/policy/ActionPermissionEngine.mjs';
+import { DecisionAuditTrail } from './src/platform/audit/DecisionAuditTrail.mjs';
+import { UsageMeteringBilling } from './src/platform/billing/UsageMeteringBilling.mjs';
+import { UniversalRequestEngine } from './src/platform/core/UniversalRequestEngine.mjs';
+import { ConversationOpportunityDetector } from './src/os/growth/ConversationOpportunityDetector.mjs';
+import { DontChaseEngine } from './src/os/growth/DontChaseEngine.mjs';
+import { HumanHandoffEngine } from './src/os/growth/HumanHandoffEngine.mjs';
+import { CollaborationDetector } from './src/os/growth/CollaborationDetector.mjs';
+import { ObjectionHandler } from './src/os/growth/ObjectionHandler.mjs';
+import { CustomSolutionEngine } from './src/os/growth/CustomSolutionEngine.mjs';
+import { LeadQualificationEngine } from './src/os/growth/LeadQualificationEngine.mjs';
+import { PromptInjectionFirewall } from './src/security/PromptInjectionFirewall.mjs';
+import { AgentPermissionFirewall } from './src/security/AgentPermissionFirewall.mjs';
+import { ConversationIntelligenceEngine } from './src/os/intelligence/ConversationIntelligenceEngine.mjs';
+import { NextBestActionEngine } from './src/os/intelligence/NextBestActionEngine.mjs';
+import { TruthEvidenceEngine } from './src/os/truth/TruthEvidenceEngine.mjs';
+import { ConversationEvaluationEngine } from './src/os/evaluation/ConversationEvaluationEngine.mjs';
+import { ConversationMemoryGraph } from './src/memory/ConversationMemoryGraph.mjs';
+import { ConversionIntelligenceEngine } from './src/os/conversion/ConversionIntelligenceEngine.mjs';
+import { LeadDNAEngine } from './src/os/conversion/LeadDNAEngine.mjs';
+import { AIObservabilityEngine } from './src/os/observability/AIObservabilityEngine.mjs';
+import { CostIntelligenceEngine } from './src/os/cost/CostIntelligenceEngine.mjs';
+import { PersonalizationEngine } from './src/os/personalization/PersonalizationEngine.mjs';
+import { NaturalConversationEngine } from './src/os/natural/NaturalConversationEngine.mjs';
+import { PersonalityGovernor } from './src/os/personality/PersonalityGovernor.mjs';
+import { LearningLoopEngine } from './src/os/learning/LearningLoopEngine.mjs';
+import { BusinessOperatingSystemOrchestrator } from './src/os/core/BusinessOperatingSystemOrchestrator.mjs';
 
 const OWNER_LID = '236322690191595@lid';
+
+// Global Business OS Singletons
+const globalMemoryGraph = new ConversationMemoryGraph();
+const globalConversionIntelligence = new ConversionIntelligenceEngine();
+const globalObservability = new AIObservabilityEngine();
+const globalCostIntelligence = new CostIntelligenceEngine();
+const globalLearningLoop = new LearningLoopEngine();
+const businessOS = new BusinessOperatingSystemOrchestrator();
 
 console.log('=============================================');
 console.log('🤖 UNIVERSAL PERSONAL CO-PILOT OS (V16.0 — COGNITIVE SALIM)');
@@ -186,7 +247,6 @@ async function start() {
                 let syncCount = 0;
                 for (const [gid, gdata] of Object.entries(groups)) {
                     const subject = gdata.subject || 'Grup WhatsApp';
-                    groupSubjectCache.set(gid, subject);
                     await ContactPolicyEngine.recordSeen(gid, subject, true);
                     syncCount++;
                 }
@@ -206,7 +266,7 @@ async function start() {
         const chatId = unifiedMsg?.chatId || rawKey?.remoteJid || '';
 
         // Extract full incoming text including image/video captions
-        const incomingText = (
+        let incomingText = (
             unifiedMsg?.text ||
             rawMessage?.conversation ||
             rawMessage?.extendedTextMessage?.text ||
@@ -228,6 +288,51 @@ async function start() {
         // 1. Convert to CanonicalMessage & Persist immediately (Persist-First: Zero Data Loss)
         const canonicalMsg = CanonicalMessage.fromBaileys(data, { ownerLid: OWNER_LID, ownerPhone });
         PersistFirstIngress.persist(canonicalMsg);
+
+        // 1.5. Anti-Scam & Malware APK Shield (Auto scan documents & phishing lures)
+        try {
+            const scamCheck = AntiScamGuard.inspect({ message: rawMessage }, canonicalMsg.senderId, chatId, incomingText);
+            if (scamCheck.isScam) {
+                console.warn(`[AntiScamGuard] 🚨 Detected ${scamCheck.threatType} (${scamCheck.modus}) from ${canonicalMsg.senderId} in ${chatId}`);
+                if (waGateway.sock) {
+                    await waGateway.sock.sendMessage(chatId, { text: scamCheck.warningText }).catch(() => {});
+                    if (chatId.endsWith('@g.us')) {
+                        await waGateway.sock.sendMessage(OWNER_LID, {
+                            text: `🚨 *SECURITY DISPATCH: POTENSI MALWARE DI GRUP!*\n━━━━━━━━━━━━━━━━━━\n👥 *Grup:* \`${chatId}\`\n👤 *Pengirim:* \`${canonicalMsg.senderId}\`\n🎯 *Modus:* *${scamCheck.modus}*\n📁 *File:* \`${scamCheck.fileName || '-'}\`\n━━━━━━━━━━━━━━━━━━\n_Peringatan keamanan telah dikirim ke grup._`
+                        }).catch(() => {});
+                    }
+                }
+            }
+        } catch (scamErr) {
+            console.warn('[AntiScamGuard] ⚠️ Scan error:', scamErr.message);
+        }
+
+        // 1.6. Stop Password Interceptor for Aggressive Alarm
+        try {
+            const stopAlarm = AggressiveAlarmEngine.checkStopPassword(incomingText, chatId);
+            if (stopAlarm) {
+                console.log(`[AggressiveAlarm] 🔕 Alarm stopped by ${canonicalMsg.senderId}`);
+                if (waGateway.sock) {
+                    await waGateway.sock.sendMessage(chatId, { text: stopAlarm.message }).catch(() => {});
+                    if (stopAlarm.wasFiring) {
+                        try {
+                            const cheerBuf = await VoiceSynthesizer.synthesizeVoiceNote("Mantap Bos Agus Salim, alarm sudah dimatikan total. Segera cuci muka dulu biar segar dan melek ya! Semangat menjalani hari!");
+                            if (cheerBuf) {
+                                await waGateway.sock.sendMessage(chatId, {
+                                    audio: cheerBuf,
+                                    mimetype: 'audio/mp4',
+                                    ptt: true
+                                });
+                            }
+                        } catch (vnErr) {}
+                    }
+                }
+                PersistFirstIngress.markCompleted(canonicalMsg.id);
+                return;
+            }
+        } catch (alarmErr) {
+            console.warn('[AggressiveAlarm] ⚠️ Stop check error:', alarmErr.message);
+        }
 
         // 2. Global Command & Control Plane (Deterministic Operational System Actions)
         const cmdDetect = GlobalCommandDetector.detect(canonicalMsg.text || incomingText);
@@ -253,11 +358,15 @@ async function start() {
             return;
         }
 
-        // If the owner typed manually to ANOTHER person -> Record Human Takeover & NEVER let AI reply
+        // If the owner typed manually to ANOTHER person/group -> Record Human Takeover UNLESS explicitly summoning bot
         if (fromMe && !isSelfChat) {
-            OwnerPresenceEngine.recordOwnerMessage(chatId);
-            console.log(`[OwnerPresence] 👤 Owner typed manually to ${chatId}. AI standing down.`);
-            return;
+            const isExplicitBotCall = /^(?:!ai|!tanya|\/ai|\/tanya)\b/i.test(incomingText) || /\b(salim|arka)\b/i.test(incomingText);
+            if (!isExplicitBotCall) {
+                OwnerPresenceEngine.recordOwnerMessage(chatId);
+                console.log(`[OwnerPresence] 👤 Owner typed manually to ${chatId}. AI standing down.`);
+                return;
+            }
+            console.log(`[OwnerPresence] 👑 Owner explicitly summoned bot in ${chatId}: "${incomingText.slice(0, 40)}"`);
         }
 
         // ====================================================
@@ -265,7 +374,11 @@ async function start() {
         // ====================================================
         const isOwner = Boolean(chatId === OWNER_LID || isSelfChat || chatId.includes('236322690191595'));
         const lcmd = incomingText.toLowerCase();
-        if (isOwner && (lcmd.startsWith('/leads') || lcmd.startsWith('/approve') || lcmd.startsWith('/pdf') || lcmd.startsWith('/portfolio') || lcmd.includes('kirim pdf') || lcmd.includes('kirimkan ke waku') || lcmd.includes('minta pdf'))) {
+        if (isOwner && (
+            lcmd.startsWith('/leads') || lcmd.startsWith('!leads') || lcmd.startsWith('!caripelanggan') || lcmd.startsWith('cari pelanggan') ||
+            lcmd.startsWith('/approve') || lcmd.startsWith('!approve') ||
+            lcmd.startsWith('/pdf') || lcmd.startsWith('/portfolio') || lcmd.includes('kirim pdf') || lcmd.includes('kirimkan ke waku') || lcmd.includes('minta pdf')
+        )) {
             console.log(`[SalesAdmin] 🎯 Intercepted Admin Command: "${incomingText}" from ${chatId}`);
             try {
                 const { SalesIntegrator } = await import('./SalesIntegrator.mjs');
@@ -349,6 +462,439 @@ async function start() {
         }
 
         // ====================================================
+        // VOICE SYNTHESIS DIRECT COMMAND (!vn <teks>)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!vn ') || lcmd.startsWith('/vn '))) {
+            const textToSpeak = incomingText.replace(/^[!/](?:vn)\s+/i, '').trim();
+            if (textToSpeak && waGateway.sock) {
+                try {
+                    const audioBuffer = await VoiceSynthesizer.synthesize(textToSpeak, 'id');
+                    await waGateway.sock.sendMessage(chatId, {
+                        audio: audioBuffer,
+                        mimetype: 'audio/mp4',
+                        ptt: true
+                    });
+                    console.log(`[WA Voice] 🎙️ Sent Voice Note to ${chatId} (${(audioBuffer.length/1024).toFixed(1)} KB)`);
+                } catch (vErr) {
+                    console.error('[WA Voice] ❌ Failed to synthesize voice note:', vErr.message);
+                    await waGateway.sock.sendMessage(chatId, { text: `❌ Gagal membuat pesan suara: ${vErr.message}` });
+                }
+            }
+            return;
+        }
+
+        // ====================================================
+        // NATURAL LANGUAGE REMINDER & ALARM ENGINE
+        // (!ingatkan, "ingatkan aku...", !jadwal, !hapusjadwal)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!jadwal') || lcmd.startsWith('!reminders') || lcmd.startsWith('/jadwal'))) {
+            const activeList = NaturalReminderEngine.listActiveReminders(chatId);
+            if (!activeList || activeList.length === 0) {
+                await waGateway.sock?.sendMessage(chatId, {
+                    text: '📅 *DAFTAR PENGINGAT AKTIF*\n━━━━━━━━━━━━━━━━━━\nBelum ada jadwal pengingat yang aktif saat ini.\n\n_Contoh membuat pengingat baru:_\n`ingatkan aku 10 menit lagi angkat jemuran`\n`ingatkan jam 15:30 nelpon Hanif`\n`ingatkan besok jam 04:30 bangun pagi`'
+                });
+            } else {
+                let msg = `📅 *DAFTAR PENGINGAT AKTIF (${activeList.length})*\n━━━━━━━━━━━━━━━━━━\n`;
+                for (const item of activeList) {
+                    const timeStr = new Date(item.target_timestamp).toLocaleTimeString('id-ID', {
+                        hour: '2-digit', minute: '2-digit', hour12: false
+                    }) + ' WIB';
+                    const dateStr = new Date(item.target_timestamp).toLocaleDateString('id-ID', {
+                        day: 'numeric', month: 'short'
+                    });
+                    msg += `🔹 *[#${item.id}]* ${item.reminder_text}\n   ⏰ ${dateStr} • ${timeStr}\n\n`;
+                }
+                msg += `_Ketik \`!hapusjadwal <ID>\` untuk membatalkan pengingat._`;
+                await waGateway.sock?.sendMessage(chatId, { text: msg });
+            }
+            return;
+        }
+
+        if (isOwner && (lcmd.startsWith('!hapusjadwal ') || lcmd.startsWith('!cancelreminder '))) {
+            const targetId = parseInt(incomingText.replace(/^[!/](?:hapusjadwal|cancelreminder)\s+/i, '').trim(), 10);
+            if (!targetId) {
+                await waGateway.sock?.sendMessage(chatId, { text: '⚠️ Gunakan format: `!hapusjadwal <ID>` (contoh: `!hapusjadwal 1`)' });
+                return;
+            }
+            const ok = NaturalReminderEngine.cancelReminder(targetId, chatId);
+            if (ok) {
+                await waGateway.sock?.sendMessage(chatId, { text: `✅ Berhasil membatalkan pengingat *#${targetId}*.` });
+            } else {
+                await waGateway.sock?.sendMessage(chatId, { text: `❌ Pengingat *#${targetId}* tidak ditemukan atau sudah selesai.` });
+            }
+            return;
+        }
+
+        const reminderParsed = isOwner ? NaturalReminderEngine.parseNaturalReminder(incomingText) : null;
+        if (reminderParsed) {
+            const newReminder = NaturalReminderEngine.addReminder({
+                chatId,
+                senderId: canonicalMsg.senderId,
+                text: reminderParsed.text,
+                targetTimestamp: reminderParsed.targetTimestamp
+            });
+            const confirmMsg = 
+                `✅ *PENGINGAT BERHASIL DIJADWALKAN!*\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `📌 *Agenda:* ${reminderParsed.text}\n` +
+                `🕒 *Waktu:* ${reminderParsed.formattedTime}\n` +
+                `🆔 *ID Jadwal:* #${newReminder.id}\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `_Salim OS akan mengirim notifikasi & pesan suara tepat waktu!_`;
+            
+            await waGateway.sock?.sendMessage(chatId, { text: confirmMsg });
+            console.log(`[ReminderEngine] 📌 Scheduled reminder #${newReminder.id} for ${chatId}: "${reminderParsed.text}" at ${reminderParsed.formattedTime}`);
+            return;
+        }
+
+        // ====================================================
+        // PROACTIVE DAILY BRIEFING & RECAP (!briefing, !pagi, !recap, !malam)
+        // ====================================================
+        if (isOwner && (lcmd === '!briefing' || lcmd === '!pagi' || lcmd === '/briefing')) {
+            await DailyLifeBriefing.dispatchMorningBriefing(chatId);
+            return;
+        }
+
+        if (isOwner && (lcmd === '!recap' || lcmd === '!malam' || lcmd === '/recap')) {
+            await DailyLifeBriefing.dispatchNightRecap(chatId);
+            return;
+        }
+
+        // ====================================================
+        // SHIFT WORK & TUKAR SHIFT TRACKER
+        // (!shift, "besok shift apa", "besok aku shift pagi", "tukar shift sama...")
+        // ====================================================
+        const shiftParsed = isOwner ? ShiftWorkTracker.parseNaturalShiftInput(incomingText) : null;
+        if (shiftParsed) {
+            if (shiftParsed.action === 'QUERY') {
+                const scheduleMsg = ShiftWorkTracker.formatScheduleMessage(7);
+                await waGateway.sock?.sendMessage(chatId, { text: scheduleMsg });
+                return;
+            } else if (shiftParsed.action === 'SET') {
+                const resp = `✅ *JADWAL SHIFT BERHASIL DICATAT!*\n` +
+                             `━━━━━━━━━━━━━━━━━━\n` +
+                             `📅 *Hari:* ${shiftParsed.targetDay} (${shiftParsed.dateStr})\n` +
+                             `💼 *Shift:* *${shiftParsed.shiftType}*` +
+                             (shiftParsed.swappedWith ? ` _(Tukar dg ${shiftParsed.swappedWith})_` : '') + `\n` +
+                             `━━━━━━━━━━━━━━━━━━\n` +
+                             `_Salim OS akan menyesuaikan briefing & alarm bangun tidur otomatis._`;
+                await waGateway.sock?.sendMessage(chatId, { text: resp });
+                return;
+            } else if (shiftParsed.action === 'BATCH_SET') {
+                await waGateway.sock?.sendMessage(chatId, { text: `✅ Berhasil mencatat *${shiftParsed.count} jadwal shift* mingguan Bos Agus!` });
+                return;
+            }
+        }
+
+        // ====================================================
+        // GROUP CHAT INTEL & SUMMARIZER
+        // (!rangkum <nama grup>, "rangkum grup...")
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!rangkum ') || lcmd.startsWith('/rangkum ') || lcmd.startsWith('rangkum grup '))) {
+            const groupQuery = incomingText.replace(/^(?:[!/]?rangkum\s+(?:grup\s+)?)/i, '').trim();
+            if (!groupQuery) {
+                await waGateway.sock?.sendMessage(chatId, { text: '⚠️ Format: `!rangkum <nama/id grup>`\n\nContoh:\n`!rangkum PELETBENTO`\n`!rangkum GeForteX`' });
+                return;
+            }
+            await waGateway.sock?.sendMessage(chatId, { text: `🔍 Sedang memindai obrolan grup *"${groupQuery}"* dan menyusun ringkasan intelijen... (tunggu sebentar ya Bos)` }).catch(()=>{});
+            const summary = await GroupChatSummarizer.summarize({ queryOrChatId: groupQuery, waGateway, hoursAgo: 8, maxMessages: 80 });
+            await waGateway.sock?.sendMessage(chatId, { text: summary });
+            return;
+        }
+
+        // ====================================================
+        // WISDOM & DEEP TALK SPARRING (!curhat, !evaluasi)
+        // ====================================================
+        if (isOwner && (lcmd === '!curhat' || lcmd === '!evaluasi' || lcmd.startsWith('!curhat ') || lcmd.startsWith('!evaluasi '))) {
+            const promptText = WisdomSparringEngine.formatDeepTalkPrompt();
+            await waGateway.sock?.sendMessage(chatId, { text: promptText });
+            return;
+        }
+
+        // ====================================================
+        // MOUNTAIN & OUTDOOR COPILOT (!cuaca, !packing, !sopgunung)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!cuaca ') || lcmd.startsWith('/cuaca ') || lcmd.startsWith('!gunung '))) {
+            const mQuery = incomingText.replace(/^[!/](?:cuaca|gunung)\s+/i, '').trim();
+            await waGateway.sock?.sendMessage(chatId, { text: `🛰️ Mengambil data satelit cuaca puncak untuk *"${mQuery}"*...` }).catch(()=>{});
+            const weatherMsg = await MountainCopilot.getSummitWeather(mQuery);
+            await waGateway.sock?.sendMessage(chatId, { text: weatherMsg });
+            return;
+        }
+
+        if (isOwner && (lcmd.startsWith('!packing') || lcmd.startsWith('/packing'))) {
+            const parts = incomingText.trim().split(/\s+/);
+            const days = parts[1] || 2;
+            const team = parts[2] || 4;
+            const packMsg = MountainCopilot.getPackingChecklist(days, team);
+            await waGateway.sock?.sendMessage(chatId, { text: packMsg });
+            return;
+        }
+
+        if (isOwner && (lcmd === '!sopgunung' || lcmd === '!daruratgunung' || lcmd === '/sopgunung')) {
+            const sopMsg = MountainCopilot.getEmergencySOP();
+            await waGateway.sock?.sendMessage(chatId, { text: sopMsg });
+            return;
+        }
+
+        // ====================================================
+        // SMART EXPENSE BUDGET GUARD (!pengeluaran, natural logging)
+        // ====================================================
+        const expenseParsed = isOwner ? SmartBudgetGuard.parseNaturalExpense(incomingText) : null;
+        if (expenseParsed) {
+            if (expenseParsed.action === 'QUERY') {
+                const summaryMsg = SmartBudgetGuard.formatSummary(chatId);
+                await waGateway.sock?.sendMessage(chatId, { text: summaryMsg });
+                return;
+            } else if (expenseParsed.action === 'ADD') {
+                const recorded = SmartBudgetGuard.recordExpense({
+                    chatId,
+                    amount: expenseParsed.amount,
+                    description: expenseParsed.description
+                });
+                const weekly = SmartBudgetGuard.getWeeklyStats(chatId);
+                let addResp = `✅ *PENGELUARAN DICATAT!*\n` +
+                              `━━━━━━━━━━━━━━━━━━\n` +
+                              `📌 *Item:* ${recorded.description}\n` +
+                              `💵 *Nominal:* Rp ${recorded.amount.toLocaleString('id-ID')}\n` +
+                              `🏷️ *Kategori:* ${recorded.category}\n` +
+                              `📊 *Total Minggu Ini:* Rp ${weekly.total.toLocaleString('id-ID')}\n` +
+                              `━━━━━━━━━━━━━━━━━━\n`;
+                if (weekly.total >= SmartBudgetGuard.DEFAULT_WEEKLY_BUDGET * 0.8) {
+                    addResp += `⚠️ *Catatan:* Pengeluaran minggu ini sudah mendekati batas budget! Rem dikit ya Bos.`;
+                } else {
+                    addResp += `_Ketik \`!pengeluaran\` untuk melihat rekap saldo & jatah mingguan._`;
+                }
+                await waGateway.sock?.sendMessage(chatId, { text: addResp });
+                return;
+            }
+        }
+
+        // ====================================================
+        // TERMUX SYSTEM HEALTH MONITOR (!status, !sistem, !clearmem)
+        // ====================================================
+        if (isOwner && (lcmd === '!status' || lcmd === '!sistem' || lcmd === '/status' || lcmd === '!hp' || lcmd === '!battery' || lcmd === '!hardware')) {
+            const statusMsg = await DeviceHardwareSentinel.getDiagnosticReport();
+            await waGateway.sock?.sendMessage(chatId, { text: statusMsg });
+            return;
+        }
+
+        if (isOwner && (lcmd === '!clearmem' || lcmd === '/clearmem')) {
+            const gcRes = TermuxDeviceBridge.cleanMemory();
+            await waGateway.sock?.sendMessage(chatId, {
+                text: `🧹 *PEMBERSIHAN MEMORI RAM BERHASIL*\n━━━━━━━━━━━━━━━━━━\n` +
+                      `• Sebelum: ${gcRes.before} MB\n` +
+                      `• Sesudah: ${gcRes.after} MB\n` +
+                      `_Sistem kembali ringan & segar!_`
+            });
+            return;
+        }
+
+        // ====================================================
+        // AGGRESSIVE ALARM ENGINE (!alarmgalak, "pasang alarm galak...")
+        // ====================================================
+        if (isOwner && (lcmd === '!alarmgalak' || lcmd === '!alarmgalak list' || lcmd === '/alarmgalak list')) {
+            const list = AggressiveAlarmEngine.getActiveAlarms();
+            if (list.length === 0) {
+                await waGateway.sock?.sendMessage(chatId, { text: '⏰ Tidak ada alarm galak yang sedang aktif.' });
+            } else {
+                let msg = `🚨 *DAFTAR ALARM GALAK AKTIF (${list.length})*\n━━━━━━━━━━━━━━━━━━\n`;
+                list.forEach((a, i) => {
+                    const timeStr = new Date(a.target_timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+                    msg += `${i + 1}. *${timeStr}* - "${a.alarm_text}" [Status: ${a.status}]\n`;
+                });
+                msg += `\n_Ketik "aku udah bangun" atau "stop alarm" untuk mematikan._`;
+                await waGateway.sock?.sendMessage(chatId, { text: msg });
+            }
+            return;
+        }
+
+        const alarmParsed = isOwner ? AggressiveAlarmEngine.parseAlarmRequest(incomingText) : null;
+        if (alarmParsed) {
+            const newId = AggressiveAlarmEngine.createAlarm(chatId, alarmParsed.targetTimestamp, alarmParsed.alarmText);
+            const confirmMsg =
+                `🚨 *ALARM GALAK BERHASIL DISET!* 🚨\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `⏰ *Waktu Target:* *${alarmParsed.formattedTime}*\n` +
+                `📝 *Agenda:* *${alarmParsed.alarmText}*\n` +
+                `🆔 *ID Alarm:* #${newId}\n` +
+                `━━━━━━━━━━━━━━━━━━\n` +
+                `⚠️ *PERINGATAN:* Saat waktu tiba, alarm ini AKAN BERBUNYI TERUS SETIAP 60 DETIK (Teks + Pesan Suara VN) sampai Bos membalas kata sandi *"aku udah bangun"*!\n` +
+                `_Anti-kesiangan Salim OS aktif._`;
+            await waGateway.sock?.sendMessage(chatId, { text: confirmMsg });
+            return;
+        }
+
+        // ====================================================
+        // LIVE WEB SEARCH ENGINE (!cari <kueri>, !google <kueri>)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!cari ') || lcmd.startsWith('/cari ') || lcmd.startsWith('!google '))) {
+            const query = incomingText.replace(/^[!/](?:cari|google)\s+/i, '').trim();
+            if (!query) {
+                await waGateway.sock?.sendMessage(chatId, { text: '❓ Masukkan kata kunci pencarian. Contoh: `!cari harga emas hari ini`' });
+                return;
+            }
+            await waGateway.sock?.sendMessage(chatId, { text: `🌐 Sedang menjelajahi web secara real-time untuk *"${query}"*...` }).catch(()=>{});
+            const searchSummary = await LiveWebSearch.search(query);
+            await waGateway.sock?.sendMessage(chatId, { text: searchSummary });
+            return;
+        }
+
+        // ====================================================
+        // PEOPLE MEMORY CRM (Buku Catatan Teman & Info Kontak)
+        // (!crm, "catat tentang <nama>: <info>", "info <nama>", "siapa yang punya...")
+        // ====================================================
+        const crmResponse = isOwner ? PeopleMemoryCRM.handleNaturalInput(incomingText) : null;
+        if (crmResponse) {
+            await waGateway.sock?.sendMessage(chatId, { text: crmResponse });
+            return;
+        }
+
+        // ====================================================
+        // SMART SPLIT BILL CALCULATOR (!splitbill, "hitung patungan...")
+        // ====================================================
+        if (isOwner) {
+            const splitBillResp = SplitBillCalculator.handleCommand(incomingText);
+            if (splitBillResp) {
+                await waGateway.sock?.sendMessage(chatId, { text: splitBillResp });
+                return;
+            }
+        }
+
+        // ====================================================
+        // HABIT TRACKER & STREAK COUNTER (!habit, "sudah push up 30x", etc.)
+        // ====================================================
+        if (isOwner) {
+            const habitParsed = HabitTrackerEngine.parseNaturalHabit(incomingText);
+            if (habitParsed) {
+                if (habitParsed.action === 'LIST') {
+                    const listText = HabitTrackerEngine.formatHabitList(chatId);
+                    await waGateway.sock?.sendMessage(chatId, { text: listText });
+                    return;
+                } else if (habitParsed.action === 'LOG' && habitParsed.habitName) {
+                    const logRes = HabitTrackerEngine.logHabit(chatId, habitParsed.habitName, habitParsed.notes);
+                    await waGateway.sock?.sendMessage(chatId, { text: logRes });
+                    return;
+                } else if (habitParsed.action === 'ADD' && habitParsed.habitName) {
+                    const addRes = HabitTrackerEngine.logHabit(chatId, habitParsed.habitName, 'Habit baru');
+                    await waGateway.sock?.sendMessage(chatId, { text: addRes });
+                    return;
+                }
+            }
+        }
+
+        // ====================================================
+        // PERSONAL JOURNAL & PSYCHOLOGICAL REFLECTION (!jurnal, "catat jurnal: ...")
+        // ====================================================
+        if (isOwner) {
+            const journalParsed = PersonalJournalEngine.parseNaturalJournal(incomingText);
+            if (journalParsed) {
+                if (journalParsed.action === 'RECAP') {
+                    const recapText = PersonalJournalEngine.getRecentEntries(chatId);
+                    await waGateway.sock?.sendMessage(chatId, { text: recapText });
+                    return;
+                } else if (journalParsed.action === 'RECORD' && journalParsed.content) {
+                    await waGateway.sock?.sendMessage(chatId, { text: '✍️ Menganalisis refleksi dan menyimpannya ke brankas memori...' }).catch(()=>{});
+                    const journalRes = await PersonalJournalEngine.recordEntry(chatId, journalParsed.content);
+                    await waGateway.sock?.sendMessage(chatId, { text: journalRes });
+                    return;
+                }
+            }
+        }
+
+        // ====================================================
+        // EMAIL SENTINEL (!email, !cekemail)
+        // ====================================================
+        if (isOwner && (lcmd === '!email' || lcmd === '!cekemail' || lcmd === '/email')) {
+            const emailRes = await EmailSentinelEngine.checkInbox();
+            await waGateway.sock?.sendMessage(chatId, { text: emailRes.message });
+            return;
+        }
+
+        // ====================================================
+        // STEAM RADAR & DEALS (!steam <game/diskon>)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!steam ') || lcmd.startsWith('/steam ') || lcmd === '!steam' || lcmd === '/steam')) {
+            const query = incomingText.replace(/^[!/]steam\s*/i, '').trim();
+            const steamRes = await SteamRadarEngine.searchGame(query || 'special');
+            await waGateway.sock?.sendMessage(chatId, { text: steamRes });
+            return;
+        }
+
+        // ====================================================
+        // COURIER & PACKAGE TRACKER (!resi <kurir> <nomor_resi>)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!resi ') || lcmd.startsWith('/resi ') || lcmd === '!resi' || lcmd === '/resi')) {
+            const courierRes = await CourierTrackerEngine.track(incomingText);
+            await waGateway.sock?.sendMessage(chatId, { text: courierRes });
+            return;
+        }
+
+        // ====================================================
+        // WEATHER & OUTDOOR RADAR (!cuaca, !cuaca <kota>)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!cuaca') || lcmd.startsWith('/cuaca'))) {
+            const weatherRes = await WeatherOutdoorRadar.getWeather(incomingText);
+            await waGateway.sock?.sendMessage(chatId, { text: weatherRes });
+            return;
+        }
+
+        // ====================================================
+        // UNIVERSAL MEDIA DOWNLOADER (!dl <url> or social links)
+        // ====================================================
+        if (isOwner && (lcmd.startsWith('!dl ') || lcmd.startsWith('/dl ') || UniversalMediaDownloader.isSupportedUrl(incomingText))) {
+            const dlRes = await UniversalMediaDownloader.process(incomingText);
+            await waGateway.sock?.sendMessage(chatId, { text: dlRes });
+            return;
+        }
+
+        // ====================================================
+        // ENTERPRISE SAAS CONTROL PLANE & AUDIT COMMANDS (Owner Only)
+        // (!kuota, !usage, !audit <id>, !approve <id>, !reject <id>, !approvals)
+        // ====================================================
+        if (isOwner && (lcmd === '!kuota' || lcmd === '!usage' || lcmd === '/kuota')) {
+            const usageReport = UsageMeteringBilling.formatUsageReport('tenant_agus_master');
+            await waGateway.sock?.sendMessage(chatId, { text: usageReport });
+            return;
+        }
+
+        if (isOwner && (lcmd.startsWith('!audit ') || lcmd.startsWith('/audit '))) {
+            const traceId = incomingText.replace(/^[!/]audit\s*/i, '').trim();
+            const auditRes = DecisionAuditTrail.explainDecision(traceId);
+            await waGateway.sock?.sendMessage(chatId, { text: auditRes });
+            return;
+        }
+
+        if (isOwner && (lcmd === '!approvals' || lcmd === '/approvals')) {
+            const pending = Array.from(ActionPermissionEngine.pendingApprovals.values()).filter(p => p.status === 'PENDING_APPROVAL');
+            if (pending.length === 0) {
+                await waGateway.sock?.sendMessage(chatId, { text: '✅ Tidak ada permintaan aksi tertunda yang butuh approval saat ini.' });
+            } else {
+                let card = `⚠️ *DAFTAR PERSETUJUAN TERTUNDA (${pending.length})*\n━━━━━━━━━━━━━━━━━━\n`;
+                pending.forEach((p, idx) => {
+                    card += `${idx + 1}. ID: \`${p.approvalId}\`\n   Aksi: *${p.actionType}*\n   Waktu: ${p.requestedAt}\n\n`;
+                });
+                card += `_Ketik \`!approve <ID>\` atau \`!reject <ID>\`_`;
+                await waGateway.sock?.sendMessage(chatId, { text: card });
+            }
+            return;
+        }
+
+        if (isOwner && (lcmd.startsWith('!approve ') || lcmd.startsWith('/approve '))) {
+            const appId = incomingText.replace(/^[!/]approve\s*/i, '').trim();
+            const res = ActionPermissionEngine.approveAction(appId, 'Agus_Owner');
+            await waGateway.sock?.sendMessage(chatId, { text: res.message });
+            return;
+        }
+
+        if (isOwner && (lcmd.startsWith('!reject ') || lcmd.startsWith('/reject '))) {
+            const appId = incomingText.replace(/^[!/]reject\s*/i, '').trim();
+            const res = ActionPermissionEngine.rejectAction(appId, 'Agus_Owner');
+            await waGateway.sock?.sendMessage(chatId, { text: res.message });
+            return;
+        }
+
+        // ====================================================
         // CONTACT & GROUP WHITELIST POLICY (WEB COCKPIT & !whitelist)
         // Owner selalu diizinkan, kontak/grup lain harus diizinkan via Checklist/Command
         // ====================================================
@@ -364,25 +910,22 @@ async function start() {
         }
 
         // ====================================================
-        // GROUP MENTION GUARD — Hanya balas jika di-mention / reply ke bot
+        // STRICT GROUP MENTION & REPLY GUARD (Anti-Spam Mutlak)
+        // Bot HANYA membalas di grup jika:
+        // 1. Nomor / Akun Owner di-tag (@mention) via Phone / LID
+        // 2. Pesan Owner / Bot di-reply (quote reply)
+        // 3. Explicit command (!ai / !tanya)
         // ====================================================
-        if (isGroupMsg && !isOwner) {
-            const botJid   = waGateway.sock?.user?.id || '';
-            const botNumber = botJid.split(':')[0].split('@')[0]; // e.g. "6285600596826"
+        if (isGroupMsg) {
+            const isCommandTrigger = /^(?:!ai|!tanya|\/ai|\/tanya)\b/i.test(incomingText);
+            const isTargeted = isCommandTrigger || OwnerMentionResolver.isSpecificallyTargetedToOwner({
+                rawMessage,
+                ownerJid: waGateway.sock?.user?.id || OWNER_LID,
+                text: incomingText
+            });
 
-            // 1. @mention langsung
-            const mentionedJids = rawMessage?.extendedTextMessage?.contextInfo?.mentionedJid || [];
-            const botMentioned  = botNumber && mentionedJids.some(j => j.includes(botNumber));
-
-            // 2. Reply ke pesan bot
-            const quotedParticipant = rawMessage?.extendedTextMessage?.contextInfo?.participant || '';
-            const repliedToBot = botNumber && quotedParticipant.includes(botNumber);
-
-            // 3. Sebut "salim" di teks
-            const textMentionsArka = /\bsalim\b/i.test(incomingText);
-
-            if (!botMentioned && !repliedToBot && !textMentionsArka) {
-                // Bukan untuk bot — skip
+            if (!isTargeted) {
+                // Bukan di-tag dan bukan me-reply pesan Owner/Bot — 100% DIAM (Anti-Spam)
                 return;
             }
         }
@@ -426,6 +969,16 @@ async function start() {
                     imageBase64 = buffer.toString('base64');
                     mimeType = rawMessage?.imageMessage?.mimetype || 'image/jpeg';
                     console.log(`[WA Vision] 📸 Downloaded image (${(buffer.length/1024).toFixed(1)} KB) from ${chatId}`);
+
+                    // Smart Receipt & QRIS OCR
+                    if (isOwner && ReceiptScannerOCR.isReceiptLure(incomingText)) {
+                        console.log(`[ReceiptOCR] 🧾 Processing receipt from Owner in ${chatId}`);
+                        await waGateway.sock?.sendMessage(chatId, { text: '🔍 Sedang memindai struk/nota pembayaran via Vision AI... (tunggu sebentar ya Bos)' }).catch(()=>{});
+                        const receiptResp = await ReceiptScannerOCR.processAndRecord(chatId, imageBase64, mimeType);
+                        await waGateway.sock?.sendMessage(chatId, { text: receiptResp });
+                        PersistFirstIngress.markCompleted(canonicalMsg.id);
+                        return;
+                    }
                 }
             }
         } catch (e) {
@@ -472,24 +1025,36 @@ async function start() {
         let docBase64 = null;
         let docFileName = '';
         try {
-            const isDoc = Boolean(rawMessage?.documentMessage);
+            const docMsg = rawMessage?.documentMessage || rawMessage?.documentWithCaptionMessage?.message?.documentMessage;
+            const isDoc = Boolean(docMsg);
             if (isDoc && waGateway.sock) {
-                docFileName = rawMessage.documentMessage.fileName || 'document.pdf';
-                const buffer = await downloadMediaMessage(
-                    { key: rawKey, message: rawMessage },
-                    'buffer', {},
-                    { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.sock.updateMediaMessage }
-                );
-                if (buffer) {
-                    docBase64 = buffer.toString('base64');
-                    mimeType = rawMessage.documentMessage.mimetype || 'application/pdf';
-                    console.log(`[WA Doc] 📄 Downloaded document "${docFileName}" (${(buffer.length/1024).toFixed(1)} KB) from ${chatId}`);
+                docFileName = docMsg.fileName || 'document.pdf';
+                const fileSize = Number(docMsg.fileLength || 0);
+                const MAX_DOC_SIZE = 18 * 1024 * 1024; // 18 MB limit for inline Google API and Termux safety
 
-                    if (docFileName.endsWith('.txt') || docFileName.endsWith('.csv') || docFileName.endsWith('.json') || docFileName.endsWith('.md')) {
-                        const snippet = buffer.toString('utf8').slice(0, 4000);
-                        incomingText = incomingText ? `${incomingText}\n[Isi Dokumen "${docFileName}"]:\n${snippet}` : `[Isi Dokumen "${docFileName}"]:\n${snippet}`;
-                    } else {
-                        incomingText = incomingText ? `${incomingText}\n[Lampiran Dokumen]: "${docFileName}"` : `[Lampiran Dokumen]: "${docFileName}" (Tolong baca dan buatkan ringkasan isi dokumen ini)`;
+                if (fileSize > MAX_DOC_SIZE) {
+                    console.warn(`[WA Doc] ⚠️ Document "${docFileName}" is too large (${(fileSize/1024/1024).toFixed(1)} MB > 18 MB). Skipping raw buffer.`);
+                    incomingText = incomingText
+                        ? `${incomingText}\n[Pemberitahuan Dokumen]: File "${docFileName}" berukuran ${(fileSize/1024/1024).toFixed(1)} MB (melebihi batas maksimal 18 MB pemrosesan langsung di HP). Mohon beri tahu Bos dengan ramah bahwa batas per file adalah 18 MB.`
+                        : `File dokumen "${docFileName}" berukuran ${(fileSize/1024/1024).toFixed(1)} MB (melebihi batas maksimal 18 MB untuk pemrosesan AI langsung di HP). Jelaskan hal ini ke Bos dengan santai dan ramah.`;
+                } else {
+                    const msgToDownload = rawMessage?.documentMessage ? rawMessage : { documentMessage: docMsg };
+                    const buffer = await downloadMediaMessage(
+                        { key: rawKey, message: msgToDownload },
+                        'buffer', {},
+                        { logger: { level: 'silent', child: () => ({ error: ()=>{}, warn: ()=>{}, info: ()=>{}, debug: ()=>{} }) }, reuploadRequest: waGateway.sock.updateMediaMessage }
+                    );
+                    if (buffer) {
+                        docBase64 = buffer.toString('base64');
+                        mimeType = docMsg.mimetype || 'application/pdf';
+                        console.log(`[WA Doc] 📄 Downloaded document "${docFileName}" (${(buffer.length/1024).toFixed(1)} KB) from ${chatId}`);
+
+                        if (docFileName.endsWith('.txt') || docFileName.endsWith('.csv') || docFileName.endsWith('.json') || docFileName.endsWith('.md')) {
+                            const snippet = buffer.toString('utf8').slice(0, 4000);
+                            incomingText = incomingText ? `${incomingText}\n[Isi Dokumen "${docFileName}"]:\n${snippet}` : `[Isi Dokumen "${docFileName}"]:\n${snippet}`;
+                        } else {
+                            incomingText = incomingText ? `${incomingText}\n[Lampiran Dokumen PDF]: "${docFileName}"` : `Tolong baca, analisis, dan jelaskan atau buatkan ringkasan isi dokumen PDF "${docFileName}" ini secara lengkap`;
+                        }
                     }
                 }
             }
@@ -574,9 +1139,24 @@ async function start() {
             // Record contact or group so it appears in the Web Cockpit checklist
             await ContactPolicyEngine.recordSeen(chatId, pushName || groupSubject, isGroup);
 
-            // ── FAST INTERCEPTOR: Owner Whitelist & Permission Control (!whitelist, !izinkan, !mute) ──
+            // ── SECURITY FIREWALL: Prompt Injection & Goal Hijacking (OWASP Agent Security) ──
             let deliveryPlan = null;
-            if (isOwner) {
+            if (!isOwner && incomingText) {
+                const injection = PromptInjectionFirewall.inspect(incomingText);
+                if (!injection.clean && injection.blocked) {
+                    console.warn(`[SECURITY FIREWALL] Blocked prompt injection from ${chatId}: ${injection.matchedAttacks.map(a => a.category).join(', ')}`);
+                    deliveryPlan = {
+                        text: injection.safeResponse,
+                        bubbles: [injection.safeResponse],
+                        typingDelays: [800],
+                        reactionEmoji: '🛡️',
+                        action: 'REPLY'
+                    };
+                }
+            }
+
+            // ── FAST INTERCEPTOR: Owner Whitelist & Permission Control (!whitelist, !izinkan, !mute) ──
+            if (!deliveryPlan && isOwner) {
                 const cmdRes = await ContactPolicyEngine.handleOwnerCommand(incomingText, chatId, isGroup, groupSubject);
                 if (cmdRes.handled) {
                     deliveryPlan = {
@@ -734,7 +1314,41 @@ async function start() {
                 }
             }
 
+            // ── FAST INTERCEPTOR: Universal AI Operating System ("Request Anything") (Owner Only) ──
+            if (!deliveryPlan && isOwner && UniversalRequestEngine.isBusinessRequest(incomingText)) {
+                const bizRes = await UniversalRequestEngine.processRequest({
+                    tenantId: 'tenant_agus_master',
+                    text: incomingText,
+                    role: 'AI_AGENT',
+                    chatId
+                });
+                if (bizRes) {
+                    deliveryPlan = {
+                        text: bizRes,
+                        bubbles: [bizRes],
+                        typingDelays: [800],
+                        reactionEmoji: '🏢',
+                        action: 'REPLY'
+                    };
+                }
+            }
 
+            // ── BUSINESS OS INTERCEPTOR (Goals for Owner, Guarded Inbound Sales for Clients) ──
+            if (!deliveryPlan && incomingText) {
+                try {
+                    const bizPlan = await businessOS.process({
+                        chatId,
+                        incomingText,
+                        isOwner,
+                        mediaOptions
+                    });
+                    if (bizPlan && bizPlan.handled && bizPlan.deliveryPlan) {
+                        deliveryPlan = bizPlan.deliveryPlan;
+                    }
+                } catch (bizErr) {
+                    console.warn('[BusinessOS] ⚠️ Interceptor error, falling back:', bizErr.message);
+                }
+            }
 
             // ── PRIMARY PIPELINE: Full 30-Stage PersonalAIOS Master Brain ──
             if (!deliveryPlan) {
@@ -830,7 +1444,33 @@ async function start() {
                     return;
                 }
 
-                // 3. Dispatch Bubbles with Adaptive Typing Delays
+                // 3. Two-Way Conversational Voice Note Reply (if Voice Note incoming, or requested by Owner)
+                const hasAudioInput = Boolean(audio || payload?.audioBase64 || payload?.audio);
+                const wantsVoiceNote = isOwner && (
+                    hasAudioInput ||
+                    TwoWayVoiceDirector.shouldReplyWithVoice(incomingText, hasAudioInput, isOwner) ||
+                    /\b(?:jawab|balas|kirim)\s*(?:pake|pakai|dengan)?\s*(?:vn|suara|audio)\b/i.test(incomingText) ||
+                    /\b(?:pake|pakai)\s*(?:vn|suara)\b/i.test(incomingText)
+                );
+
+                if (wantsVoiceNote && waGateway.sock) {
+                    try {
+                        const voiceText = deliveryPlan.text || (deliveryPlan.bubbles || []).join(' ');
+                        const audioBuffer = await TwoWayVoiceDirector.generateVoiceBuffer(voiceText);
+                        if (audioBuffer) {
+                            await waGateway.sock.sendMessage(chatId, {
+                                audio: audioBuffer,
+                                mimetype: 'audio/mp4',
+                                ptt: true
+                            });
+                            console.log(`[WA Voice] 🎙️ Two-Way Voice Note auto-replied to ${chatId}`);
+                        }
+                    } catch (vErr) {
+                        console.warn('[WA Voice] ⚠️ Failed auto-VN reply:', vErr.message);
+                    }
+                }
+
+                // 4. Dispatch Bubbles with Adaptive Typing Delays
                 const bubbles = deliveryPlan.bubbles || (deliveryPlan.text ? [deliveryPlan.text] : []);
                 const delays = deliveryPlan.typingDelays || [300];
 
@@ -890,6 +1530,27 @@ async function start() {
     await waGateway.connect();
     console.log('✅ [V14.1 Bootloader] Master Universal Co-Pilot (Strict Isolation) Online.');
 
+    // Start Natural Language Reminder & Alarm Daemon
+    NaturalReminderEngine.startDaemon(waGateway);
+
+    // Start Proactive Daily Briefing & Night Recap Cron
+    DailyLifeBriefing.startCron(waGateway, OWNER_LID);
+
+    // Start Aggressive Wake-Up Alarm Loop Daemon (checks every 15s, fires every 60s)
+    AggressiveAlarmEngine.startDaemon(waGateway);
+
+    // Start Telegram Mirror Gateway (Dual-Ecosystem Bridge)
+    TelegramMirrorGateway.start(async ({ text, chatId: tgChatId, fromUser }) => {
+        console.log(`[TelegramMirror] 📨 Incoming from @${fromUser} (${tgChatId}): "${text}"`);
+        try {
+            const plan = await personalAI.process(OWNER_LID, text, `tg_${Date.now()}`);
+            return plan?.text || (plan?.bubbles || []).join('\n\n') || null;
+        } catch (tgErr) {
+            console.warn('[TelegramMirror] Error processing message:', tgErr.message);
+            return null;
+        }
+    });
+
     // Auto-dispatch Portfolio PDF to owner on startup
     setTimeout(async () => {
         try {
@@ -913,6 +1574,7 @@ async function start() {
 
 process.on('SIGINT', () => {
     console.log('\n[V14.1 Bootloader] Received SIGINT. Flushing & Shutting down...');
+    TelegramMirrorGateway.stop();
     burstAggregator.flushAll();
     QueueWorker.stop();
     waGateway.shutdown();

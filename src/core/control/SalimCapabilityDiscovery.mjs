@@ -26,51 +26,50 @@ export class SalimCapabilityDiscovery {
      * @returns {string}
      */
     static getMasterCapabilityCard() {
-        return `🧠 *SALIM OS — MASTER CAPABILITY MATRIX*
+        return `*SALIM PERSONAL AI OS — FITUR YANG AKTIF*
 ──────────────────────────────
-Gue asisten pribadi AI WhatsApp lo yang serba bisa. Lo gak perlu ribet, tinggal suruh pakai bahasa sehari-hari:
+Gue asisten pribadi AI WhatsApp lo yang serba bisa. Tinggal suruh pakai bahasa sehari-hari:
 
-👁️ *1. MATA AI & VISION*
-• Kirim foto barang/motor/mesin: *"Ini apanya yang rusak?"*
-• Kirim screenshot error/coding: *"Bantu perbaiki error ini"*
-• Kirim struk belanja: Otomatis membaca nominal & item
+*1. MATA AI & VISION*
+• Kirim foto barang/produk/dokumen: "Ini apanya?"
+• Kirim foto/screenshot: Analisis visual dan beri penjelasan
+• Kirim struk belanja: Otomatis baca nominal & item
 
-🎙️ *2. SUARA & VOICE NOTE (VN)*
+*2. SUARA & VOICE NOTE*
 • Kirim pesan suara / VN apapun: Gue langsung dengar, transkrip ke teks, dan balas isinya.
 
-🎨 *3. AI IMAGE GENERATOR (FLUX 4K)*
-• *"gambarin kucing garong naik motor rx king"*
-• *"bikinin gambar pemandangan cyberpunk malam hari"*
+*3. AI IMAGE GENERATOR (FLUX 4K)*
+• "gambarin kucing garong naik motor rx king"
+• "bikinin gambar pemandangan cyberpunk malam hari"
 
-🌐 *4. LIVE WEB SEARCH & RESEARCH*
-• *"carikan harga tiket kereta semarang tawang ke pasar senen"*
-• *"cek info cuaca jogja hari ini"*
-• *"riset perbandingan laptop 10 jutaan terbaik"*
+*4. LIVE WEB SEARCH & RESEARCH*
+• "carikan harga tiket kereta semarang ke jakarta"
+• "cek info cuaca jogja hari ini"
+• "riset perbandingan laptop 10 jutaan terbaik"
 
-⏰ *5. SMART NATURAL REMINDER*
-• *"ingatkan 15 menit lagi matikan air"*
-• *"ingatkan jam 14.30 meeting zoom"*
+*5. SMART REMINDER*
+• "ingatkan 15 menit lagi matikan air"
+• "ingatkan jam 14.30 meeting zoom"
 • Gue bakal nge-chat WA lo otomatis pas waktunya!
 
-💰 *6. CATAT PENGELUARAN (EXPENSE TRACKER)*
-• *"catat bensin 50rb"* / *"catat makan siang 35k"*
-• Ketik */rekap* buat lihat total pengeluaran hari ini & bulan ini.
+*6. CATAT PENGELUARAN*
+• "catat bensin 50rb" / "catat makan siang 35k"
+• Ketik /rekap buat lihat total pengeluaran hari ini & bulan ini.
 
-🕵️‍♂️ *7. ANALISIS PSIKOLOGI CHAT*
-• Quote chat orang lain + ketik: *"analisis chat ini"*
-• Gue bedah tingkat kejujuran, nada emosi terselubung, & saran balasan skakmat.
+*7. ANALISIS PSIKOLOGI CHAT*
+• Quote chat orang lain + ketik: "analisis chat ini"
+• Gue bedah tingkat kejujuran, nada emosi, & saran balasan.
 
-✍️ *8. GHOSTWRITER & DRAFT PESAN*
-• *"bikinin draft izin gak masuk kerja karena demam"*
-• *"buatkan kalimat penawaran harga yang sopan ke klien"*
+*8. GHOSTWRITER & DRAFT PESAN*
+• "bikinin draft izin gak masuk kerja karena demam"
+• "buatkan kalimat penawaran harga yang sopan ke klien"
 
-📱 *9. KONTROL & RELAY PESAN*
-• !chat <Nama/Nomor> <Pesan> (titip kirim chat ke orang lain)
-• /status (cek kesehatan sistem, RAM, & koneksi WA)
-• /doctor (diagnosa lengkap 8 pilar sistem)
-
+*9. KONTROL & RELAY PESAN*
+• !chat <Nama/Nomor> <Pesan> — titip kirim chat ke orang lain
+• /status — cek kesehatan sistem & koneksi WA
+• /rekap — laporan pengeluaran
 
 ──────────────────────────────
-_Lo mau coba yang mana dulu sekarang, Gus? Tinggal gas!_ 🔥`;
+_Lo mau coba yang mana dulu sekarang, Gus?_`;
     }
 }

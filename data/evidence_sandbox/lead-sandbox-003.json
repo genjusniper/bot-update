@@ -1,0 +1,41 @@
+{
+  "leadId": "lead-sandbox-003",
+  "evidenceLog": [
+    {
+      "evidenceId": "EV-SBX-003-A",
+      "domain": "identity",
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "gmaps://warmindo-mas-bro",
+      "capturedAt": "2026-09-03T01:49:25.824Z",
+      "rawValue": "Warmindo Mas Bro",
+      "normalizedValue": "Warmindo Mas Bro",
+      "reliability": 0.85,
+      "directness": "DIRECT",
+      "completeness": 100,
+      "classification": "FACT",
+      "fingerprint": "fp-59f2745d"
+    },
+    {
+      "evidenceId": "EV-SBX-003-B",
+      "domain": "menu",
+      "sourceType": "PUBLIC_MENU",
+      "sourceRef": "public://warmindo-mas-bro",
+      "capturedAt": "2026-09-03T01:49:25.824Z",
+      "rawValue": "indomie goreng, indomie rebus, telur mata sapi, tahu, tempe goreng",
+      "normalizedValue": "indomie goreng telur mata sapi tahu tempe goreng",
+      "reliability": 0.88,
+      "directness": "DIRECT",
+      "completeness": 90,
+      "classification": "INFERENCE",
+      "fingerprint": "fp-b033cb85"
+    }
+  ],
+  "fingerprints": [
+    "fp-59f2745d",
+    "fp-b033cb85"
+  ],
+  "claims": {},
+  "conflicts": [],
+  "snapshots": [],
+  "blockOutreach": false
+}

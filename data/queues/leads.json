@@ -1,0 +1,1863 @@
+{
+  "lead-1788359539163-833": {
+    "id": "lead-1788359539163-833",
+    "businessName": "RM. Padang Hayam Wuruk",
+    "businessCategory": "Padang restaurant",
+    "location": "Pleburan, Semarang Selatan, Semarang City, Central Java 50241, Indonesia",
+    "rating": 4.6,
+    "reviewCount": 2165,
+    "evidence": "Ditemukan di Google Maps. Rating 4.6 dari 2165 ulasan. Lokasi: Pleburan, Semarang Selatan, Semarang City, Central Java 50241, Indonesia.",
+    "phone": "+62 24 8442837",
+    "source": {
+      "type": "SerpApi Maps",
+      "placeId": "ChIJOZPmHGCLcC4RPA7LyBbwM_k"
+    },
+    "discoveredAt": 1788359539350,
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "draftMessage": "Halo, saya Agus. Barangkali RM. Padang Hayam Wuruk sedang membutuhkan Santan Murni untuk operasional, saya siap mengirim tester.",
+    "confidence": "LOW",
+    "claims": [],
+    "updatedAt": 1788359539354
+  },
+  "lead-1788359772101-729": {
+    "id": "lead-1788359772101-729",
+    "businessName": "PESTA KEBOEN SEMARANG",
+    "businessCategory": "Indonesian restaurant",
+    "location": "Jl. Veteran No.29, Lempongsari, Gajahmungkur, Semarang City, Central Java 50231, Indonesia",
+    "rating": 4.5,
+    "reviewCount": 4044,
+    "evidence": "Ditemukan di Google Maps. Rating 4.5 dari 4044 ulasan. Lokasi: Jl. Veteran No.29, Lempongsari, Gajahmungkur, Semarang City, Central Java 50231, Indonesia.",
+    "phone": "+62 888-2588-825",
+    "source": {
+      "type": "SerpApi Maps",
+      "placeId": "ChIJQ2Mc7meLcC4RXm4PJgP1pZA"
+    },
+    "discoveredAt": 1788359772293,
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "draftMessage": "Halo, saya Agus. Barangkali PESTA KEBOEN SEMARANG sedang membutuhkan Parutan Kelapa dan bahan kulakan pasar untuk operasional, apakah berkenan jika saya bertanya seputar pasokan parutan kelapanya?",
+    "confidence": "LOW",
+    "claims": [],
+    "updatedAt": 1788359772295
+  },
+  "lead-1788363318064-802": {
+    "businessName": "Nasi Kapau Padangju (Klentengsari)",
+    "businessCategory": "Padang restaurant",
+    "location": "WCRG+PWC, Jl. Klentengsari, Pedalangan, Banyumanik, Semarang City, Central Java 50268, Indonesia",
+    "publicContact": "+62 877-8272-8255",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJiZgLKmOPcC4RY7uTcZ80R6k",
+      "capturedAt": "2026-09-02T15:35:18.064Z"
+    },
+    "id": "lead-1788363318064-802",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-02T15:35:18.394Z",
+    "fitAnalysis": [
+      {
+        "product": "KELAPA_PARUT",
+        "score": 0.95,
+        "explanation": "Fallback heuristic match based on category Padang restaurant",
+        "evidence": [
+          {
+            "evidenceId": "EV-FALLBACK-0",
+            "sourceType": "SERPAPI_MAPS",
+            "sourceRef": "ChIJiZgLKmOPcC4RY7uTcZ80R6k",
+            "capturedAt": "2026-09-02T15:35:18.302Z",
+            "rawValue": "Padang restaurant",
+            "normalizedValue": "KELAPA_PARUT",
+            "confidence": 0.95
+          }
+        ]
+      },
+      {
+        "product": "TAHU",
+        "score": 0.95,
+        "explanation": "Fallback heuristic match based on category Padang restaurant",
+        "evidence": [
+          {
+            "evidenceId": "EV-FALLBACK-1",
+            "sourceType": "SERPAPI_MAPS",
+            "sourceRef": "ChIJiZgLKmOPcC4RY7uTcZ80R6k",
+            "capturedAt": "2026-09-02T15:35:18.303Z",
+            "rawValue": "Padang restaurant",
+            "normalizedValue": "TAHU",
+            "confidence": 0.95
+          }
+        ]
+      }
+    ],
+    "uncertaintyBudget": {
+      "known": [
+        "Padang restaurant"
+      ],
+      "inferred": [
+        {
+          "claim": "Kebutuhan bahan baku reguler",
+          "confidence": 0.95,
+          "basedOn": [
+            "EV-FALLBACK-0"
+          ]
+        }
+      ],
+      "unknown": [
+        "Volume harian spesifik"
+      ]
+    },
+    "basketPotential": 75000,
+    "expectedProfit": 16500,
+    "primaryOpportunity": {
+      "id": "KELAPA_PARUT",
+      "name": "KELAPA_PARUT",
+      "explanation": "Fallback heuristic match based on category Padang restaurant"
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "TAHU"
+      }
+    ],
+    "opportunityScore": 0.7475,
+    "nextBestAction": "SEND_PRICE",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "High product fit (95%) for KELAPA_PARUT",
+        "evidenceId": "EV-FALLBACK-0"
+      },
+      {
+        "type": "POSITIVE",
+        "reason": "Evidence backed by SERPAPI_MAPS (Confidence: 86%)",
+        "evidenceId": "EV-FALLBACK-0"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Missing 1 data points (e.g., Volume harian spesifik)"
+      }
+    ],
+    "draft": "Halo dari Ibu supplier bahan pasar. Kami siap menyuplai KELAPA_PARUT segar untuk Nasi Kapau Padangju (Klentengsari). Bolehkah saya kirimkan daftar harga kami hari ini?",
+    "draftMetadata": {
+      "draftSource": "FALLBACK_HEURISTIC",
+      "confidence": "LOW",
+      "requiresHumanReview": true
+    },
+    "updatedAt": 1788363318400
+  },
+  "lead-1788372391380-29": {
+    "businessName": "RM Padang Bundo Kanduang",
+    "businessCategory": "Restoran, Minang",
+    "location": "Jl. Margonda Raya, Depok",
+    "publicContact": "+6281299998888",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "MOCK_DATA",
+      "sourceRef": "mock-1",
+      "capturedAt": "2026-09-02T18:06:31.375Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788372391380-29",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-02T18:06:31.407Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "WATCHLIST",
+    "firewallReasons": [
+      "Opportunity score too low for immediate action."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788372391388-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 28,
+        "ttlMs": 2592000000
+      },
+      "EV-1788372391388-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 15,
+        "ttlMs": 1209600000
+      },
+      "EV-1788372391388-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 15,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "WARUNG_PADANG",
+    "demandMatches": [
+      {
+        "product": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "kelapa_parut",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "daun_singkong",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "POSSIBLY_AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.12800000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      }
+    ],
+    "primaryOpportunity": {
+      "id": "cabai",
+      "name": "cabai",
+      "demandSignal": "WEAK_INFERENCE",
+      "supplyStatus": "AVAILABLE",
+      "evidenceConfidence": 0.4,
+      "fitScore": 0.16000000000000003
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "bawang_merah",
+        "name": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "kelapa_parut",
+        "name": "kelapa_parut",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "telur",
+        "name": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "daun_singkong",
+        "name": "daun_singkong",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "POSSIBLY_AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.12800000000000003
+      }
+    ],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0.14080000000000004,
+    "nextBestAction": "WATCHLIST",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "Top Opportunity: cabai (Fit: 16%, Confidence: 40%)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: volume (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: frequency (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: current_supplier (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: price_point (Penalty: -2% — not publicly verifiable)"
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788372978422-513": {
+    "businessName": "Warteg Sumurboto Banyumanik",
+    "businessCategory": "Tegal restaurant",
+    "location": "XC2C+7CX, Jalan Ngesrep Timur V, Sumurboto, Banyumanik, Sumurboto, Semarang, Kota Semarang, Jawa Tengah 50269, Indonesia",
+    "publicContact": null,
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJ8QCEd_mLcC4RiLwO3kcX93Y",
+      "capturedAt": "2026-09-02T18:16:18.422Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788372978422-513",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-02T18:16:18.443Z",
+    "qualityGrade": "B",
+    "confidence": 0.7650000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 0,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788372978428-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 18,
+        "ttlMs": 2592000000
+      },
+      "EV-1788372978428-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 12,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "WARTEG",
+    "demandMatches": [
+      {
+        "product": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "tahu",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "daun_singkong",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "POSSIBLY_AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.12800000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "ikan_asin",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "OUT_OF_STOCK",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0,
+        "activeRecommendation": false,
+        "reason": "Kategori bisnis: WARTEG"
+      }
+    ],
+    "primaryOpportunity": {
+      "id": "telur",
+      "name": "telur",
+      "demandSignal": "WEAK_INFERENCE",
+      "supplyStatus": "AVAILABLE",
+      "evidenceConfidence": 0.4,
+      "fitScore": 0.16000000000000003
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "tempe",
+        "name": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "tahu",
+        "name": "tahu",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "bawang_merah",
+        "name": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "cabai",
+        "name": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "daun_singkong",
+        "name": "daun_singkong",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "POSSIBLY_AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.12800000000000003
+      }
+    ],
+    "conditionalOpportunities": [
+      {
+        "id": "ikan_asin",
+        "name": "ikan_asin",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "OUT_OF_STOCK",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0
+      }
+    ],
+    "opportunityScore": 0.15680000000000005,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "Top Opportunity: telur (Fit: 16%, Confidence: 40%)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: volume (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: frequency (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: current_supplier (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: price_point (Penalty: -2% — not publicly verifiable)"
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788400327285-611": {
+    "businessName": "Tuumis - Tembalang",
+    "businessCategory": "Indonesian restaurant",
+    "location": "Jl. Mulawarman Raya, Bulusan, Kec. Tembalang, Kota Semarang, Jawa Tengah 50268, Indonesia",
+    "publicContact": "+62 813-8710-7776",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJkW70bwCPcC4RO42kvcILQtE",
+      "capturedAt": "2026-09-03T01:52:07.281Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788400327285-611",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T01:52:07.301Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788400327291-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 17,
+        "ttlMs": 2592000000
+      },
+      "EV-1788400327291-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 7,
+        "ttlMs": 1209600000
+      },
+      "EV-1788400327291-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 7,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "UMKM_LAINNYA",
+    "demandMatches": [],
+    "primaryOpportunity": null,
+    "secondaryOpportunities": [],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "NEGATIVE",
+        "reason": "No supply-demand matches found."
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788400356020-532": {
+    "businessName": "Warung Lesehan Fifty Fifty Sumurboto Banyumanik",
+    "businessCategory": "Javanese restaurant",
+    "location": "Jl. Ngesrep Tim. V No.118, Sumurboto, Kec. Banyumanik, Kota Semarang, Jawa Tengah 50269, Indonesia",
+    "publicContact": "+62 24 7475207",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJ5-WusfiLcC4RS6aT14Pecd8",
+      "capturedAt": "2026-09-03T01:52:36.019Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788400356020-532",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T01:52:36.025Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788400356022-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 5,
+        "ttlMs": 2592000000
+      },
+      "EV-1788400356022-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 2,
+        "ttlMs": 1209600000
+      },
+      "EV-1788400356022-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 2,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "UMKM_LAINNYA",
+    "demandMatches": [],
+    "primaryOpportunity": null,
+    "secondaryOpportunities": [],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "NEGATIVE",
+        "reason": "No supply-demand matches found."
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788400574552-73": {
+    "businessName": "Warung Bamboo",
+    "businessCategory": "Restaurant",
+    "location": "Tembalang, Semarang City, Central Java 50275, Indonesia",
+    "publicContact": "+62 815-1681-343",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJ6wM9tqmOcC4R-JnXQCw2raM",
+      "capturedAt": "2026-09-03T01:56:14.550Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788400574552-73",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T01:56:14.559Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788400574555-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 7,
+        "ttlMs": 2592000000
+      },
+      "EV-1788400574555-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 2,
+        "ttlMs": 1209600000
+      },
+      "EV-1788400574555-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 2,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "UMKM_LAINNYA",
+    "demandMatches": [],
+    "primaryOpportunity": null,
+    "secondaryOpportunities": [],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "NEGATIVE",
+        "reason": "No supply-demand matches found."
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788400603512-560": {
+    "businessName": "Adi's Culinary Banyumanik",
+    "businessCategory": "Restaurant",
+    "location": "Jl. Durian Raya No.49, Srondol Wetan, Kec. Banyumanik, Kota Semarang, Jawa Tengah 50263, Indonesia",
+    "publicContact": "+62 822-6518-4499",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJy7ziLYWJcC4RFexj2GB-n0k",
+      "capturedAt": "2026-09-03T01:56:43.511Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788400603512-560",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T01:56:43.519Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788400603515-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 6,
+        "ttlMs": 2592000000
+      },
+      "EV-1788400603515-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 2,
+        "ttlMs": 1209600000
+      },
+      "EV-1788400603515-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 2,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "UMKM_LAINNYA",
+    "demandMatches": [],
+    "primaryOpportunity": null,
+    "secondaryOpportunities": [],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "NEGATIVE",
+        "reason": "No supply-demand matches found."
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788400875084-167": {
+    "businessName": "Burjo Borneo Tembalang",
+    "businessCategory": "Asian restaurant",
+    "location": "Jl. Banjarsari Selatan, Tembalang, Kec. Tembalang, Kota Semarang, Jawa Tengah 50271, Indonesia",
+    "publicContact": "+62 813-2882-2392",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJ4ef7vH-PcC4RW0wk3BD7RgU",
+      "capturedAt": "2026-09-03T02:01:15.079Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788400875084-167",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T02:01:15.099Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788400875088-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 18,
+        "ttlMs": 2592000000
+      },
+      "EV-1788400875088-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 9,
+        "ttlMs": 1209600000
+      },
+      "EV-1788400875089-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 8,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "WARMINDO",
+    "demandMatches": [
+      {
+        "product": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARMINDO"
+      },
+      {
+        "product": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARMINDO"
+      },
+      {
+        "product": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.4,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16000000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARMINDO"
+      }
+    ],
+    "primaryOpportunity": {
+      "id": "telur",
+      "name": "telur",
+      "demandSignal": "WEAK_INFERENCE",
+      "supplyStatus": "AVAILABLE",
+      "evidenceConfidence": 0.4,
+      "fitScore": 0.16000000000000003
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "cabai",
+        "name": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      },
+      {
+        "id": "bawang_merah",
+        "name": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.4,
+        "fitScore": 0.16000000000000003
+      }
+    ],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0.11200000000000003,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "Top Opportunity: telur (Fit: 16%, Confidence: 40%)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: volume (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: frequency (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: current_supplier (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: price_point (Penalty: -2% — not publicly verifiable)"
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788401056332-590": {
+    "businessName": "Zahra's Yemeni Kitchen",
+    "businessCategory": "Yemeni restaurant",
+    "location": "4807 N Elston Ave, Chicago, IL 60630",
+    "publicContact": "(708) 667-0776",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJk6aPvC3MD4gRam5NOpcAcAU",
+      "capturedAt": "2026-09-03T02:04:16.331Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788401056332-590",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T02:04:16.340Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788401056336-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 7,
+        "ttlMs": 2592000000
+      },
+      "EV-1788401056337-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 1,
+        "ttlMs": 1209600000
+      },
+      "EV-1788401056337-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 1,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "UMKM_LAINNYA",
+    "demandMatches": [],
+    "primaryOpportunity": null,
+    "secondaryOpportunities": [],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "NEGATIVE",
+        "reason": "No supply-demand matches found."
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788401639499-915": {
+    "businessName": "Kurnia Seafood Semarang",
+    "businessCategory": "Seafood restaurant",
+    "location": "Jl. Kompol Maksum No.300, Peterongan, Kec. Semarang Sel., Kota Semarang, Jawa Tengah 50242, Indonesia",
+    "publicContact": "+62 813-3950-5758",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJx8dyX0-NcC4RUD_qN1Z5qsA",
+      "capturedAt": "2026-09-03T02:13:59.498Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788401639499-915",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T02:13:59.505Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788401639502-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 6,
+        "ttlMs": 2592000000
+      },
+      "EV-1788401639502-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 2,
+        "ttlMs": 1209600000
+      },
+      "EV-1788401639502-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 2,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "UMKM_LAINNYA",
+    "demandMatches": [],
+    "primaryOpportunity": null,
+    "secondaryOpportunities": [],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "NEGATIVE",
+        "reason": "No supply-demand matches found."
+      }
+    ],
+    "draft": null,
+    "draftMetadata": null
+  },
+  "lead-1788403442601-272": {
+    "businessName": "Rumah Makan Padang Murah",
+    "businessCategory": "Padang restaurant",
+    "location": "Jl. Prof. Soedarto, Pedalangan, Kec. Banyumanik, Kota Semarang, Jawa Tengah 50268, Indonesia",
+    "publicContact": null,
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJFcMrmQGMcC4R5DLFg8R1iRM",
+      "capturedAt": "2026-09-03T02:44:02.598Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788403442601-272",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T02:44:02.918Z",
+    "qualityGrade": "B",
+    "confidence": 0.7650000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 0,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788403442607-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 21,
+        "ttlMs": 2592000000
+      },
+      "EV-1788403442607-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 12,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "WARUNG_PADANG",
+    "demandMatches": [
+      {
+        "product": "kelapa_parut",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.45,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.18000000000000002,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.43,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.17200000000000001,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.39,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.15600000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.35,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.13999999999999999,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      },
+      {
+        "product": "daun_singkong",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.41000000000000003,
+        "supplyStatus": "POSSIBLY_AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.13120000000000004,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARUNG_PADANG"
+      }
+    ],
+    "primaryOpportunity": {
+      "id": "kelapa_parut",
+      "name": "kelapa_parut",
+      "demandSignal": "WEAK_INFERENCE",
+      "supplyStatus": "AVAILABLE",
+      "evidenceConfidence": 0.45,
+      "fitScore": 0.18000000000000002
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "cabai",
+        "name": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.43,
+        "fitScore": 0.17200000000000001
+      },
+      {
+        "id": "bawang_merah",
+        "name": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.39,
+        "fitScore": 0.15600000000000003
+      },
+      {
+        "id": "telur",
+        "name": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.35,
+        "fitScore": 0.13999999999999999
+      },
+      {
+        "id": "daun_singkong",
+        "name": "daun_singkong",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "POSSIBLY_AVAILABLE",
+        "evidenceConfidence": 0.41000000000000003,
+        "fitScore": 0.13120000000000004
+      }
+    ],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0.15992,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "Top Opportunity: kelapa_parut (Fit: 18%, Confidence: 45%)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: volume (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: frequency (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: current_supplier (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: price_point (Penalty: -2% — not publicly verifiable)"
+      }
+    ],
+    "draft": "Selamat siang Kak di Rumah Makan Padang Murah. Kami menyuplai pasokan harian seperti Kelapa Parut Segar & Santan Murni dan Cabai Merah & Rawit Segar & Bawang Merah Brebes dengan harga grosir langsung dari pasar. Apakah berkenan jika kami bagikan daftar harganya?",
+    "draftMetadata": {
+      "draftSource": "DYNAMIC_HEURISTIC",
+      "confidence": "MEDIUM",
+      "requiresHumanReview": true
+    },
+    "recommendedProduct": "Kelapa Parut Segar & Santan Murni"
+  },
+  "lead-1788403442995-601": {
+    "businessName": "GORBES Gorengan Besek - Tembalang",
+    "businessCategory": "Indonesian restaurant",
+    "location": "Jl. Banjarsari No.3C, Tembalang, Kec. Tembalang, Kota Semarang, Jawa Tengah 50275, Indonesia",
+    "publicContact": null,
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJyfWgfACPcC4R2NhAA1pde8I",
+      "capturedAt": "2026-09-03T02:44:02.994Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788403442995-601",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T02:44:03.147Z",
+    "qualityGrade": "B",
+    "confidence": 0.7650000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 0,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788403442998-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 7,
+        "ttlMs": 2592000000
+      },
+      "EV-1788403442998-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 3,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "GORENGAN",
+    "demandMatches": [
+      {
+        "product": "tahu",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.45,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.18000000000000002,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: GORENGAN"
+      },
+      {
+        "product": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.43,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.17200000000000001,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: GORENGAN"
+      },
+      {
+        "product": "pisang",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.41000000000000003,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16400000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: GORENGAN"
+      },
+      {
+        "product": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.39,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.15600000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: GORENGAN"
+      },
+      {
+        "product": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.37,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.148,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: GORENGAN"
+      }
+    ],
+    "primaryOpportunity": {
+      "id": "tahu",
+      "name": "tahu",
+      "demandSignal": "WEAK_INFERENCE",
+      "supplyStatus": "AVAILABLE",
+      "evidenceConfidence": 0.45,
+      "fitScore": 0.18000000000000002
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "tempe",
+        "name": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.43,
+        "fitScore": 0.17200000000000001
+      },
+      {
+        "id": "pisang",
+        "name": "pisang",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.41000000000000003,
+        "fitScore": 0.16400000000000003
+      },
+      {
+        "id": "cabai",
+        "name": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.39,
+        "fitScore": 0.15600000000000003
+      },
+      {
+        "id": "bawang_merah",
+        "name": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.37,
+        "fitScore": 0.148
+      }
+    ],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0.16400000000000003,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "Top Opportunity: tahu (Fit: 18%, Confidence: 45%)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: volume (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: frequency (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: current_supplier (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: price_point (Penalty: -2% — not publicly verifiable)"
+      }
+    ],
+    "draft": "Selamat siang Kak di GORBES Gorengan Besek - Tembalang. Kami menyuplai pasokan harian seperti Tahu Putih Segar dan Tempe Kedelai Murni & Pisang Kepok Kuning dengan harga grosir langsung dari pasar. Apakah berkenan jika kami bagikan daftar harganya?",
+    "draftMetadata": {
+      "draftSource": "DYNAMIC_HEURISTIC",
+      "confidence": "MEDIUM",
+      "requiresHumanReview": true
+    },
+    "recommendedProduct": "Tahu Putih Segar"
+  },
+  "lead-1788403445160-639": {
+    "businessName": "Warung Makan Bos Gentong",
+    "businessCategory": "Seafood restaurant",
+    "location": "Jl. Tlogosari No.17, Tembalang, Semarang City, Central Java 50275, Indonesia",
+    "publicContact": "+62 882-2873-7107",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJBTVvQq-OcC4RBjp9xE_BEcg",
+      "capturedAt": "2026-09-03T02:44:05.158Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788403445160-639",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T02:44:05.326Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788403445163-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 9,
+        "ttlMs": 2592000000
+      },
+      "EV-1788403445163-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 4,
+        "ttlMs": 1209600000
+      },
+      "EV-1788403445163-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 4,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "RUMAH_MAKAN",
+    "demandMatches": [
+      {
+        "product": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.45,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.18000000000000002,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: RUMAH_MAKAN"
+      },
+      {
+        "product": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.43,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.17200000000000001,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: RUMAH_MAKAN"
+      },
+      {
+        "product": "tahu",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.41000000000000003,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16400000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: RUMAH_MAKAN"
+      },
+      {
+        "product": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.39,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.15600000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: RUMAH_MAKAN"
+      },
+      {
+        "product": "kelapa_parut",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.37,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.148,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: RUMAH_MAKAN"
+      },
+      {
+        "product": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.33,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.132,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: RUMAH_MAKAN"
+      }
+    ],
+    "primaryOpportunity": {
+      "id": "bawang_merah",
+      "name": "bawang_merah",
+      "demandSignal": "WEAK_INFERENCE",
+      "supplyStatus": "AVAILABLE",
+      "evidenceConfidence": 0.45,
+      "fitScore": 0.18000000000000002
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "cabai",
+        "name": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.43,
+        "fitScore": 0.17200000000000001
+      },
+      {
+        "id": "tahu",
+        "name": "tahu",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.41000000000000003,
+        "fitScore": 0.16400000000000003
+      },
+      {
+        "id": "tempe",
+        "name": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.39,
+        "fitScore": 0.15600000000000003
+      },
+      {
+        "id": "kelapa_parut",
+        "name": "kelapa_parut",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.37,
+        "fitScore": 0.148
+      },
+      {
+        "id": "telur",
+        "name": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.33,
+        "fitScore": 0.132
+      }
+    ],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0.17720000000000002,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "Top Opportunity: bawang_merah (Fit: 18%, Confidence: 45%)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: volume (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: frequency (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: current_supplier (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: price_point (Penalty: -2% — not publicly verifiable)"
+      }
+    ],
+    "draft": "Salam kenal Kak, kami dari supplier kebutuhan dapur dan kuliner Semarang. Barangkali Warung Makan Bos Gentong sedang cari tambahan pasokan Bawang Merah Brebes berkualitas? Kami siap kirim rutin. Boleh kami info pricelist-nya?",
+    "draftMetadata": {
+      "draftSource": "DYNAMIC_HEURISTIC",
+      "confidence": "MEDIUM",
+      "requiresHumanReview": true
+    },
+    "recommendedProduct": "Bawang Merah Brebes"
+  },
+  "lead-1788407304276-5": {
+    "businessName": "Warteg Citra Rasa",
+    "businessCategory": "Central Javanese restaurant",
+    "location": "VCF5+MGC, Jl. Moh. Yamin, Kuncen, Ungaran, Kec. Ungaran Bar., Kabupaten Semarang, Jawa Tengah 50511, Indonesia",
+    "publicContact": "+62 857-0255-5261",
+    "contactPermission": "UNKNOWN",
+    "source": {
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "ChIJlY7gg7uIcC4RWUOnJ5abKOg",
+      "capturedAt": "2026-09-03T03:48:24.275Z"
+    },
+    "researchAttempts": 0,
+    "id": "lead-1788407304276-5",
+    "status": "PENDING_APPROVAL",
+    "version": 1,
+    "timestamp": "2026-09-03T03:48:24.449Z",
+    "qualityGrade": "B",
+    "confidence": 0.7800000000000001,
+    "firewallDecision": "RESEARCH_MORE",
+    "firewallReasons": [
+      "Contact invalid or missing."
+    ],
+    "evidenceCoverage": {
+      "identity": 100,
+      "category": 100,
+      "location": 0,
+      "contact": 100,
+      "demand": 0,
+      "supplier": 0
+    },
+    "evidenceConflicts": [],
+    "freshness": {
+      "EV-1788407304284-ID": {
+        "status": "FRESH",
+        "domain": "identity",
+        "ageMs": 25,
+        "ttlMs": 2592000000
+      },
+      "EV-1788407304284-CT": {
+        "status": "FRESH",
+        "domain": "contact",
+        "ageMs": 16,
+        "ttlMs": 1209600000
+      },
+      "EV-1788407304284-CAT": {
+        "status": "FRESH",
+        "domain": "category",
+        "ageMs": 16,
+        "ttlMs": 2592000000
+      }
+    },
+    "businessType": "WARTEG",
+    "demandMatches": [
+      {
+        "product": "daun_singkong",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.45,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.18000000000000002,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "gori",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.43,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.17200000000000001,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.41000000000000003,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.16400000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "tahu",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.39,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.15600000000000003,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.37,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.148,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.35,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.13999999999999999,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      },
+      {
+        "product": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "evidenceConfidence": 0.33,
+        "supplyStatus": "AVAILABLE",
+        "freshness": 1,
+        "businessRelevance": 1,
+        "matchScore": 0.132,
+        "activeRecommendation": true,
+        "reason": "Kategori bisnis: WARTEG"
+      }
+    ],
+    "primaryOpportunity": {
+      "id": "daun_singkong",
+      "name": "daun_singkong",
+      "demandSignal": "WEAK_INFERENCE",
+      "supplyStatus": "AVAILABLE",
+      "evidenceConfidence": 0.45,
+      "fitScore": 0.18000000000000002
+    },
+    "secondaryOpportunities": [
+      {
+        "id": "gori",
+        "name": "gori",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.43,
+        "fitScore": 0.17200000000000001
+      },
+      {
+        "id": "tempe",
+        "name": "tempe",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.41000000000000003,
+        "fitScore": 0.16400000000000003
+      },
+      {
+        "id": "tahu",
+        "name": "tahu",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.39,
+        "fitScore": 0.15600000000000003
+      },
+      {
+        "id": "bawang_merah",
+        "name": "bawang_merah",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.37,
+        "fitScore": 0.148
+      },
+      {
+        "id": "cabai",
+        "name": "cabai",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.35,
+        "fitScore": 0.13999999999999999
+      },
+      {
+        "id": "telur",
+        "name": "telur",
+        "demandSignal": "WEAK_INFERENCE",
+        "supplyStatus": "AVAILABLE",
+        "evidenceConfidence": 0.33,
+        "fitScore": 0.132
+      }
+    ],
+    "conditionalOpportunities": [],
+    "opportunityScore": 0.19119999999999998,
+    "nextBestAction": "RESEARCH_MORE",
+    "decisionReasons": [
+      {
+        "type": "POSITIVE",
+        "reason": "Top Opportunity: daun_singkong (Fit: 18%, Confidence: 45%)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: volume (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: frequency (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: current_supplier (Penalty: -2% — not publicly verifiable)"
+      },
+      {
+        "type": "UNKNOWN",
+        "reason": "Structural unknown: price_point (Penalty: -2% — not publicly verifiable)"
+      }
+    ],
+    "draft": "Halo tim Warteg Citra Rasa, salam kenal dari kami supplier bahan pangan lokal di Semarang. Kami rutin menyuplai Daun Singkong Muda Segar segar setiap pagi. Boleh kami kirimkan daftar harga terbaru hari ini?",
+    "draftMetadata": {
+      "draftSource": "DYNAMIC_HEURISTIC",
+      "confidence": "MEDIUM",
+      "requiresHumanReview": true
+    },
+    "recommendedProduct": "Daun Singkong Muda Segar"
+  }
+}

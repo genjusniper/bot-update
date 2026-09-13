@@ -2,6 +2,8 @@
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import { Normalizer } from './Normalizer.mjs';
+import { LeadApprovalUI } from '../sales/approval/LeadApprovalUI.mjs';
+const leadUI = new LeadApprovalUI('./data/queues/leads.json');
 import { EventBus } from '../event/EventBus.mjs';
 import { JobQueue } from '../queue/JobQueue.mjs';
 
@@ -91,6 +93,43 @@ export class WhatsAppGateway {
         if (!mek.message) continue;
         
         const jid = mek.key.remoteJid;
+        
+        
+        
+        
+        
+        // --- LEAD APPROVAL REMOTE CONTROL ---
+        const txtCmd = mek.message?.conversation || mek.message?.extendedTextMessage?.text || "";
+        if (txtCmd.match(/^(APPROVE|EDIT|REJECT|VIEW)\s+/i)) {
+            const replyMsg = await leadUI.handleCommand(txtCmd);
+            await socket.sendMessage(jid, { text: replyMsg });
+            continue;
+        }
+        
+        // --- CANARY DISCOVERY TRIGGER ---
+        if (txtCmd.trim().startsWith("CANARY")) {
+            const loc = txtCmd.replace("CANARY", "").trim() || "Purworejo";
+            await socket.sendMessage(jid, { text: 'Mencari lead via GoogleScraper di ' + loc + '...' });
+            const { LeadDiscoveryEngine } = await import('../sales/discovery/LeadDiscoveryEngine.mjs');
+            const engine = new LeadDiscoveryEngine();
+            
+            const targetTypes = ["Warteg di ", "Katering di ", "Rumah Makan di ", "Burjo di ", "Restoran Padang di "];
+            const randomTarget = targetTypes[Math.floor(Math.random() * targetTypes.length)] + loc;
+            const results = await engine.discoverAndDraft(randomTarget, 1);
+            if (results.length > 0) {
+                const waView = "[Sales System Disabled here. Use /leads or /approve]";
+                await socket.sendMessage(jid, { text: waView });
+            } else {
+                await socket.sendMessage(jid, { text: '❌ Gagal mendapatkan lead di ' + loc + '.' });
+            }
+            continue;
+        }
+    
+        if (txtCmd.trim() === "G3 LIVE") {
+            console.log('✅ SECRET TRIGGER G3 LIVE V15 DIPANGGIL OLEH: ' + jid);
+            await socket.sendMessage(jid, { text: 'Halo Mas Agus, ini pengujian langsung dari eksekusi G3 Live Server! (Arsitektur V15 Enterprise Worker telah merespon)' });
+            continue;
+        }
         
         // Filter out status broadcasts and newsletters
         if (!jid || jid.endsWith('@newsletter') || jid === 'status@broadcast') { 

@@ -93,17 +93,20 @@ export class PersonalSimulationKernel {
             emotionValence: dims.emotionValence || 'NEUTRAL'
         });
 
+        const isOwner = Boolean(options.isOwner || fusedSnapshot.context?.isOwner);
+
         // 5. Flow & Topic Shift Analysis (Phase 7)
         const closure = ClosureEngine.evaluate({
             text: options.text || '',
-            languageStyle: state.languageMode
+            languageStyle: state.languageMode,
+            isOwner
         });
         const topicShift = TopicShiftEngine.evaluate({
             currentText: options.text || '',
             languageStyle: state.languageMode
         });
 
-        if (closure.isClosing) {
+        if (closure.isClosing && !isOwner) {
             strategy = 'CONVERSATION_CLOSURE';
             requiresFollowup = false;
         }
@@ -154,7 +157,9 @@ export class PersonalSimulationKernel {
             interactionMode: interactionMode.mode,
             userWordCount: (options.text || '').split(/\s+/).filter(Boolean).length
         });
-        const maxWords = closure.isClosing ? 4 : (state.targetLength === 'ULTRA_SHORT' ? 8 : (state.targetLength === 'CONCISE' ? 14 : 22));
+        const maxWords = isOwner 
+            ? 300 
+            : (closure.isClosing ? 4 : (state.targetLength === 'ULTRA_SHORT' ? 8 : (state.targetLength === 'CONCISE' ? 14 : 22)));
         const timing = ResponseTimingModel.calculate({
             interactionMode: interactionMode.mode,
             urgency: dims.urgency || 0.2,
@@ -323,7 +328,8 @@ export class PersonalSimulationKernel {
             why: {
                 reasoning: whyReasoning,
                 modulationsApplied
-            }
+            },
+            isOwner: Boolean(isOwner)
         };
 
         try {
@@ -349,12 +355,16 @@ export class PersonalSimulationKernel {
             languageGuide = 'Bahasa Indonesia sopan, profesional, dan to-the-point';
         }
 
+        const wordLimitGuide = contract.isOwner
+            ? 'BATASAN KATA & KUALITAS (KHUSUS BOS): Jelaskan secara tuntas, solutif, dan step-by-step jika Bos meminta panduan/tutorial/bantuan teknis! Jangan membatasi jawaban jika membutuhkan penjelasan langkah demi langkah yang jelas.'
+            : `BATASAN KATA: MAKSIMAL ${how.maxWords} KATA! Dilarang membuat esai panjang! Dilarang tanda seru (!) di akhir kalimat!`;
+
         return `=== PERSONAL BEHAVIOR CONTRACT ===
 ${contract.identity?.canonicalName ? `IDENTITAS KONTAK: ${contract.identity.canonicalName} (Sapa/Panggil: "${contract.identity.addressForm || 'Bro'}") | Status: ${contract.identity.verificationState}\n` : ''}${contract.group?.isGroup ? `KONTEKS GRUP: Diskresi ${contract.group.responseDiscretion} | Rekomendasi: ${contract.group.recommendation}\n` : ''}MODE INTERAKSI: ${interaction?.mode || 'Casual'} | ${interaction?.messageBurst?.directive || 'Single bubble'}
 STRATEGI RESPON (WHAT): ${what.strategy} (${what.requiresFollowupQuestion ? 'Pancing cerita pendek, jangan beri wejangan!' : 'Jawab langsung, jangan muter-muter'})
 GAYA & NADA (HOW): ${how.tone} | Directness: ${(how.directnessScore * 100).toFixed(0)}%
 GAYA BAHASA: ${languageGuide}
-BATASAN KATA: MAKSIMAL ${how.maxWords} KATA! Dilarang membuat esai panjang! Dilarang tanda seru (!) di akhir kalimat!
+${wordLimitGuide}
 KUOTA PERTANYAAN: ${interaction?.questionBudget?.directive || '0 pertanyaan'}
 HUMOR: ${how.humorStyle === 'OFF' ? 'DILARANG BERCANDA! Jaga suasana serius/empati!' : `Gunakan humor ${how.humorStyle} tipis, jangan melawak garing!`}
 GAYA RESPON: ${interaction?.acknowledgement?.directive || 'Casual'} | ${interaction?.punchline?.directive || 'Jawab natural'}

@@ -1,161 +1,852 @@
 {
   "defaultPrivatePolicy": "SILENT",
+  "defaultGroupPolicy": "SILENT",
   "contacts": {
     "236322690191595@lid": {
-      "name": "Agus (Owner Test)",
+      "name": "Agus (Owner)",
       "policy": "AUTO"
     },
-    "159068543008903@lid": {
-      "name": "Cindy",
-      "policy": "AUTO"
-    },
-    "165145904984105@lid": {
-      "name": "Hanif",
-      "policy": "AUTO"
-    },
-    "6281325554282@s.whatsapp.net": {
-      "name": "Novita",
-      "policy": "SILENT"
-    },
-    "6281935596653@s.whatsapp.net": {
-      "name": "Ayu",
-      "policy": "AUTO"
-    },
-    "6285602612832@s.whatsapp.net": {
-      "name": "VIP Contact 3",
-      "policy": "AUTO"
-    },
-    "6285600961769@s.whatsapp.net": {
-      "name": "Aziz",
-      "policy": "AUTO"
-    },
-    "6285134755110@s.whatsapp.net": {
-      "name": "Vio",
-      "policy": "AUTO"
-    },
-    "628989820481@s.whatsapp.net": {
-      "name": "Bunga",
-      "policy": "AUTO"
-    },
-    "6285799205356@s.whatsapp.net": {
-      "name": "Nael",
-      "policy": "AUTO"
-    },
-    "6285865977271@s.whatsapp.net": {
-      "name": "Mba Tamia",
-      "policy": "AUTO"
-    },
-    "6281574446756@s.whatsapp.net": {
-      "name": "Via",
-      "policy": "AUTO"
-    },
-    "6285877764091@s.whatsapp.net": {
-      "name": "VIP Contact 10",
-      "policy": "AUTO"
-    },
-    "6282134990540@s.whatsapp.net": {
-      "name": "VIP Contact 11",
-      "policy": "AUTO"
-    },
-    "6288239215734@s.whatsapp.net": {
-      "name": "VIP Contact 12",
-      "policy": "AUTO"
-    },
-    "628558932876@s.whatsapp.net": {
-      "name": "VIP Contact 13",
-      "policy": "AUTO"
-    },
-    "6285180980302@s.whatsapp.net": {
-      "name": "VIP Contact 14",
-      "policy": "AUTO"
-    },
-    "6285702431542@s.whatsapp.net": {
-      "name": "Enola",
-      "policy": "AUTO"
-    },
-    "6287710109426@s.whatsapp.net": {
-      "name": "Anang",
-      "policy": "AUTO"
-    },
-    "6288229958381@s.whatsapp.net": {
-      "name": "Mba Tara",
-      "policy": "AUTO"
-    },
-    "6289519307502@s.whatsapp.net": {
-      "name": "Mba Dian",
-      "policy": "AUTO"
-    },
-    "6285715264794@s.whatsapp.net": {
-      "name": "Firda",
-      "policy": "AUTO"
+    "6285741318412@s.whatsapp.net": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789046096205
     },
     "107722125115420@lid": {
-      "name": "Novita",
-      "policy": "SILENT"
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789046607003
     },
-    "33535809335333@lid": {
-      "name": "Ayu",
-      "policy": "AUTO"
+    "186135460495395@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789046961199
     },
-    "56856793858050@lid": {
-      "name": "Aziz",
-      "policy": "AUTO"
+    "105316976992281@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789047504843
     },
-    "60074278006936@lid": {
-      "name": "Vio",
-      "policy": "AUTO"
+    "226989155831867@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789062261577
     },
-    "186470518243569@lid": {
-      "name": "Bunga",
-      "policy": "AUTO"
+    "115655013581013@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789097899183
     },
     "36245363265707@lid": {
-      "name": "Nael",
-      "policy": "AUTO"
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789101046433
     },
-    "238112986927244@lid": {
-      "name": "Mba Tamia",
-      "policy": "AUTO"
+    "131048293814523@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789113634525
     },
-    "76145492025386@lid": {
-      "name": "Via",
-      "policy": "AUTO"
+    "115@s.whatsapp.net": {
+      "name": "Kontak Whitelist",
+      "policy": "AUTO",
+      "lastSeen": 1789114938806
     },
-    "275578154442765@lid": {
-      "name": "VIP Contact 10",
-      "policy": "AUTO"
+    "@s.whatsapp.net": {
+      "name": "Lima belas",
+      "policy": "AUTO",
+      "lastSeen": 1789115017503
     },
-    "104745763127494@lid": {
-      "name": "VIP Contact 11",
-      "policy": "AUTO"
+    "150946659180570@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789116766285
     },
-    "178327092473921@lid": {
-      "name": "VIP Contact 13",
-      "policy": "AUTO"
+    "186470518243569@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789120837856
     },
-    "26938588569601@lid": {
-      "name": "VIP Contact 14",
-      "policy": "AUTO"
+    "11691555344520@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789122210145
     },
-    "241884186288323@lid": {
-      "name": "Enola",
-      "policy": "AUTO"
+    "4291024699637@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789131526629
     },
-    "170445861081155@lid": {
-      "name": "Anang",
-      "policy": "AUTO"
+    "56856793858050@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789168326062
     },
-    "276166548131896@lid": {
-      "name": "Mba Tara",
-      "policy": "AUTO"
+    "2@s.whatsapp.net": {
+      "name": "3, 4",
+      "policy": "AUTO",
+      "lastSeen": 1789169721457
     },
-    "270720462540854@lid": {
-      "name": "Mba Dian",
-      "policy": "AUTO"
+    "178752445276293@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789173023307
     },
-    "26663576403971@lid": {
-      "name": "Firda",
-      "policy": "AUTO"
+    "21492284809228@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789183195593
+    },
+    "165145904984105@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789202198165
+    },
+    "110793127420092@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789212172679
+    },
+    "26577375092970@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789212794997
+    },
+    "40321303973911@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789212813052
+    },
+    "60074278006936@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789268907595
+    },
+    "222630317703188@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789274501428
+    },
+    "199325288263823@lid": {
+      "name": "Kontak Baru",
+      "policy": "SILENT",
+      "lastSeen": 1789277336903
+    }
+  },
+  "groups": {
+    "120363422595642490@g.us": {
+      "name": "Semarang climbers⛰️✨",
+      "policy": "AUTO",
+      "lastSeen": 1789114582474
+    },
+    "120363224366056312@g.us": {
+      "name": "𝙶𝚎𝙵𝚘𝚛𝚝𝚎𝚇 𝙶𝚎𝚗𝚎𝚛𝚊𝚕",
+      "policy": "AUTO",
+      "lastSeen": 1789169741056
+    },
+    "120363405873632151@g.us": {
+      "name": "Group mendaki2⛰️",
+      "policy": "AUTO",
+      "lastSeen": 1789169748142
+    },
+    "120363424614353389@g.us": {
+      "name": "COMMUNITY MDPL",
+      "policy": "AUTO",
+      "lastSeen": 1789169753600
+    },
+    "120363412351618812@g.us": {
+      "name": "Gass bobok",
+      "policy": "AUTO",
+      "lastSeen": 1789169685967
+    },
+    "120363421816932910@g.us": {
+      "name": "SABANA ADVENTURE",
+      "policy": "AUTO",
+      "lastSeen": 1789169680142
+    },
+    "120363426279510545@g.us": {
+      "name": "PELETBENTO SEMARANG🌄",
+      "policy": "AUTO",
+      "lastSeen": 1789169643927
+    },
+    "120363202497869248@g.us": {
+      "name": "KCS Absensi MD - SPG - SPB Jateng 1 & 3",
+      "policy": "SILENT",
+      "lastSeen": 1789048895476
+    },
+    "120363406425345015@g.us": {
+      "name": "info ngopi semarangan",
+      "policy": "SILENT",
+      "lastSeen": 1789051180486
+    },
+    "120363425918114002@g.us": {
+      "name": "Mountain Exp'2⛰️",
+      "policy": "AUTO",
+      "lastSeen": 1789169796805
+    },
+    "120363199566944841@g.us": {
+      "name": "TEAM KCS-INDOLIMA_JATENG UTARA",
+      "policy": "SILENT",
+      "lastSeen": 1789052796188
+    },
+    "120363426988391567@g.us": {
+      "name": "Intern PLAT H",
+      "policy": "SILENT",
+      "lastSeen": 1789055675142
+    },
+    "120363397252803116@g.us": {
+      "name": "FOREX X CRYPTO",
+      "policy": "SILENT",
+      "lastSeen": 1789059954234
+    },
+    "120363321239624829@g.us": {
+      "name": "P.ADA",
+      "policy": "SILENT",
+      "lastSeen": 1789059954243
+    },
+    "120363269648161828@g.us": {
+      "name": "Komunitas Pemula Crypto",
+      "policy": "SILENT",
+      "lastSeen": 1789059954251
+    },
+    "120363267668275710@g.us": {
+      "name": "The Community Crypto Central Java",
+      "policy": "SILENT",
+      "lastSeen": 1789059954256
+    },
+    "120363168565448024@g.us": {
+      "name": "Trader for Living",
+      "policy": "SILENT",
+      "lastSeen": 1789059954263
+    },
+    "120363041237958034@g.us": {
+      "name": "Bukber no wacana",
+      "policy": "SILENT",
+      "lastSeen": 1789059954267
+    },
+    "6285741318412-1613865763@g.us": {
+      "name": "Family",
+      "policy": "SILENT",
+      "lastSeen": 1789059954272
+    },
+    "120363174788484708@g.us": {
+      "name": "FOREX",
+      "policy": "SILENT",
+      "lastSeen": 1789059954278
+    },
+    "6285816269657-1596458255@g.us": {
+      "name": "Pasukane pak to",
+      "policy": "SILENT",
+      "lastSeen": 1789059954327
+    },
+    "120363169517300846@g.us": {
+      "name": "Smg",
+      "policy": "SILENT",
+      "lastSeen": 1789059954345
+    },
+    "120363405669870755@g.us": {
+      "name": "gemini",
+      "policy": "SILENT",
+      "lastSeen": 1789059954351
+    },
+    "120363047430743332@g.us": {
+      "name": "Work",
+      "policy": "SILENT",
+      "lastSeen": 1789059954355
+    },
+    "120363170928954461@g.us": {
+      "name": "FOREX",
+      "policy": "SILENT",
+      "lastSeen": 1789059954359
+    },
+    "120363159647758447@g.us": {
+      "name": "CPM",
+      "policy": "SILENT",
+      "lastSeen": 1789059954363
+    },
+    "120363201636258313@g.us": {
+      "name": "Grup WhatsApp",
+      "policy": "SILENT",
+      "lastSeen": 1789059954367
+    },
+    "120363218111034206@g.us": {
+      "name": "LIT Technically",
+      "policy": "SILENT",
+      "lastSeen": 1789059954371
+    },
+    "120363203432134110@g.us": {
+      "name": "Eksekusi Woobler Daun Sirih LSI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954375
+    },
+    "120363216295720249@g.us": {
+      "name": "Backtest Result ",
+      "policy": "SILENT",
+      "lastSeen": 1789059954378
+    },
+    "120363184913228739@g.us": {
+      "name": "9 CACINK🪱📊",
+      "policy": "SILENT",
+      "lastSeen": 1789059954381
+    },
+    "120363236008710095@g.us": {
+      "name": "Wyckoff Technicall",
+      "policy": "SILENT",
+      "lastSeen": 1789059954384
+    },
+    "120363216504947386@g.us": {
+      "name": "Fibonacci ",
+      "policy": "SILENT",
+      "lastSeen": 1789059954390
+    },
+    "120363232371347647@g.us": {
+      "name": "Discussion",
+      "policy": "SILENT",
+      "lastSeen": 1789059954394
+    },
+    "120363232849823994@g.us": {
+      "name": "ICT Technicall 2022",
+      "policy": "SILENT",
+      "lastSeen": 1789059954397
+    },
+    "120363232868812908@g.us": {
+      "name": "Crypto Fundamental",
+      "policy": "SILENT",
+      "lastSeen": 1789059954402
+    },
+    "120363235682051432@g.us": {
+      "name": "Hacking Tips",
+      "policy": "SILENT",
+      "lastSeen": 1789059954407
+    },
+    "120363402552940173@g.us": {
+      "name": "BELAJAR BARENG",
+      "policy": "SILENT",
+      "lastSeen": 1789059954411
+    },
+    "6282378913128-1627646960@g.us": {
+      "name": "JDM ELITE (JE)",
+      "policy": "SILENT",
+      "lastSeen": 1789059954415
+    },
+    "120363235380711539@g.us": {
+      "name": "Fundamental Forex ",
+      "policy": "SILENT",
+      "lastSeen": 1789059954420
+    },
+    "120363041754856258@g.us": {
+      "name": "REPUBLIK CINTA",
+      "policy": "SILENT",
+      "lastSeen": 1789059954424
+    },
+    "120363216800208344@g.us": {
+      "name": "Outlook Market Crypto & Forex",
+      "policy": "SILENT",
+      "lastSeen": 1789059954428
+    },
+    "6285740768785-1592670600@g.us": {
+      "name": "Pro player",
+      "policy": "SILENT",
+      "lastSeen": 1789059954432
+    },
+    "120363043170822556@g.us": {
+      "name": "🇮🇩Sanset Rider Semarang🏁",
+      "policy": "SILENT",
+      "lastSeen": 1789059954436
+    },
+    "120363044151858971@g.us": {
+      "name": "BAYAR LANGSUNG DI TEMPAT",
+      "policy": "SILENT",
+      "lastSeen": 1789059954441
+    },
+    "120363158564337849@g.us": {
+      "name": "ODGJ Crew",
+      "policy": "SILENT",
+      "lastSeen": 1789059954447
+    },
+    "6282220865193-1553067338@g.us": {
+      "name": "3.Mr bread area MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954454
+    },
+    "6282220865193-1548981891@g.us": {
+      "name": "12.Gertak & Full Display",
+      "policy": "SILENT",
+      "lastSeen": 1789059954460
+    },
+    "6282220865193-1548980903@g.us": {
+      "name": "10.Laporan Shift Area MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954465
+    },
+    "6282220440098-1581064689@g.us": {
+      "name": "18.Kurset vir/fin",
+      "policy": "SILENT",
+      "lastSeen": 1789059954470
+    },
+    "120363039308017038@g.us": {
+      "name": "NGAJI PAK KUM",
+      "policy": "SILENT",
+      "lastSeen": 1789059954485
+    },
+    "6287831510695-1593680872@g.us": {
+      "name": "2.Absensi per shift MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954492
+    },
+    "6285876291778-1524048115@g.us": {
+      "name": "11.Produck Khusus MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954498
+    },
+    "6282220865193-1548980077@g.us": {
+      "name": "7.PJR Area MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954505
+    },
+    "6282220865193-1548978504@g.us": {
+      "name": "1.Jop & Prodmast Area MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954511
+    },
+    "120363259598108032@g.us": {
+      "name": "Grup sesat",
+      "policy": "SILENT",
+      "lastSeen": 1789059954516
+    },
+    "6282220865193-1548997645@g.us": {
+      "name": "14.Event,PTW,HH,HTH",
+      "policy": "SILENT",
+      "lastSeen": 1789059954523
+    },
+    "6282220440098-1592124217@g.us": {
+      "name": "16.New Member Isaku",
+      "policy": "SILENT",
+      "lastSeen": 1789059954531
+    },
+    "6282220440098-1580554444@g.us": {
+      "name": "8.Qscv-IIS KA.Toko",
+      "policy": "SILENT",
+      "lastSeen": 1789059954537
+    },
+    "120363426877679588@g.us": {
+      "name": "cus slamet",
+      "policy": "SILENT",
+      "lastSeen": 1789059954542
+    },
+    "120363025193941045@g.us": {
+      "name": "E-sis 19/ 22-24 agt 2022",
+      "policy": "SILENT",
+      "lastSeen": 1789059954548
+    },
+    "6282220440098-1624502848@g.us": {
+      "name": "13.Cek Barang dg Wdcp",
+      "policy": "SILENT",
+      "lastSeen": 1789059954558
+    },
+    "6282220865193-1549095835@g.us": {
+      "name": "15.Komplain/CO-intransit",
+      "policy": "SILENT",
+      "lastSeen": 1789059954565
+    },
+    "6282220865193-1548979753@g.us": {
+      "name": "9.Itt/Audit Area MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954571
+    },
+    "120363196447677924@g.us": {
+      "name": "GWS Kampz 🫶🏻",
+      "policy": "SILENT",
+      "lastSeen": 1789059954578
+    },
+    "120363091999533354@g.us": {
+      "name": "Mafia",
+      "policy": "SILENT",
+      "lastSeen": 1789059954585
+    },
+    "6282220865193-1548981413@g.us": {
+      "name": "4. KPI proses&sales MUI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954592
+    },
+    "120363362109778858@g.us": {
+      "name": "oslogengg",
+      "policy": "SILENT",
+      "lastSeen": 1789059954598
+    },
+    "6282220440098-1580554326@g.us": {
+      "name": "20.Meeting-Hrd-mutasi",
+      "policy": "SILENT",
+      "lastSeen": 1789059954605
+    },
+    "6282220440098-1592124451@g.us": {
+      "name": "5. No Variant Mines",
+      "policy": "SILENT",
+      "lastSeen": 1789059954612
+    },
+    "6282220865193-1548982061@g.us": {
+      "name": "17.Supervisi/Urgent",
+      "policy": "SILENT",
+      "lastSeen": 1789059954621
+    },
+    "6282220440098-1592124823@g.us": {
+      "name": "6. 'No' cancel",
+      "policy": "SILENT",
+      "lastSeen": 1789059954629
+    },
+    "120363305883395172@g.us": {
+      "name": "pencari jalan allah",
+      "policy": "SILENT",
+      "lastSeen": 1789059954637
+    },
+    "120363023864384770@g.us": {
+      "name": "Midnight Brutality",
+      "policy": "SILENT",
+      "lastSeen": 1789059954647
+    },
+    "120363210404171865@g.us": {
+      "name": "MB Drift Technique (MBDT)",
+      "policy": "SILENT",
+      "lastSeen": 1789059954656
+    },
+    "6281218594345-1547093828@g.us": {
+      "name": "NOIN ESPORTS",
+      "policy": "SILENT",
+      "lastSeen": 1789059954665
+    },
+    "120363303126253010@g.us": {
+      "name": "JADWAL 22 - BERKOMUNIKASI BAHASA INGGRIS UNTUK STAFF PERKANTORAN UMUM",
+      "policy": "SILENT",
+      "lastSeen": 1789059954672
+    },
+    "120363333706591444@g.us": {
+      "name": "P.Ada",
+      "policy": "SILENT",
+      "lastSeen": 1789059954679
+    },
+    "6287733235675-1627968776@g.us": {
+      "name": "TEAM AREA SPV BCO",
+      "policy": "SILENT",
+      "lastSeen": 1789059954686
+    },
+    "120363425509164138@g.us": {
+      "name": "WACANA PIKNIK 😜",
+      "policy": "SILENT",
+      "lastSeen": 1789059954693
+    },
+    "6285640446063-1580107631@g.us": {
+      "name": "TEAM JATENG&DIY",
+      "policy": "SILENT",
+      "lastSeen": 1789059954700
+    },
+    "6281542544112-1634107893@g.us": {
+      "name": "BSU BCO APN",
+      "policy": "SILENT",
+      "lastSeen": 1789059954710
+    },
+    "6285640446063-1609320005@g.us": {
+      "name": "Konconan Selawase",
+      "policy": "SILENT",
+      "lastSeen": 1789059954720
+    },
+    "120363120308995294@g.us": {
+      "name": "Grup sharing sambat 😁",
+      "policy": "SILENT",
+      "lastSeen": 1789059954729
+    },
+    "120363298607802740@g.us": {
+      "name": "TOURING BROMO ",
+      "policy": "SILENT",
+      "lastSeen": 1789059954737
+    },
+    "6287733235675-1628837604@g.us": {
+      "name": "AUDIT- NKL-CEK BARANG",
+      "policy": "SILENT",
+      "lastSeen": 1789059954747
+    },
+    "6287850431499-1625628675@g.us": {
+      "name": "Vaksinasi 7 juli 2021",
+      "policy": "SILENT",
+      "lastSeen": 1789059954756
+    },
+    "6285727562768-1580638142@g.us": {
+      "name": "Koordinasi MD SI JATENG",
+      "policy": "SILENT",
+      "lastSeen": 1789059954764
+    },
+    "120363417742726368@g.us": {
+      "name": "gibah dulu bukber kemudian",
+      "policy": "SILENT",
+      "lastSeen": 1789059954773
+    },
+    "120363148272895606@g.us": {
+      "name": "1 tahun piknik lagi",
+      "policy": "SILENT",
+      "lastSeen": 1789059954780
+    },
+    "120363165615644943@g.us": {
+      "name": "ARP MD  KCS JATENG",
+      "policy": "SILENT",
+      "lastSeen": 1789059954788
+    },
+    "120363386276042876@g.us": {
+      "name": "SPG / MD Semarang ",
+      "policy": "SILENT",
+      "lastSeen": 1789059954795
+    },
+    "120363401136976650@g.us": {
+      "name": "BOL Family",
+      "policy": "SILENT",
+      "lastSeen": 1789059954801
+    },
+    "120363109713176525@g.us": {
+      "name": "MD NKA JATENG",
+      "policy": "SILENT",
+      "lastSeen": 1789059954809
+    },
+    "120363041701068344@g.us": {
+      "name": "PENGAJIAN MALAM SABTU",
+      "policy": "SILENT",
+      "lastSeen": 1789059954815
+    },
+    "120363043197968247@g.us": {
+      "name": "TEAM BONDOWOSO",
+      "policy": "SILENT",
+      "lastSeen": 1789059954822
+    },
+    "120363402376630902@g.us": {
+      "name": "MONTHLY MEETING - 14 AGUST",
+      "policy": "SILENT",
+      "lastSeen": 1789059954830
+    },
+    "120363410342586212@g.us": {
+      "name": "Sweety lovers",
+      "policy": "AUTO",
+      "lastSeen": 1789115101825
+    },
+    "6285740768785-1601968389@g.us": {
+      "name": "Perkumpulan orang gila",
+      "policy": "SILENT",
+      "lastSeen": 1789059954844
+    },
+    "6287733235675-1629292369@g.us": {
+      "name": "VARIAN MINUS & CANCEL",
+      "policy": "SILENT",
+      "lastSeen": 1789059954850
+    },
+    "120363335826150629@g.us": {
+      "name": "P.ADA",
+      "policy": "SILENT",
+      "lastSeen": 1789059954857
+    },
+    "120363406973777020@g.us": {
+      "name": "EVENT LUCKYDIP",
+      "policy": "SILENT",
+      "lastSeen": 1789059954863
+    },
+    "120363418846302811@g.us": {
+      "name": "Grub sementara",
+      "policy": "SILENT",
+      "lastSeen": 1789059954871
+    },
+    "120363404477505137@g.us": {
+      "name": "LDOE Guder Clan",
+      "policy": "SILENT",
+      "lastSeen": 1789059954879
+    },
+    "6285738953407-1573733417@g.us": {
+      "name": "KAUM BERSATU",
+      "policy": "SILENT",
+      "lastSeen": 1789059954889
+    },
+    "120363161544155047@g.us": {
+      "name": "INFIVIZ - KCSOFTEX",
+      "policy": "SILENT",
+      "lastSeen": 1789059954897
+    },
+    "6282138775586-1505182286@g.us": {
+      "name": "SPG SOFTEX ADA GROUP",
+      "policy": "SILENT",
+      "lastSeen": 1789059954908
+    },
+    "120363307250068024@g.us": {
+      "name": "B O L🐎",
+      "policy": "SILENT",
+      "lastSeen": 1789059954918
+    },
+    "120363151394309318@g.us": {
+      "name": "Trader s2fx",
+      "policy": "SILENT",
+      "lastSeen": 1789059954926
+    },
+    "120363166803375908@g.us": {
+      "name": "KUMPUL PR DI SINI",
+      "policy": "SILENT",
+      "lastSeen": 1789059954933
+    },
+    "120363277024553606@g.us": {
+      "name": "SPG MD SMG, KDL, USA",
+      "policy": "SILENT",
+      "lastSeen": 1789059954941
+    },
+    "120363152415098728@g.us": {
+      "name": "Trader for Living",
+      "policy": "SILENT",
+      "lastSeen": 1789059954948
+    },
+    "120363296452105712@g.us": {
+      "name": "SPG Byberilkids",
+      "policy": "SILENT",
+      "lastSeen": 1789059954956
+    },
+    "120363028894749934@g.us": {
+      "name": "LMBK [MANDALIKADRIFT]🚗🌪️",
+      "policy": "SILENT",
+      "lastSeen": 1789059954964
+    },
+    "120363424244816362@g.us": {
+      "name": "INTERN Semarang ❤️",
+      "policy": "AUTO",
+      "lastSeen": 1789115055757
+    },
+    "628566627373-1562727880@g.us": {
+      "name": "Koordinasi Team Semarang",
+      "policy": "SILENT",
+      "lastSeen": 1789059954985
+    },
+    "120363392039764668@g.us": {
+      "name": "Admin Jateng utara",
+      "policy": "SILENT",
+      "lastSeen": 1789059954997
+    },
+    "120363320126308948@g.us": {
+      "name": "JOGO KAMPUNG",
+      "policy": "SILENT",
+      "lastSeen": 1789059955005
+    },
+    "120363423536318043@g.us": {
+      "name": "Bukber Shift B 2026",
+      "policy": "SILENT",
+      "lastSeen": 1789059955018
+    },
+    "120363269048087472@g.us": {
+      "name": "Competitor Activity",
+      "policy": "SILENT",
+      "lastSeen": 1789059955029
+    },
+    "120363090190164476@g.us": {
+      "name": "ONCALL LEBARAN 2023 SEMSOL ",
+      "policy": "SILENT",
+      "lastSeen": 1789059955040
+    },
+    "6281216561339-1529977772@g.us": {
+      "name": "FORMAJ",
+      "policy": "SILENT",
+      "lastSeen": 1789059955050
+    },
+    "120363216636605937@g.us": {
+      "name": "Pemula Crypto Jateng ",
+      "policy": "SILENT",
+      "lastSeen": 1789059955059
+    },
+    "120363211674464733@g.us": {
+      "name": "TIM JATENG UTARA",
+      "policy": "SILENT",
+      "lastSeen": 1789059955068
+    },
+    "120363212557453875@g.us": {
+      "name": "ACADEMY CRYPTO SEMARANG",
+      "policy": "SILENT",
+      "lastSeen": 1789059955079
+    },
+    "120363029961187647@g.us": {
+      "name": "AUSBILDUNG 50",
+      "policy": "SILENT",
+      "lastSeen": 1789059955088
+    },
+    "62895421284060-1630296334@g.us": {
+      "name": "KOMEDI SEMARANG",
+      "policy": "SILENT",
+      "lastSeen": 1789059955103
+    },
+    "120363418539999451@g.us": {
+      "name": "Group Indo5 Semarang",
+      "policy": "SILENT",
+      "lastSeen": 1789059955113
+    },
+    "120363030002907105@g.us": {
+      "name": "INFO LOKER WEB 2",
+      "policy": "SILENT",
+      "lastSeen": 1789059955121
+    },
+    "120363269225608705@g.us": {
+      "name": "The Community Crypto Central Java",
+      "policy": "SILENT",
+      "lastSeen": 1789059955132
+    },
+    "120363417913065615@g.us": {
+      "name": "Price Tracking (Pareto Store) ",
+      "policy": "SILENT",
+      "lastSeen": 1789059955139
+    },
+    "120363045106624427@g.us": {
+      "name": "GUDANG LOKER 50 {AL}🤙🏿",
+      "policy": "SILENT",
+      "lastSeen": 1789059955149
+    },
+    "120363232786159428@g.us": {
+      "name": "S2FX FREE GLOBAL",
+      "policy": "SILENT",
+      "lastSeen": 1789059955168
+    },
+    "120363223567854428@g.us": {
+      "name": "Crypto Association",
+      "policy": "SILENT",
+      "lastSeen": 1789059955177
+    },
+    "120363196769071953@g.us": {
+      "name": "OUTLOOK MARKET S2FX",
+      "policy": "SILENT",
+      "lastSeen": 1789059955185
+    },
+    "6287845670358-1599459413@g.us": {
+      "name": "LoWker Jateng 7",
+      "policy": "SILENT",
+      "lastSeen": 1789059955203
+    },
+    "120363421939524913@g.us": {
+      "name": "ALL TEAM SPG MD - KCS PROJECT",
+      "policy": "SILENT",
+      "lastSeen": 1789059955211
+    },
+    "6285800663988-1609834397@g.us": {
+      "name": "LoWker Jateng 16",
+      "policy": "SILENT",
+      "lastSeen": 1789059955220
+    },
+    "120363250149636916@g.us": {
+      "name": "Komunitas Pemula Crypto",
+      "policy": "SILENT",
+      "lastSeen": 1789059955228
+    },
+    "6281332645617-1582019473@g.us": {
+      "name": "LoWker Jateng 1",
+      "policy": "SILENT",
+      "lastSeen": 1789059955236
+    },
+    "6287845670358-1595658171@g.us": {
+      "name": "LoWker Jateng 3",
+      "policy": "SILENT",
+      "lastSeen": 1789059955244
+    },
+    "6285726487663-1592883032@g.us": {
+      "name": "Loker",
+      "policy": "SILENT",
+      "lastSeen": 1789059955253
+    },
+    "120363396221118226@g.us": {
+      "name": "FOREX X CRYPTO",
+      "policy": "SILENT",
+      "lastSeen": 1789059955261
     }
   }
 }

@@ -1,0 +1,97 @@
+{
+  "owner": {
+    "name": "Agus Salim",
+    "aliases": [
+      "agus",
+      "mas agus",
+      "bos"
+    ],
+    "location": "Semarang, Jawa Tengah",
+    "occupation": "Tech Builder & Creator"
+  },
+  "people": {
+    "novita": {
+      "id": "novita",
+      "name": "Novita",
+      "aliases": [
+        "nov",
+        "novita",
+        "nopita"
+      ],
+      "relationship": "special / sensitive",
+      "policy": "SILENT",
+      "notes": "Prioritas tinggi, AI dilarang membalas otomatis (khusus manual Owner)"
+    },
+    "hanif": {
+      "id": "hanif",
+      "name": "Hanif",
+      "aliases": [
+        "hanif",
+        "nif"
+      ],
+      "relationship": "close friend",
+      "notes": "Teman akrab nongkrong & komputer/motor"
+    },
+    "cindy": {
+      "id": "cindy",
+      "name": "Cindy",
+      "aliases": [
+        "cindy",
+        "cin"
+      ],
+      "relationship": "friend",
+      "notes": "Teman ngobrol ramah & santai"
+    }
+  },
+  "devices": {
+    "pc_desktop": {
+      "id": "pc_desktop",
+      "name": "PC Desktop",
+      "aliases": [
+        "pc",
+        "komputer",
+        "laptop",
+        "kompi"
+      ],
+      "status": "Troubled (BCD Boot Issue)",
+      "activeProblem": "BCD error booting Windows, butuh repair via CMD bootable USB",
+      "lastUpdated": 1789042656907
+    },
+    "hp_termux": {
+      "id": "hp_termux",
+      "name": "HP Android (Termux)",
+      "aliases": [
+        "hp",
+        "termux",
+        "server bot",
+        "android"
+      ],
+      "status": "Operational / Running Salim OS V16",
+      "role": "Always-on Daemon"
+    }
+  },
+  "projects": {
+    "salim_os": {
+      "id": "salim_os",
+      "name": "Salim OS / ARKA AI",
+      "aliases": [
+        "arka",
+        "salim",
+        "bot",
+        "salim os"
+      ],
+      "status": "V16 Autonomous Cognitive Evolution",
+      "milestone": "Situational & Graph Intelligence"
+    }
+  },
+  "open_loops": [
+    {
+      "id": "loop_bcd_repair",
+      "title": "Perbaikan Boot BCD Windows",
+      "linkedDevice": "pc_desktop",
+      "status": "IN_PROGRESS",
+      "lastStep": "Perintah CMD bootable USB (bootrec /fixmbr & bootrec /rebuildbcd)",
+      "created": 1789042656907
+    }
+  ]
+}

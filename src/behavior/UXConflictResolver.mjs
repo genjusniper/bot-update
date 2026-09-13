@@ -2,7 +2,7 @@
 // UXConflictResolver: Resolves conflict between social/behavioral modules, estimates user energy, detects overtalk, and enforces low initiative.
 
 export class UXConflictResolver {
-    static resolve({ text, chatId, rawResponse, history = [], moodState = 'NORMAL' }) {
+    static resolve({ text, chatId, rawResponse, history = [], moodState = 'NORMAL', isOwner = false }) {
         const incomingText = (text || '').trim().toLowerCase();
         const responseText = (rawResponse || '').trim();
 
@@ -26,8 +26,8 @@ export class UXConflictResolver {
         const userLength = incomingText.split(/\s+/).length;
         const botLength = responseText.split(/\s+/).length;
 
-        // Ratio brake: if Bot is talking > 3x the user, enforce Minimum Effective Response
-        if (userEnergy < 0.5 && botLength > 15 && botLength > userLength * 2.5) {
+        // Ratio brake: if Bot is talking > 3x the user, enforce Minimum Effective Response (Bypass for Owner)
+        if (!isOwner && userEnergy < 0.5 && botLength > 15 && botLength > userLength * 2.5) {
             const sentences = responseText.split(/[.!?\n]/).filter(Boolean);
             if (sentences.length > 0) {
                 governedResponse = sentences[0].trim(); // Cut to the very first sentence

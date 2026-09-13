@@ -1,0 +1,41 @@
+{
+  "leadId": "lead-sandbox-001",
+  "evidenceLog": [
+    {
+      "evidenceId": "EV-SBX-001-A",
+      "domain": "identity",
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "gmaps://warteg-bu-yati",
+      "capturedAt": "2026-09-03T01:49:25.823Z",
+      "rawValue": "Warteg Bu Yati",
+      "normalizedValue": "Warteg Bu Yati",
+      "reliability": 0.85,
+      "directness": "DIRECT",
+      "completeness": 100,
+      "classification": "FACT",
+      "fingerprint": "fp-3e072cc7"
+    },
+    {
+      "evidenceId": "EV-SBX-001-B",
+      "domain": "category",
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "gmaps://warteg-bu-yati",
+      "capturedAt": "2026-09-03T01:49:25.823Z",
+      "rawValue": "Warteg",
+      "normalizedValue": "WARTEG",
+      "reliability": 0.85,
+      "directness": "DIRECT",
+      "completeness": 95,
+      "classification": "FACT",
+      "fingerprint": "fp-ac20dd7c"
+    }
+  ],
+  "fingerprints": [
+    "fp-3e072cc7",
+    "fp-ac20dd7c"
+  ],
+  "claims": {},
+  "conflicts": [],
+  "snapshots": [],
+  "blockOutreach": false
+}

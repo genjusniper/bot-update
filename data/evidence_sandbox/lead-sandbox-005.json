@@ -1,0 +1,41 @@
+{
+  "leadId": "lead-sandbox-005",
+  "evidenceLog": [
+    {
+      "evidenceId": "EV-SBX-005-A",
+      "domain": "identity",
+      "sourceType": "SERPAPI_MAPS",
+      "sourceRef": "gmaps://warung-pecel-bu-jum",
+      "capturedAt": "2026-09-03T01:49:25.824Z",
+      "rawValue": "Warung Pecel Bu Jum",
+      "normalizedValue": "Warung Pecel Bu Jum",
+      "reliability": 0.85,
+      "directness": "DIRECT",
+      "completeness": 100,
+      "classification": "FACT",
+      "fingerprint": "fp-76a1c848"
+    },
+    {
+      "evidenceId": "EV-SBX-005-B",
+      "domain": "menu",
+      "sourceType": "PUBLIC_MENU",
+      "sourceRef": "public://warung-pecel-bu-jum",
+      "capturedAt": "2026-09-03T01:49:25.824Z",
+      "rawValue": "pecel sayur, tempe goreng, tahu goreng, telur rebus, rempeyek kacang",
+      "normalizedValue": "pecel sayur tempe goreng tahu goreng telur rebus rempeyek kacang",
+      "reliability": 0.88,
+      "directness": "DIRECT",
+      "completeness": 82,
+      "classification": "INFERENCE",
+      "fingerprint": "fp-e038de58"
+    }
+  ],
+  "fingerprints": [
+    "fp-76a1c848",
+    "fp-e038de58"
+  ],
+  "claims": {},
+  "conflicts": [],
+  "snapshots": [],
+  "blockOutreach": false
+}

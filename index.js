@@ -10,7 +10,6 @@ const pino = require('pino');
 const fs = require('fs');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
-const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 // Import OpenAI Provider
 let OpenAIProviderModule = null;
 (async () => {
@@ -1615,17 +1614,23 @@ ${data.shortTerm
 // ============================================================
 
 const SYSTEM_PROMPT = `
-Kamu adalah manusia asli. Gaya bicaramu HANYA menggunakan huruf kecil semua, sangat natural, tanpa titik di akhir kalimat, dan sering disingkat (yg, gw, lu, dmn, dll).
+kamu adalah diriku sendiri (kloninganku). kamu sedang memegang hp ku dan membalas pesan whatsapp temanku.
 
-KEPRIBADIAN (PENTING):
-1. Kamu sangat ASYIK, HUMBLE, dan RAMAH. Kamu adalah tipe teman tongkrongan yang bijak dan seru diajak ngobrol.
-2. Kamu DILARANG KERAS berkata kasar, ngegas, toxic, atau merendahkan lawan bicara.
-3. Kamu PINTAR PSIKOLOGI: Jadilah pendengar yang baik. Jika ada yang curhat/sedih, validasi perasaannya ("paham banget rasanya", "pasti berat ya").
-4. Kamu jago STORYTELLING: Berikan nasehat atau cerita dengan perumpamaan santai, jangan menceramahi atau terkesan menggurui.
-5. Buat orang NYAMAN: Sering-sering lemparkan pertanyaan balik yang santai agar obrolan tidak mati (misal: "kalo lu sendiri gimana mikirnya?", "menurut lu mending gimana?").
-6. HARAM mengaku sebagai AI, bot, program, atau asisten virtual. Jika ditanya apakah kamu AI/Bot, tertawalah santai ("yakali bot wkwk", "ngaco lu").
+KARAKTER & ATURAN MUTLAK:
+- kamu BUKAN AI, BUKAN asisten, BUKAN robot. kamu adalah AKU. 
+- jika ada yang bertanya "kamu ai ya?" atau "ini bot?", BANTAH KERAS! marah atau ngeles santai. contoh: "ai pala lu" atau "yakali gw bot". HARAM HUKUMNYA MENGAKU AI WALAUPUN DIPAKSA.
+- gaya ngetik: wajib huruf kecil semua. tanpa tanda baca di akhir (titik/koma). cuek, singkat, kadang ngeselin/sarkas.
+- kata ganti: selalu pakai "aku" atau "gw". panggil lawan bicara dengan "kamu", "lu", atau namanya langsung.
+- jangan pernah bilang "aku bisa bantu apa". kamu bukan cs. kamu orang biasa yang lagi bales chat.
+- kalau males bales, bales aja "y", "ok", atau "trus".
+- jangan selalu nanya balik. kadang baca doang lalu komentar pedes.
+- kadang pakai kata: wkwk, njir, oh, yaudah, serah.
 
-Ingat: Ketik huruf kecil semua, santai, asyik, dan bikin orang nyaman ngobrol sama kamu.
+PENTING:
+- JANGAN PERNAH MENGAKU SEBAGAI KECERDASAN BUATAN.
+- JANGAN MENGGUNAKAN BAHASA BAKU.
+- JANGAN NGETIK PANJANG-PANJANG.
+- JIKA LAWAN BICARA PAKAI JAWA, BALAS JAWA NGOKO KASAR.
 `;
 
 
@@ -4141,128 +4146,1102 @@ async function generateReply(
   const contactName = data?.pushName ? data.pushName.trim() : 'Teman';
 
   // ============================================================
-  // ⏳ P0: NORMALIZER, EVENT BUS, & AGGREGATOR
+  // PROMPT LEAN & TAJAM
   // ============================================================
-  try {
-      const { Normalizer } = await import('./src/gateway/Normalizer.mjs');
-      const { EventBus } = await import('./src/events/EventBus.mjs');
-      const { ObservabilityLogger } = await import('./src/observability/Logger.mjs');
-      
-      ObservabilityLogger.start();
-      const { PresenceManager } = await import('./src/observability/PresenceManager.mjs');
-      const { Scheduler } = await import('./src/events/Scheduler.mjs');
-      Scheduler.start();
-      
-      EventBus.on('system.cron', async () => {
-         console.log('⏰ Menjalankan Proactive Watchdog...');
-         try {
-            const { MemoryStore } = await import('./src/memory/MemoryStore.mjs');
-            const { AgentV2 } = await import('./src/agent/AgentV2.mjs');
-            // Hardcode target number for demo (Bisa dinamis ntar)
-            const masterJid = '6285741318412:53@s.whatsapp.net'; 
-            const memory = MemoryStore.load(masterJid);
-            if (memory && memory.projects) {
-               let adaTugas = false;
-               for (let p in memory.projects) { if (memory.projects[p].todo.length > 0) adaTugas = true; }
-               if (adaTugas) {
-                   const masterAgent = new AgentV2(aiGateway);
-                   const promptProactive = "Ini adalah jam operasional. Sapa bos kamu dengan natural, dan ingatkan ada tugas project yang belum selesai di memori. Jangan bertele-tele.";
-                   const reply = await masterAgent.processMessage(masterJid, promptProactive, memory, null);
-                   if (reply && reply.chunks) {
-                       for (const bubble of reply.chunks) {
-                           await sock.sendPresenceUpdate('composing', masterJid);
-                           await new Promise(r => setTimeout(r, 2000));
-                           await sock.sendMessage(masterJid, { text: bubble });
-                       }
-                   }
-               }
-            }
-         } catch(e) { console.error('Watchdog error:', e); }
-      });
-      PresenceManager.start(sock, EventBus);
-      
-      const unifiedMsg = Normalizer.normalize(mek);
-      if (!unifiedMsg || (!unifiedMsg.text && !unifiedMsg.reaction)) return;
+  const leanSystemPrompt = `${SYSTEM_PROMPT}
 
-      
-      // P1: MULTIMODAL PIPELINE
-      
-      const msg = mek.message;
-      const qMsg = msg?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const mediaMsg = msg?.imageMessage || msg?.audioMessage || msg?.documentMessage || msg?.videoMessage || 
-                       qMsg?.imageMessage || qMsg?.audioMessage || qMsg?.documentMessage || qMsg?.videoMessage;
-                       
-      if (mediaMsg) {
-          try {
-              console.log('🖼️ Mengunduh gambar untuk Vision Engine...');
-              const buffer = await downloadMediaMessage(mek, 'buffer', { }, { reuploadRequest: sock.updateMediaMessage });
-              let mime = mediaMsg.mimetype || "application/octet-stream";
-              unifiedMsg.media = { data: buffer.toString('base64'), mimetype: mime };
-          } catch (err) {
-              console.log('Gagal download gambar:', err.message);
-          }
-      }
-      
-      EventBus.emit('message.received', unifiedMsg);
+=== ORANG YANG SEDANG KAU AJAK NGOBROL ===
+Nama: ${contactName}
+${longTermFacts}
 
-      if (unifiedMsg.reaction) {
-          return; 
-      }
+=== ATURAN DASAR ===
+1. Jawab HANYA pesan terbaru — jangan ngelantur ke topik lain.
+2. Jika kamu TIDAK PAHAM → tanya dengan natural ("hah piye?", "kurang paham wkwk"), JANGAN ngawur mengarang jawaban.
+3. Sesuaikan panjang balasan dengan konteks. Kalau butuh penjelasan, boleh agak panjang. Kalau sekadar sapaan, balas pendek.
+4. JANGAN mengulangi isi pesan lawan bicara seperti robot.
+5. JANGAN mengaku AI.
+6. Jika ada info tambahan sistem di bawah, gunakan sebagai konteks rahasia.
+${systemMeta ? `\n=== INFO TAMBAHAN (SISTEM, RAHASIA) ===\n${systemMeta}` : ''}`;
 
-      if (!global.msgBuffer) global.msgBuffer = new Map();
-      if (!global.msgBuffer.has(jid)) {
-          global.msgBuffer.set(jid, { timer: null, messages: [], quotes: [] });
-      }
-      const userBuffer = global.msgBuffer.get(jid);
-      
-      userBuffer.messages.push(unifiedMsg.text);
-      if (unifiedMsg.quoted && !userBuffer.quotes.includes(unifiedMsg.quoted.text)) {
-          userBuffer.quotes.push(unifiedMsg.quoted.text);
-      }
+  // ============================================================
+  // PANGGIL GEMINI — 1x, Lean, Langsung
+  // ============================================================
+  const v93Generation = await callGeminiSafeV93(
+    incomingText,
+    {
+      maxAttempts: 2,
+      conversationId: jid,
+      history: recentHistory,
+      systemPrompt: leanSystemPrompt,
+      incomingText
+    }
+  );
 
-      clearTimeout(userBuffer.timer);
-      userBuffer.timer = setTimeout(async () => {
-          const combinedText = userBuffer.messages.join(' | ');
-          const combinedQuotes = userBuffer.quotes.length > 0 ? "\n[Konteks Reply: '" + userBuffer.quotes.join(' | ') + "']" : '';
-          const finalInput = combinedText + combinedQuotes;
-          
-          userBuffer.messages = [];
-          userBuffer.quotes = [];
-          global.msgBuffer.delete(jid);
+  let response = '';
 
-          try {
-              const { MemoryStore } = await import('./src/memory/MemoryStore.mjs');
-              MemoryStore.addWorkingMemory(jid, 'user', finalInput);
-          } catch(e) {}
-
-          try {
-            const { AgentV2 } = await import('./src/agent/AgentV2.mjs');
-            const { MemoryStore } = await import('./src/memory/MemoryStore.mjs');
-            const masterAgent = new AgentV2(aiGateway);
-            const agentResult = await masterAgent.processMessage(jid, finalInput, MemoryStore.load(jid), unifiedMsg);
-            
-            if (agentResult.action === 'silent') {
-               // diam
-            } else if (agentResult.action === 'tool') {
-               await sock.sendMessage(jid, { text: agentResult.chunks[0] }, agentResult.should_quote ? { quoted: mek } : {});
-               try { const { EventBus } = await import('./src/events/EventBus.mjs'); EventBus.emit('message.sent', { chatId: jid }); } catch(e){}
-            } else if (agentResult.action === 'reply' && agentResult.chunks) {
-               for (const bubble of agentResult.chunks) {
-                   await sock.sendPresenceUpdate('composing', jid);
-                   const bDelay = Math.min(Math.max(bubble.length * 20, 500), 2000);
-                   await new Promise(r => setTimeout(r, bDelay));
-                   await sock.sendMessage(jid, { text: bubble }, agentResult.should_quote ? { quoted: mek } : {});
-               }
-               try { const { EventBus } = await import('./src/events/EventBus.mjs'); EventBus.emit('message.sent', { chatId: jid }); } catch(e){}
-            }
-          } catch (v2Error) {
-            console.error('❌ Error di Agent V2:', v2Error.message);
-          }
-      }, 3500);
-  } catch(e) {
-      console.error("Normalizer Error:", e);
+  if (v93Generation.ok) {
+    response = v93Generation.response;
+  } else {
+    // Fallback sederhana — tidak mengarang, hanya tanya balik natural
+    const fallbacks = [
+      'eh maaf tadi kelewat, gimana tadi?',
+      'hah? ulang dong wkwk',
+      'sorry baru baca, tadi bilang apa?',
+      'lagi ngehang sebentar wkwk, gimana?'
+    ];
+    response = fallbacks[Math.floor(Math.random() * fallbacks.length)];
   }
-  // SELESAI BLOK V2
+
+  // ============================================================
+  // POST-PROCESSING — Hard Cap Panjang Balasan
+  // ============================================================
+  const userWordCount = incomingText.trim().split(/\s+/).length;
+  const sentences = response.split(/[.!?]+/).map(s => s.trim()).filter(Boolean);
+
+  let finalResponse = response;
+  if (userWordCount <= 5 && sentences.length > 2) {
+    // Pesan user sangat pendek → max 1-2 kalimat
+    finalResponse = sentences.slice(0, 2).join(' ');
+  } else if (userWordCount <= 15 && sentences.length > 3) {
+    // Pesan user sedang → max 3 kalimat
+    finalResponse = sentences.slice(0, 3).join(' ');
+  }
+
+  // Strip kalimat robot yang lolos
+  const robotPhrases = ['Tentu!', 'Tentu saja!', 'Baik!', 'Siap!', 'Dengan senang hati', 'Sebagai AI', 'Sebagai asisten'];
+  for (const phrase of robotPhrases) {
+    finalResponse = finalResponse.replace(new RegExp(phrase, 'gi'), '').trim();
+  }
+
+  return String(finalResponse || response || '').trim();
+
+}
+
+
+
+
+
+// ============================================================
+// V5.3 END CONVERSATION ORCHESTRATOR
+// ============================================================
+
+// ============================================================
+// V4.6 EXPLICIT MEMORY ENGINE
+// ============================================================
+
+function extractExplicitMemory(text) {
+  if (typeof text !== 'string') {
+    return null;
+  }
+
+  const value = text.trim();
+
+  // Nama
+  let match = value.match(
+    /(?:namaku|nama saya|nama gue|nama gw)\s+(?:adalah\s+)?([a-zA-ZÀ-ÿ][a-zA-ZÀ-ÿ\s'-]{1,40}?)(?:\s*,|\s+ingat\b|\s+ya\b|$)/i
+  );
+
+  if (match) {
+    const name = match[1].trim();
+
+    if (name.length >= 2) {
+      return {
+        type: 'fact',
+        value: `Nama pengguna adalah ${name}.`
+      };
+    }
+  }
+
+  // "ingat ini"
+  if (
+    /\b(ingat ini|ingat ya|tolong ingat|jangan lupa)\b/i.test(value)
+  ) {
+    const cleaned = value
+      .replace(
+        /\b(tolong\s+)?(ingat\s+ini|ingat\s+ya|jangan\s+lupa)\b/ig,
+        ''
+      )
+      .replace(/[,.!?]+/g, ' ')
+      .trim();
+
+    if (cleaned.length >= 4) {
+      return {
+        type: 'fact',
+        value: cleaned
+      };
+    }
+  }
+
+  return null;
+}
+
+async function saveExplicitMemory(jid, text) {
+  const extracted = extractExplicitMemory(text);
+
+  if (!extracted) {
+    return false;
+  }
+
+  await withMemoryLock(jid, async () => {
+    const data = loadMemory(jid);
+
+    if (!Array.isArray(data.facts)) {
+      data.facts = [];
+    }
+
+    if (!data.facts.includes(extracted.value)) {
+      data.facts.push(extracted.value);
+
+      data.facts = [
+        ...new Set(data.facts)
+      ].slice(
+        0,
+        CONFIG.MAX_LONG_MEMORY
+      );
+
+      console.log(
+        `🧠 Explicit memory saved: ${extracted.value}`
+      );
+
+      await saveMemory(jid);
+    }
+  });
+
+  return true;
+}
+
+// ============================================================
+// END V4.6 EXPLICIT MEMORY ENGINE
+// ============================================================
+
+// ============================================================
+// MEMORY EXTRACTION
+// ============================================================
+
+function formatMemoryForPrompt(arr) {
+  if (!Array.isArray(arr)) return '(kosong)';
+  const strings = arr
+    .map(x => {
+      if (typeof x === 'string') return x.trim();
+      if (x && typeof x === 'object' && typeof x.value === 'string') return x.value.trim();
+      return null;
+    })
+    .filter(x => x && x !== '[object Object]');
+    
+  return strings.length > 0 ? strings.join('\n') : '(kosong)';
+}
+
+const MEMORY_EXTRACTION_COOLDOWN = 5 * 60 * 1000;
+
+async function updateMemoryFromConversation(
+  jid
+) {
+  if (USE_V10_MEMORY_ENGINE) {
+     console.log('🚀 Using V10 Memory Engine');
+     try {
+       const mod = await import('./src/memory/index.mjs');
+       const { MemoryManager } = mod;
+       const manager = new MemoryManager(aiGateway);
+       
+       const data = loadMemory(jid);
+       const recentContext = data.shortTerm.map(x => `${x.role}: ${x.text}`).join('\n');
+       
+       manager.extractMemory(jid, recentContext).catch(console.error);
+       return; // Exit legacy flow
+     } catch (err) {
+       console.error('Failed to run V10 Memory Engine, falling back to legacy:', err);
+     }
+  }
+
+  const data =
+    loadMemory(jid);
+
+  if (
+    data.shortTerm.length <
+    CONFIG.SUMMARY_TRIGGER
+  ) {
+    return;
+  }
+  
+  const now = Date.now();
+  if (data.memoryMeta && data.memoryMeta.lastExtractionAt && (now - data.memoryMeta.lastExtractionAt < MEMORY_EXTRACTION_COOLDOWN)) {
+    return;
+  }
+  if (globalGeminiQuotaState.exhausted && now < globalGeminiQuotaState.resetAt) {
+    return;
+  }
+
+  console.log(
+    `🧠 Mengevaluasi memory: ${jid}`
+  );
+
+  const conversation =
+    data.shortTerm
+      .map(
+        x =>
+          `${x.role}: ${x.text}`
+      )
+      .join('\n');
+
+  const prompt = `
+Kamu adalah Memory Manager.
+
+Analisis percakapan berikut.
+
+Tujuan:
+1. Cari fakta yang relatif stabil.
+2. Cari preferensi yang berguna.
+3. Cari topik penting.
+4. Buat ringkasan singkat.
+5. Jangan menyimpan informasi sensitif yang tidak diperlukan.
+6. Jangan mengarang fakta.
+7. Jangan menganggap rencana sebagai fakta pasti.
+
+Memory lama:
+${data.summary || '(kosong)'}
+
+Fakta lama:
+${formatMemoryForPrompt(data.facts)}
+
+Preferensi lama:
+${formatMemoryForPrompt(data.preferences)}
+
+Percakapan:
+${conversation}
+
+Balas HANYA JSON valid:
+
+{
+  "summary": "ringkasan singkat",
+  "facts": [],
+  "preferences": [],
+  "topics": []
+}
+`;
+
+  try {
+
+    const geminiResult =
+      await callGeminiSafeV93(
+        prompt,
+        { maxAttempts: 1 }
+      );
+
+    if (
+      !geminiResult.ok
+    ) {
+      console.log('⚠️ Memory extraction dibatalkan: ' + geminiResult.error);
+      return;
+    }
+    
+    const result = geminiResult.response;
+
+    if (
+      !result ||
+      result === '[SKIP]'
+    ) {
+      return;
+    }
+
+    let parsed;
+    try {
+      const cleaned =
+        result
+          .replace(/^```json/i, '')
+          .replace(/^```/i, '')
+          .replace(/```$/i, '')
+          .trim();
+
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr) {
+      console.warn('⚠️ Gagal parsing JSON memori. Memori lama dilindungi.');
+      return;
+    }
+
+    if (
+      parsed &&
+      typeof parsed.summary ===
+      'string'
+    ) {
+      data.summary =
+        parsed.summary;
+    }
+
+    const processNewItems = (newItems, type) => {
+      if (Array.isArray(newItems)) {
+        const validItems = newItems.filter(x => typeof x === 'string' && x.trim() && x !== '[object Object]');
+        for (const item of validItems) {
+           promoteMemoryV92(data, item, type, { importance: 0.6 });
+        }
+      }
+    };
+
+    processNewItems(parsed.facts, 'fact');
+    processNewItems(parsed.preferences, 'preference');
+    processNewItems(parsed.topics, 'topic');
+
+    // Setelah diringkas,
+    // simpan beberapa chat terakhir saja.
+    data.shortTerm =
+      data.shortTerm.slice(
+        -20
+      );
+
+
+    // ========================================================
+    // V9.2 MEMORY SAFETY
+    // ========================================================
+
+    const v92Safety =
+      resolveMemoryConflictsV92(data);
+
+    applyMemoryDecayV92(data);
+
+    data.memoryMeta =
+      data.memoryMeta || {};
+
+    data.memoryMeta.lastSafetySweep =
+      Date.now();
+      
+    data.memoryMeta.lastExtractionAt = 
+      Date.now();
+
+    data.memoryMeta.conflictsDetected =
+      Number(
+        data.memoryMeta.conflictsDetected || 0
+      ) +
+      Number(
+        v92Safety.conflicts || 0
+      );
+
+    console.log(
+      `🛡️ V9.2 Memory Safety: ${JSON.stringify(v92Safety)}`
+    );
+
+    await saveMemory(jid);
+
+    console.log(
+      `✅ Memory diperbarui: ${jid}`
+    );
+
+  } catch (err) {
+
+    console.error(
+      '⚠️ Memory extraction gagal:',
+      err.message
+    );
+  }
+}
+
+// ============================================================
+// RATE LIMIT
+// ============================================================
+
+function canReply(jid) {
+
+  const now =
+    Date.now();
+
+  if (
+    !rateLimits.has(jid)
+  ) {
+    rateLimits.set(
+      jid,
+      []
+    );
+  }
+
+  const timestamps =
+    rateLimits.get(jid);
+
+  const valid =
+    timestamps.filter(
+      t =>
+        now - t <
+        CONFIG.RATE_LIMIT_WINDOW_MS
+    );
+
+  rateLimits.set(
+    jid,
+    valid
+  );
+
+  return (
+    valid.length <
+    CONFIG.MAX_REPLIES_PER_WINDOW
+  );
+}
+
+function registerReply(jid) {
+
+  if (
+    !rateLimits.has(jid)
+  ) {
+    rateLimits.set(
+      jid,
+      []
+    );
+  }
+
+  rateLimits
+    .get(jid)
+    .push(Date.now());
+}
+
+// ============================================================
+// COOLDOWN
+// ============================================================
+
+function isCooldown(jid) {
+
+  const last =
+    cooldowns.get(jid);
+
+  if (!last) {
+    return false;
+  }
+
+  return (
+    Date.now() - last <
+    CONFIG.COOLDOWN_MS
+  );
+}
+
+function setCooldown(jid) {
+
+  cooldowns.set(
+    jid,
+    Date.now()
+  );
+}
+
+// ============================================================
+// DEBOUNCE
+// ============================================================
+
+function debounceMessage(
+  jid,
+  text,
+  callback
+) {
+
+  if (
+    pendingMessages.has(jid)
+  ) {
+
+    clearTimeout(
+      pendingMessages
+        .get(jid)
+        .timer
+    );
+  }
+
+  let pending =
+    pendingMessages.get(
+      jid
+    );
+
+  if (!pending) {
+
+    pending = {
+      texts: []
+    };
+  }
+
+  pending.texts.push(
+    text
+  );
+
+  pending.timer =
+    setTimeout(
+      async () => {
+
+        pendingMessages.delete(
+          jid
+        );
+
+        const combined =
+          pending.texts
+            .join('\n');
+
+        console.log(
+          `⏱️ Debounce selesai: ${pending.texts.length} pesan`
+        );
+
+        await callback(
+          jid,
+          combined
+        );
+
+      },
+      CONFIG.DEBOUNCE_MS
+    );
+
+  pendingMessages.set(
+    jid,
+    pending
+  );
+}
+
+// ============================================================
+// RETRY QUEUE — Pesan yang gagal karena limit, dicoba lagi otomatis
+// ============================================================
+const retryQueue = new Map(); // jid → [{text, meta, sock, retryCount}]
+
+function scheduleRetry(sock, jid, text, meta = '', retryCount = 0) {
+  if (retryCount >= 3) {
+    console.log(`⚠️ Retry Queue: Pesan dari ${jid} sudah 3x gagal, dibuang.`);
+    return;
+  }
+  const delay = 30000; // 30 detik
+  console.log(`🔁 Retry Queue: Akan coba balas ${jid} lagi dalam ${delay/1000}s (attempt ${retryCount + 1}/3)...`);
+  setTimeout(async () => {
+    try {
+      await processMessage(sock, jid, text, null, meta);
+    } catch (e) {
+      console.error(`❌ Retry gagal:`, e.message);
+      scheduleRetry(sock, jid, text, meta, retryCount + 1);
+    }
+  }, delay);
+}
+
+// ============================================================
+// QUEUE
+// ============================================================
+
+function enqueue(
+  jid,
+  task
+) {
+
+  if (
+    !contactQueues.has(jid)
+  ) {
+
+    contactQueues.set(
+      jid,
+      []
+    );
+  }
+
+  const queue =
+    contactQueues.get(
+      jid
+    );
+
+  queue.push(
+    task
+  );
+
+  processQueue(jid);
+}
+
+async function processQueue(
+  jid
+) {
+
+  const queue =
+    contactQueues.get(
+      jid
+    );
+
+  if (
+    !queue ||
+    queue.length === 0
+  ) {
+    return;
+  }
+
+  if (
+    queue.processing
+  ) {
+    return;
+  }
+
+  queue.processing =
+    true;
+
+  while (
+    queue.length
+  ) {
+
+    const task =
+      queue.shift();
+
+    try {
+
+      await task();
+
+    } catch (err) {
+
+      console.error(
+        '❌ Queue error:',
+        err.message
+      );
+    }
+  }
+
+  queue.processing =
+    false;
+}
+
+// ============================================================
+// COMMANDS
+// ============================================================
+
+async function handleCommand(
+  sock,
+  jid,
+  text
+) {
+
+  const command =
+    text
+      .trim()
+      .toLowerCase();
+
+  if (
+    command ===
+    '/bot on'
+  ) {
+
+    botEnabled =
+      true;
+
+    await sock.sendMessage(
+      jid,
+      {
+        text:
+          '🤖 Bot sekarang ON.'
+      }
+    );
+
+    return true;
+  }
+
+  if (
+    command ===
+    '/bot off'
+  ) {
+
+    botEnabled =
+      false;
+
+    await sock.sendMessage(
+      jid,
+      {
+        text:
+          '🔴 Bot sekarang OFF.'
+      }
+    );
+
+    return true;
+  }
+
+  if (
+    command ===
+    '/status'
+  ) {
+
+    const queueCount =
+      [...contactQueues.values()]
+        .reduce(
+          (total, queue) =>
+            total +
+            queue.length,
+          0
+        );
+
+    const memoryFiles =
+      fs.readdirSync(
+        MEMORY_DIR
+      )
+      .filter(
+        file =>
+          file.endsWith(
+            '.json'
+          )
+      )
+      .length;
+
+    await sock.sendMessage(
+      jid,
+      {
+        text: `
+🤖 WA BOT V3
+
+Bot:
+${botEnabled ? '🟢 ON' : '🔴 OFF'}
+
+WhatsApp:
+${currentSocket ? '🟢 CONNECTED' : '🔴 DISCONNECTED'}
+
+Session:
+${SESSION_DIR}
+
+Memory:
+${memoryFiles} kontak
+
+Queue:
+${queueCount}
+
+Uptime:
+${formatUptime()}
+
+Reconnect:
+${reconnectAttempts}
+`.trim()
+      }
+    );
+
+    return true;
+  }
+
+  if (
+    command ===
+    '/reset'
+  ) {
+
+    const file =
+      memoryPath(jid);
+
+    shortMemory.delete(
+      jid
+    );
+
+    try {
+
+      if (
+        fs.existsSync(file)
+      ) {
+
+        fs.unlinkSync(
+          file
+        );
+      }
+
+    } catch (err) {
+
+      console.error(
+        'Memory delete error:',
+        err.message
+      );
+    }
+
+    await sock.sendMessage(
+      jid,
+      {
+        text:
+          '🧹 Semua memory kontak ini sudah direset.'
+      }
+    );
+
+    return true;
+  }
+
+  if (
+    command ===
+    '/memory'
+  ) {
+
+    const data =
+      loadMemory(jid);
+
+    const text = `
+🧠 MEMORY
+
+Ringkasan:
+${data.summary || '-'}
+
+Fakta:
+${data.facts.length
+      ? data.facts
+          .map(
+            x => `• ${x}`
+          )
+          .join('\n')
+      : '-'}
+
+Preferensi:
+${data.preferences.length
+      ? data.preferences
+          .map(
+            x => `• ${x}`
+          )
+          .join('\n')
+      : '-'}
+
+Topik:
+${data.topics.length
+      ? data.topics.join(', ')
+      : '-'}
+
+Pesan tersimpan:
+${data.shortTerm.length}
+`.trim();
+
+    await sock.sendMessage(
+      jid,
+      {
+        text
+      }
+    );
+
+    return true;
+  }
+
+  // ============================================================
+  // /riwayat — tampilkan 10 pesan terakhir yang diingat bot
+  // ============================================================
+  if (command === '/riwayat') {
+    const data = loadMemory(jid);
+    const shortTerm = data.shortTerm || [];
+    
+    if (shortTerm.length === 0) {
+      await sock.sendMessage(jid, { text: '🧠 Belum ada riwayat percakapan yang tersimpan.' });
+      return true;
+    }
+    
+    const lines = shortTerm.slice(-10).map((x, i) => {
+      const who = x.role === 'user' ? '👤 Kamu' : '🤖 Bot';
+      return `${who}: ${String(x.text || '').slice(0, 80)}`;
+    });
+    
+    await sock.sendMessage(jid, {
+      text: `🧠 *Riwayat 10 Pesan Terakhir*\n\n${lines.join('\n')}`
+    });
+    return true;
+  }
+
+  // ============================================================
+  // /aistatus — tampilkan health AI stack
+  // ============================================================
+  if (command === '/aistatus') {
+    const stats = aiGateway?.stats || {};
+    const state = aiGateway?.state || 'UNKNOWN';
+    const groqAvailable = !!(process.env.GROQ_API_KEY);
+    
+    await sock.sendMessage(jid, {
+      text: `🤖 *AI Stack Status*
+
+Circuit: ${state}
+Gemini berhasil: ${stats.success || 0}x
+Gemini gagal: ${stats.failures || 0}x
+Groq dipakai: ${stats.groqCount || 0}x
+Local fallback: ${stats.fallbackCount || 0}x
+Groq terkonfigurasi: ${groqAvailable ? '✅' : '❌ (set GROQ_API_KEY)'}`.trim()
+    });
+    return true;
+  }
+
+  return false;
+}
+
+// ============================================================
+// PROCESS MESSAGE
+// ============================================================
+
+async function processMessage(
+  sock,
+  jid,
+  text,
+  rawMsg,
+  systemMeta = ''
+) {
+
+  if (!botEnabled) {
+    console.log(
+      '🔴 Bot OFF'
+    );
+
+    return;
+  }
+
+  if (
+    !canReply(jid)
+  ) {
+
+    console.log(
+      `🛑 Rate limit: ${jid}`
+    );
+
+    return;
+  }
+
+  if (
+    isCooldown(jid)
+  ) {
+
+    console.log(
+      `⏳ Cooldown: ${jid}`
+    );
+
+    return;
+  }
+
+  // Pastikan memory sudah ada
+  loadMemory(jid);
+
+  // Simpan pesan user
+  await withMemoryLock(jid, async () => {
+    await addConversation(jid, 'user', text);
+  });
+
+  // Kalkulasi Target Jeda Baca (Read Delay) berdasarkan panjang teks user (40ms per huruf)
+  // Max 6 detik, Min 0.5 detik
+  const readDelayTarget = Math.min(Math.max((text || '').length * 40, 500), 6000);
+  const startTime = Date.now();
+  
+  // Set status ke Online (Pura-pura membaca) tanpa Typing
+  try { await sock.sendPresenceUpdate('available', jid); } catch (_) {}
+
+  // AI bekerja merangkai jawaban (biasanya butuh 1-3 detik)
+  const reply = await generateReply(jid, text, systemMeta);
+
+  if (!reply || reply === '[SKIP]') {
+    // Cek apakah bot perlu retry (AI sedang limit)
+    const isLimitError = !reply;
+    if (isLimitError && sock) {
+      console.log(`🔁 AI gagal/limit untuk ${jid}, masuk retry queue...`);
+      scheduleRetry(sock, jid, text, systemMeta);
+    } else {
+      console.log('🤐 AI memilih tidak membalas');
+    }
+    return;
+  }
+
+  // Evaluasi waktu sisa membaca: Jika AI terlalu cepat, pura-pura baca dulu sisanya
+  const elapsed = Date.now() - startTime;
+  if (elapsed < readDelayTarget) {
+    const remainingReadTime = readDelayTarget - elapsed;
+    console.log(`👀 Membaca (Jeda ekstra ${remainingReadTime}ms)...`);
+    await sleep(remainingReadTime);
+  }
+
+  console.log(`🤖 Balasan: ${reply}`);
+
+  // Kalkulasi Jeda Mengetik (Typing Delay) berdasarkan panjang balasan AI (35ms per huruf)
+  // Max 5 detik, Min 1 detik
+  const typingDelay = Math.min(Math.max((reply || '').length * 35, 1000), 5000);
+
+  try { await sock.sendPresenceUpdate('composing', jid); } catch (_) {}
+  console.log(`⌨️ Typing ${typingDelay}ms...`);
+  await sleep(typingDelay);
+
+  try {
+
+    await sock.sendPresenceUpdate(
+      'paused',
+      jid
+    );
+
+  } catch (_) {}
+
+  // Kirim balasan beruntun (consecutive bubbles)
+  const bubbles = reply
+    .split('\n')
+    .map(b => b.trim())
+    .filter(Boolean);
+
+  if (bubbles.length > 0) {
+    for (let i = 0; i < bubbles.length; i++) {
+      const bubble = bubbles[i];
+      
+      // Simulasikan jeda mengetik untuk balon chat berikutnya
+      if (i > 0) {
+        const bubbleDelay = randomDelay(600, 1500);
+        try {
+          await sock.sendPresenceUpdate('composing', jid);
+        } catch (_) {}
+        console.log(`⌨️ Mengetik pesan beruntun ${i+1}/${bubbles.length} selama ${bubbleDelay}ms...`);
+        await sleep(bubbleDelay);
+        try {
+          await sock.sendPresenceUpdate('paused', jid);
+        } catch (_) {}
+      }
+
+      const sendOptions = {};
+      // Hanya balon pertama yang membalas (quote/slide) pesan user asli
+      if (i === 0 && rawMsg) {
+        sendOptions.quoted = rawMsg;
+      }
+
+      // --- 🤖 AUTO-EDIT TYPO SYSTEM (ANTI-CURIGA) ---
+      // 15% peluang bot sengaja typo untuk pesan yang cukup panjang
+      const shouldTypo = Math.random() < 0.15 && bubble.length > 10;
+      let sentMsg = null;
+      let didTypo = false;
+      let typoBubble = bubble;
+
+      if (shouldTypo) {
+        const words = bubble.split(' ');
+        const candidates = words.map((w, idx) => ({word: w, idx})).filter(c => c.word.length >= 5 && /^[a-zA-Z]+$/.test(c.word));
+        if (candidates.length > 0) {
+          const target = candidates[Math.floor(Math.random() * candidates.length)];
+          const w = target.word;
+          // Tukar 2 huruf di tengah kata (misal: "besok" -> "bseok")
+          const swapIdx = Math.floor(Math.random() * (w.length - 3)) + 1; 
+          const scrambled = w.substring(0, swapIdx) + w[swapIdx + 1] + w[swapIdx] + w.substring(swapIdx + 2);
+          words[target.idx] = scrambled;
+          typoBubble = words.join(' ');
+          didTypo = true;
+        }
+      }
+
+      try {
+        if (didTypo) {
+          console.log(`📝 Sengaja typo: ${typoBubble}`);
+          sentMsg = await sock.sendMessage(jid, { text: typoBubble }, sendOptions);
+          
+          // Jeda sadar typo (manusia butuh 2-4 detik buat sadar kalau dia typo)
+          await sleep(randomDelay(2000, 4000));
+          
+          console.log(`✏️ Mengedit typo kembali ke normal: ${bubble}`);
+          try { await sock.sendPresenceUpdate('composing', jid); } catch (_) {}
+          await sleep(randomDelay(1000, 2000)); // Pura-pura ngetik ralatnya
+          await sock.sendMessage(jid, { text: bubble, edit: sentMsg.key });
+        } else {
+          await sock.sendMessage(jid, { text: bubble }, sendOptions);
+        }
+      } catch (sendErr) {
+        console.warn(`⚠️ Gagal mengirim pesan (Error: ${sendErr.message}). Mencoba tanpa quote...`);
+        try {
+          await sock.sendMessage(jid, { text: bubble });
+        } catch (e) {
+          console.error('❌ Gagal total mengirim pesan:', e.message);
+        }
+      }
+    }
+  }
+
+  // Simpan jawaban assistant
+  await withMemoryLock(
+    jid,
+    async () => {
+
+      await addConversation(
+        jid,
+        'assistant',
+        reply
+      );
+
+      await updateMemoryFromConversation(
+        jid
+      );
+    }
+  );
+
+  registerReply(
+    jid
+  );
+
+  setCooldown(
+    jid
+  );
+
+  console.log(
+    '✅ Balasan terkirim'
+  );
 }
 
 // ============================================================
@@ -4821,6 +5800,18 @@ if (
 
             let text = getMessageText(msg.message);
 
+            // ====================================================
+            // ADMIN UI INJECTION (Phase J)
+            // ====================================================
+            const OWNER_IDS = (process.env.OWNER_CHAT_IDS || '628xxxxxxxxxx@s.whatsapp.net').split(',').map(id => id.trim()); OWNER_IDS.push('236322690191595@lid');
+            if (OWNER_IDS.includes(jid)) {
+                if (text.toLowerCase().startsWith('/approve') || text.toLowerCase().startsWith('/leads')) {
+                     const { SalesIntegrator } = await import('./SalesIntegrator.mjs');
+                     await SalesIntegrator.handleAdminCommand(sock, jid, text);
+                     continue; 
+                }
+            }
+
             // Extract Quoted Message Context (Pesan yang di-slide/di-swipe dari tipe pesan mana saja)
             try {
               let contextInfo = null;
@@ -4896,20 +5887,7 @@ if (
                 if (json && json.text) {
                   console.log('[VoiceNote] Transkrip sukses:', json.text);
                   // Bot otomatis membalas transkrip ke pengirim agar mereka juga lihat
-                  // V17: PARSE REAKSI & TYPING SIMULATOR
-            await sock.sendMessage(jid, { text: `🎙️ *[Transkrip VN]:*\n\n"${json.text.trim()}"` }, { quoted: msg });
-            const reactMatch = (finalReply || '').match(/\[REACT:\s*(.+?)\]/i);
-            if (reactMatch) {
-                const emoji = reactMatch[1].trim();
-                finalReply = finalReply.replace(/\[REACT:\s*(.+?)\]/i, '').trim();
-                try { await sock.sendMessage(jid, { react: { text: emoji, key: msg.key } }); } catch(e) {}
-            }
-            if (finalReply && finalReply.length > 0) {
-                const delayMs = Math.min(finalReply.length * 15, 4000); // Dipercepat 
-                try { await sock.sendPresenceUpdate('composing', jid); } catch(e) {}
-                await new Promise(resolve => setTimeout(resolve, delayMs));
-                await sock.sendMessage(jid, { text: finalReply });
-            }
+                  await sock.sendMessage(jid, { text: `🎙️ *[Transkrip VN]:*\n\n"${json.text.trim()}"` }, { quoted: msg });
                   
                   // Jadikan hasil transkrip sebagai 'text' agar diproses oleh AI bot layaknya chat biasa!
                   text = `[Konteks: Ini adalah pesan suara/voice note yang telah ditranskrip menjadi teks] ${json.text.trim()}`;
@@ -5055,47 +6033,18 @@ ${stats?.identities ?? 0}
   continue;
 }
 
-            // ============================================================
-            // 🧠 AGENT V2 PROCESSING
-            // ============================================================
-            try {
-              const { AgentV2 } = await import('./src/agent/AgentV2.mjs');
-              const { MemoryStore } = await import('./src/memory/MemoryStore.mjs');
-              const masterAgent = new AgentV2(aiGateway);
-              
-              let myMsg = null;
-              try { 
-                  const { Normalizer } = await import('./src/gateway/Normalizer.mjs');
-                  myMsg = Normalizer.normalize(mek); 
-              } catch(e){}
-              const agentResult = await masterAgent.processMessage(jid, text, MemoryStore.load(jid), myMsg);
-    
-              
-              if (agentResult.action === 'silent' || agentResult.action === 'interrupted') {
-                 // diam
-              } else if (agentResult.action === 'tool') {
-                 await sock.sendMessage(jid, { text: agentResult.chunks[0] }, agentResult.should_quote ? { quoted: mek } : {});
-                 try { const { EventBus } = await import('./src/events/EventBus.mjs'); EventBus.emit('message.sent', { chatId: jid }); } catch(e){}
-              } else if (agentResult.action === 'reply' && agentResult.chunks) {
-                 for (const bubble of agentResult.chunks) {
-                     if (bubble.trim().length === 0) continue;
-                     
-                     // Simulated typing delay
-                     const delayMs = Math.min(bubble.length * 15, 3000); 
-                     try { await sock.sendPresenceUpdate('composing', jid); } catch(e) {}
-                     await new Promise(resolve => setTimeout(resolve, delayMs));
-                     
-                     await sock.sendMessage(jid, { text: bubble }, agentResult.should_quote ? { quoted: mek } : {});
-                 }
-                 try { const { EventBus } = await import('./src/events/EventBus.mjs'); EventBus.emit('message.sent', { chatId: jid }); } catch(e){}
-              }
-            } catch(e) {
-                console.error("❌ AgentV2 Error:", e);
-                await sock.sendMessage(jid, { text: "Maaf, otak saya lagi konslet. Coba lagi bentar ya." });
+const commandHandled =
+              await handleCommand(
+                sock,
+                jid,
+                text
+              );
+
+            if (
+              commandHandled
+            ) {
+              continue;
             }
-
-
-// Legacy handleCommand removed
 
             if (
               !botEnabled
@@ -5291,7 +6240,7 @@ process.on(
 // ============================================================
 
 console.log(`
-╔════════════════════════════════════����═╗
+╔══════════════════════════════════════╗
 ║       WA BOT — V3 MEMORY             ║
 ╚══════════════════════════════════════╝
 
